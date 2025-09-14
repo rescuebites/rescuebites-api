@@ -7,12 +7,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-@Entity
-@Table(name = "users")
+@Entity(name = "users")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data //Incluye getters, setters, toString, equals, and hashCode methods
@@ -20,9 +20,10 @@ import java.util.UUID;
 public class User {
 
     @Id
-    private final UUID id = UUID.randomUUID();
+    @Column(name = "userId")
+    private UUID userId = UUID.randomUUID();
 
-    private String username;
+    //private String username;
 
     private String email;
 
@@ -30,14 +31,15 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private Role role = Role.USER; // El rol por defecto es USER
+    private Role role = Role.CLIENT; // El rol por defecto es CLIENT
 
     @OneToMany(
-            mappedBy = "user",
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY
     )
-    private List<Token> tokens = Collections.emptyList(); // Inicializamos la lista como una lista inmutable vacía (not nulls)
+    @Builder.Default
+    private List<Token> tokens = new ArrayList<>(); // Inicializamos la lista como una lista inmutable vacía (not nulls)
 
+    @Builder.Default
     private boolean enabled = false; //Se setea en true cuando el usuario confirma su email
 }

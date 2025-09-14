@@ -33,7 +33,9 @@ public class SecurityConfig {
                         .requestMatchers("/auth/register",
                                 "/auth/login",
                                 "/api/users/verify-account",
-                                "/api/users/resend-verification-account").permitAll()
+                                "/api/users/resend-verification-account",
+                                "/api/v1/clients")
+                        .permitAll()
                         //.requestMatchers("/v1/home").authenticated()
                         //.requestMatchers("/v1/admin").hasAuthority("ADMIN")
                         .anyRequest().authenticated() //Cualquier otra request debe estar autenticada.
@@ -44,8 +46,9 @@ public class SecurityConfig {
                 .httpBasic(httpSecurityHttpBasicConfigurer -> httpSecurityHttpBasicConfigurer
                         .authenticationEntryPoint(globalAuthenticationEntryPoint))
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-                /*
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .logout(logout -> logout.logoutSuccessUrl("/").permitAll());
+        /*
                 .exceptionHandling((exceptions) -> exceptions
                         .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
                         .accessDeniedHandler(new BearerTokenAccessDeniedHandler())

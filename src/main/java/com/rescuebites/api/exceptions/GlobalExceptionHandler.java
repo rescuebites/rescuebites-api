@@ -134,4 +134,15 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(error, HttpStatus.TOO_MANY_REQUESTS);
     }
+
+    @ExceptionHandler(ImageUploadException.class)
+    public ResponseEntity<ApiError> handleImageUpload(ImageUploadException ex) {
+        logger.error("Image upload error: {}", ex.getMessage(), ex);
+        ApiError error = new ApiError(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                ex.getMessage(),
+                "Image upload failed"
+        );
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
