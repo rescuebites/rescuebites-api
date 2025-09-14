@@ -1,6 +1,6 @@
 package com.rescuebites.api.security.filter;
 
-import com.rescuebites.api.repositories.ITokenRepository;
+import com.rescuebites.api.users.repositories.ITokenRepository;
 import com.rescuebites.api.security.services.JwtService;
 import io.jsonwebtoken.ClaimJwtException;
 import jakarta.servlet.FilterChain;

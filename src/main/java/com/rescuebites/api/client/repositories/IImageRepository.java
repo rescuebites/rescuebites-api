@@ -1,6 +1,6 @@
 package com.rescuebites.api.client.repositories;
 
-import com.rescuebites.api.data.models.Image;
+import com.rescuebites.api.shared.Image;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

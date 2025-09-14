@@ -1,7 +1,7 @@
 package com.rescuebites.api.security.services;
 
-import com.rescuebites.api.data.models.User;
-import com.rescuebites.api.services.interfaces.IUserService;
+import com.rescuebites.api.users.data.models.User;
+import com.rescuebites.api.users.services.interfaces.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

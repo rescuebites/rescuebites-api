@@ -1,7 +1,7 @@
 package com.rescuebites.api.client.data.models;
 
-import com.rescuebites.api.data.models.Image;
-import com.rescuebites.api.data.models.User;
+import com.rescuebites.api.shared.Image;
+import com.rescuebites.api.users.data.models.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,8 +14,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import static jakarta.persistence.FetchType.EAGER;
 
 @Entity(name = "clients")
 @Data
