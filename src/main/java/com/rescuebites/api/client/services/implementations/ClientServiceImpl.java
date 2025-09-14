@@ -7,10 +7,10 @@ import com.rescuebites.api.client.data.models.Preference;
 import com.rescuebites.api.client.repositories.IClientRepository;
 import com.rescuebites.api.client.repositories.IPreferenceRepository;
 import com.rescuebites.api.client.services.interfaces.IClientService;
-import com.rescuebites.api.data.models.Image;
-import com.rescuebites.api.data.models.User;
-import com.rescuebites.api.services.implementations.ImageService;
-import com.rescuebites.api.services.interfaces.IUserService;
+import com.rescuebites.api.shared.Image;
+import com.rescuebites.api.users.data.models.User;
+import com.rescuebites.api.shared.ImageService;
+import com.rescuebites.api.users.services.interfaces.IUserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.rescuebites.api.client.Constants.MAXIMUM_FILE_SIZE;
+import static com.rescuebites.api.client.utils.Constants.MAXIMUM_FILE_SIZE;
 
 @Service
 @RequiredArgsConstructor

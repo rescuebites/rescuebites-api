@@ -3,8 +3,8 @@ package com.rescuebites.api.client.data.mappers;
 import com.rescuebites.api.client.controllers.requests.CreateClientRequest;
 import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.data.models.Preference;
-import com.rescuebites.api.data.models.Image;
-import com.rescuebites.api.data.models.User;
+import com.rescuebites.api.shared.Image;
+import com.rescuebites.api.users.data.models.User;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

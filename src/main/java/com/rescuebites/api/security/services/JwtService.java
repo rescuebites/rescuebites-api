@@ -1,6 +1,6 @@
 package com.rescuebites.api.security.services;
 
-import com.rescuebites.api.data.models.User;
+import com.rescuebites.api.users.data.models.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
