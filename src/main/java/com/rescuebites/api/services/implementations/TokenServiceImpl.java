@@ -23,6 +23,7 @@ public class TokenServiceImpl implements ITokenService {
     @Override
     public Token saveUserToken(User newUser) {
         Token token = Token.builder()
+                .tokenId(UUID.randomUUID())
                 .user(newUser)
                 .build();
         return tokenRepository.save(token);

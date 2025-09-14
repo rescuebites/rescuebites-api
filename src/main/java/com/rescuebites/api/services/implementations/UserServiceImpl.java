@@ -105,7 +105,7 @@ public class UserServiceImpl implements IUserService {
         ifUserIsNotEnabledThrowException(user);
 
         String token = jwtService.generateToken(user);
-        return new AuthResponse(user.getId(), user.getEmail(), token, user.getRole());
+        return new AuthResponse(user.getUserId(), user.getEmail(), token, user.getRole());
     }
 
     private void ifUserIsNotEnabledThrowException(User user) {

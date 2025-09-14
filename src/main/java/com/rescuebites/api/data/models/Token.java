@@ -9,8 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
-@Table(name = "tokens")
+@Entity(name = "tokens")
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,8 +17,8 @@ import java.util.UUID;
 public class Token {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID tokenId;
+    @Column(name = "tokenId")
+    private UUID tokenId = UUID.randomUUID();;
 
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -29,6 +28,6 @@ public class Token {
     private LocalDateTime tokenExpirationDate = LocalDateTime.now().plusHours(12);
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "userId")
     private User user;
 }

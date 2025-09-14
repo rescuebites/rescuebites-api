@@ -6,8 +6,9 @@ import com.rescuebites.api.controllers.requests.EmailRequest;
 import com.rescuebites.api.services.interfaces.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class UserController implements IUserController {
 
