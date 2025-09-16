@@ -31,4 +31,11 @@ public class Token {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    private LocalDateTime expiryDate;
+
+   // @JoinColumn(name = "comercio_id", referencedColumnName = "id")
+    // private commerce commerce;
+
+
 }
