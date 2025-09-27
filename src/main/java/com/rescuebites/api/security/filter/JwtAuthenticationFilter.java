@@ -106,7 +106,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // Comparar con el whitelist de forma consistente
         return Arrays.stream(WHITELIST)
-                .anyMatch(pattern -> pathMatcher.match(pattern, path));
+                .anyMatch(pattern -> pathMatcher.match(pattern, path))
+                || pathMatcher.match("/api/users/reset-password/**", path);
     }
 
 }

@@ -37,7 +37,7 @@ public class EmailBuilder {
     }
 
     public String buildResendConfirmAccount(String userEmail, UUID newToken) {
-        String confirmationLink = frontendUrl + "/confirm?token=" + newToken;
+        String confirmationLink = frontendUrl + "/reset-password?token=" + newToken;
 
         return """
             <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">

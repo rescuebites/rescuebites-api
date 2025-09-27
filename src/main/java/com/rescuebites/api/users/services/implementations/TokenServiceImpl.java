@@ -44,11 +44,9 @@ public class TokenServiceImpl implements ITokenService {
     }
 
     //POR EL MOMENTO NO SE UTILIZA, PERO SE DEJA POR SI SE NECESITA
-    /*
+
     @Override
     public void deleteToken(Token token) {
         tokenRepository.delete(token);
     }
-
-     */
 }

@@ -20,4 +20,8 @@ public interface IUserService {
     void resendConfirmationEmail(String email);
 
     AuthResponse verifyUser(LoginRequest loginRequest);
+
+    void resetPassword(UUID token, String newPassword, String confirmNewPassword);
+
+    void sendResetPasswordEmail(String email);
 }
