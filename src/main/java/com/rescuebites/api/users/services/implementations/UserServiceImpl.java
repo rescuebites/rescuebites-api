@@ -2,6 +2,7 @@ package com.rescuebites.api.users.services.implementations;
 
 import com.rescuebites.api.users.controllers.requests.LoginRequest;
 import com.rescuebites.api.users.controllers.requests.RegisterRequest;
+import com.rescuebites.api.users.controllers.requests.ResetPasswordRequest;
 import com.rescuebites.api.users.controllers.responses.AuthResponse;
 import com.rescuebites.api.users.data.mappers.UserMapper;
 import com.rescuebites.api.users.data.models.Token;
@@ -35,7 +36,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public void saveUser(RegisterRequest registerRequest) {
         verifyIfEmailAlreadyExists(registerRequest.email());
-        verifyIfPasswordsMatch(registerRequest);
+        verifyIfPasswordsMatch(registerRequest.password(), registerRequest.confirmPassword());
 
         User newUser = userMapper.toUser(registerRequest);
         newUser.setPassword(passwordEncoder.encode(registerRequest.password()));
@@ -47,8 +48,8 @@ public class UserServiceImpl implements IUserService {
         emailService.sendEmail(newUser.getEmail(), "Confirm your registration ✔", confirmAccountHtml);
     }
 
-    private void verifyIfPasswordsMatch(RegisterRequest registerRequest) {
-        if(!registerRequest.password().equals(registerRequest.confirmPassword())){
+    private void verifyIfPasswordsMatch(String password, String confirmPassword) {
+        if(!password.equals(confirmPassword)){
             throw new IllegalArgumentException("Las contraseñas no coinciden");
         }
     }
@@ -106,6 +107,31 @@ public class UserServiceImpl implements IUserService {
 
         String token = jwtService.generateToken(user);
         return new AuthResponse(user.getUserId(), user.getEmail(), token, user.getRole());
+    }
+
+    @Override
+    public void resetPassword(UUID token, String newPassword, String confirmNewPassword) {
+        verifyIfPasswordsMatch(newPassword, confirmNewPassword);
+        Token resetToken = tokenService.findByTokenOrThrowException(token);
+        ifTokenIsExpiredThrowException(resetToken);
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        tokenService.deleteToken(resetToken);
+    }
+
+    @Override
+    public void sendResetPasswordEmail(String email) {
+        User user = findUserByEmailOrThrowException(email);
+        ifResendLimitExceededThrowException(user);
+
+        // Generamos token de reseteo y enviamos email
+        Token token = tokenService.saveUserToken(user);
+        UUID resetToken = token.getTokenId();
+        String resetPasswordHtml = emailBuilder.buildResendConfirmAccount(user.getEmail(), resetToken);
+        emailService.sendEmail(user.getEmail(), "Reset your password ✔", resetPasswordHtml);
     }
 
     private void ifUserIsNotEnabledThrowException(User user) {

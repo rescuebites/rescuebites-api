@@ -12,6 +12,8 @@ public interface ITokenService {
 
     boolean canResendToken(User user);
 
+    void deleteToken(Token token);
+
     /*
     void deleteToken(Token token);
 
