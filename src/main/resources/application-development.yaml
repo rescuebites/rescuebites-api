@@ -1,6 +1,6 @@
 jwt:
   secret: "GfH9j1/ZQ4g9cQh3PQV2mRupzP3vB6fJ4qFq1xTzp0A6qX6Jk9kBAQ=="
-  access-token-expiration: 1440 # 1 día
+  access-token-expiration: 36000000000 # 1 hora
 
 frontend:
   url: ${FRONTEND_URL}

@@ -1,5 +1,6 @@
 package com.rescuebites.api.users.controllers.requests;
 
+import com.rescuebites.api.security.enums.Role;
 import com.rescuebites.api.users.utils.PasswordMatches;
 import com.rescuebites.api.users.utils.ValidEmail;
 import jakarta.validation.constraints.NotBlank;
@@ -28,5 +29,7 @@ public record RegisterRequest (
         String password,
 
         @NotBlank(message = "La confirmación de la contraseña es obligatoria")
-        String confirmPassword
+        String confirmPassword,
+
+        Role role
 ){}

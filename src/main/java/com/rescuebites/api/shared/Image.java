@@ -1,6 +1,8 @@
 package com.rescuebites.api.shared;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.rescuebites.api.client.data.models.Client;
+import com.rescuebites.api.commerce.data.models.Commerce;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,4 +28,8 @@ public class Image {
 
     @OneToOne(mappedBy = "image")
     private Client client;
+
+    @OneToOne(mappedBy = "image")
+    @JsonBackReference
+    private Commerce commerce;
 }

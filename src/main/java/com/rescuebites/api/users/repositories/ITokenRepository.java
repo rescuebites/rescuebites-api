@@ -21,6 +21,5 @@ public interface ITokenRepository extends JpaRepository<Token, UUID> {
     //Cuenta los tokens creados por un usuario después de una fecha y hora específica
     long countByUserAndCreatedAtAfter(User user, LocalDateTime dateTime);
 
-    Optional<Token> findByToken(String token);
 }
 

@@ -1,11 +1,8 @@
 package com.rescuebites.api.commerce.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.rescuebites.api.commerce.data.models.commerce;
-import java.util.Optional;
+import com.rescuebites.api.commerce.data.models.Commerce;
 import java.util.UUID;
 
-public interface ICommerceRepository extends JpaRepository<commerce, UUID>{
-    // Buscar por email para validar unicidad
-    Optional<commerce> findByEmail(String email);
+public interface ICommerceRepository extends JpaRepository<Commerce, UUID>{
 }

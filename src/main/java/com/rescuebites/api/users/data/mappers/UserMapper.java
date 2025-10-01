@@ -16,6 +16,7 @@ public class UserMapper {
                 //.username(registerRequest.firstName())
                 .email(registerRequest.email())
                 .password(registerRequest.password())
+                .role(registerRequest.role())
                 .build();
     }
 }

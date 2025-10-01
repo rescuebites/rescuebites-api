@@ -1,23 +1,28 @@
 package com.rescuebites.api.commerce.data.models;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.rescuebites.api.shared.Image;
+import com.rescuebites.api.users.data.models.User;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Entity
-@Table(name = "commerce")
+@Entity(name = "commerce")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data //Incluye getters, setters, toString, equals, y hashCode methods
 @Builder
-public class commerce {
+public class Commerce {
     @Id
-    private final UUID id = UUID.randomUUID();
+    @Column(name = "commerceId")
+    private UUID commerceId = UUID.randomUUID();
+
+    @OneToOne
+    @JoinColumn(name = "userId", nullable = false)
+    private User user;
 
     @NotBlank(message = "El nombre es obligatorio")
     private String name;
@@ -25,13 +30,14 @@ public class commerce {
     @Size(min = 1, max = 50, message = "La descripción debe tener entre 1 y 50 caracteres")
     private String description;
 
-    @NotBlank(message = "El tipo de comercio es obligatorio")
-    @OneToMany(
-            mappedBy = "commerce",
-            cascade = CascadeType.ALL,
-            fetch = FetchType.LAZY
+    @NotEmpty(message = "El tipo de comercio es obligatorio")
+    @ManyToMany
+    @JoinTable(
+            name = "commerce_commerceTypes",
+            joinColumns = @JoinColumn(name = "commerceId"),
+            inverseJoinColumns = @JoinColumn(name = "commerceTypeId")
     )
-    private List<CommerceType> commerceTypes;
+    private List<CommerceType> commerceTypes = new ArrayList<>();
 
     @NotBlank(message = "El horario es obligatorio")
     private String openingHours;
@@ -46,8 +52,10 @@ public class commerce {
     )
     private String phone;
 
-    @NotBlank(message = "La foto es obligatoria")
-    private String imageUrl; // Guardaría URL
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "imageId", referencedColumnName = "imageId")
+    @JsonManagedReference
+    private Image image;
 
     //Estado: activo/inactivo (para borraod lógico)
     @Builder.Default
