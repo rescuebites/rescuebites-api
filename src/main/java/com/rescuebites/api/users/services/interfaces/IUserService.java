@@ -15,9 +15,13 @@ public interface IUserService {
 
     User findUserByEmailOrThrowException(String email);
 
-    void verifyNewUser(UUID token);
+    void verifyNewUser(UUID userId, UUID token);
 
     void resendConfirmationEmail(String email);
 
     AuthResponse verifyUser(LoginRequest loginRequest);
+
+    void resetPassword(UUID token, String newPassword, String confirmNewPassword);
+
+    void sendResetPasswordEmail(String email);
 }

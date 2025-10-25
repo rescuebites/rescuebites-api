@@ -1,9 +1,9 @@
 package com.rescuebites.api.client.controllers.requests;
 
+import com.rescuebites.api.client.data.enums.PreferenceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -26,5 +26,5 @@ public record CreateClientRequest(
         @NotNull(message = "El usuario es obligatorio")
         UUID userId,
 
-        List<UUID> preferenceIds
+        List<PreferenceType> preferences
 ) {}

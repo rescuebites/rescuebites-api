@@ -5,7 +5,9 @@ import com.rescuebites.api.security.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -24,21 +26,20 @@ public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final GlobalAuthenticationEntryPoint globalAuthenticationEntryPoint;
 
-    //Toma el objeto HttpSecurity como parámetro y configura las reglas de seguridad para las solicitudes HTTP.
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register",
-                                "/auth/login",
-                                "/api/users/verify-account",
-                                "/api/users/resend-verification-account",
-                                "/api/v1/clients")
-                        .permitAll()
-                        //.requestMatchers("/v1/home").authenticated()
-                        //.requestMatchers("/v1/admin").hasAuthority("ADMIN")
-                        .anyRequest().authenticated() //Cualquier otra request debe estar autenticada.
+                        .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/*/verify-account").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/clients").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/clients/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/reset-password/**").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -48,16 +49,6 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout.logoutSuccessUrl("/").permitAll());
-        /*
-                .exceptionHandling((exceptions) -> exceptions
-                        .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
-                        .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
-                );
-                //Usamos el formulario de login por defecto de Spring Security
-        .logout((logout) -> logout.permitAll());
-                .formLogin(Customizer.withDefaults());
-
-                 */
         return http.build();
     }
 }

@@ -2,8 +2,9 @@ package com.rescuebites.api.client.data.enums;
 
 public enum PreferenceType {
     CELIAC,
-    VEGETARIAN,
     VEGAN,
+    VEGETARIAN,
+    GLUTEN_FREE,
     LACTOSE_FREE,
-    KETO
+    LOW_SODIUM
 }
