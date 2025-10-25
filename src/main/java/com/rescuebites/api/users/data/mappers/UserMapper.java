@@ -1,6 +1,7 @@
 package com.rescuebites.api.users.data.mappers;
 
 import com.rescuebites.api.users.controllers.requests.RegisterRequest;
+import com.rescuebites.api.users.controllers.responses.UserResponse;
 import com.rescuebites.api.users.data.models.User;
 import org.springframework.stereotype.Component;
 
@@ -18,5 +19,14 @@ public class UserMapper {
                 .password(registerRequest.password())
                 .role(registerRequest.role())
                 .build();
+    }
+
+    public static UserResponse toUserResponse(User user) {
+        return new UserResponse(
+                user.getUserId(),
+                user.getEmail(),
+                user.getRole(),
+                user.isEnabled()
+        );
     }
 }
