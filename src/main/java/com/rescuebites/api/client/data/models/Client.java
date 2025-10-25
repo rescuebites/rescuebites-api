@@ -1,5 +1,6 @@
 package com.rescuebites.api.client.data.models;
 
+import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.users.data.models.User;
 import jakarta.persistence.*;
@@ -11,7 +12,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,7 +35,6 @@ public class Client {
     @NotNull(message = "La fecha de nacimiento es obligatoria")
     private LocalDate birthDate;
 
-    //@OneToMany(cascade = CascadeType.ALL, fetch = EAGER, orphanRemoval = true)
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "imageId", referencedColumnName = "imageId")
     private Image image;
@@ -47,13 +46,9 @@ public class Client {
     @JoinColumn(name = "userId", nullable = false)
     private User user;
 
-    @ManyToMany
-    @JoinTable(
-            name = "clientPreferences",
-            joinColumns = @JoinColumn(name = "clientId"),
-            inverseJoinColumns = @JoinColumn(name = "preferenceId")
-    )
-    private List<Preference> preferences = new ArrayList<>();
+    @ElementCollection(targetClass = PreferenceType.class)
+    @Enumerated(EnumType.STRING)
+    private List<PreferenceType> preferences;
 
     public String getFullName() {
         return firstName + " " + lastName;

@@ -19,12 +19,6 @@ import org.springframework.util.PathMatcher;
 @Configuration
 public class ApplicationConfig {
 
-    /*
-    PUEDO CREAR UN CONSTRUCTOR CON @Lazy PARA EVITAR UN BUCLE INFINITO. VERIFICAR SI
-    ES NECESARIO CUANDO EJECUTE EL CÓDIGO, ES DECIR, SI SE PRODUCE UN BUCLE INFINITO
-    MOSTRANDO EL MENSAJE DE ERROR: BeanCurrentlyInCreationException
-     */
-
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
