@@ -15,7 +15,7 @@ public interface IUserService {
 
     User findUserByEmailOrThrowException(String email);
 
-    void verifyNewUser(UUID token);
+    void verifyNewUser(UUID userId, UUID token);
 
     void resendConfirmationEmail(String email);
 

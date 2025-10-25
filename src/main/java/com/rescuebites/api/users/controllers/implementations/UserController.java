@@ -8,6 +8,8 @@ import com.rescuebites.api.users.services.interfaces.IUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 public class UserController implements IUserController {
@@ -15,8 +17,8 @@ public class UserController implements IUserController {
     private final IUserService userService;
 
     @Override
-    public void verifyAccount(ConfirmTokenRequest confirmTokenRequest) {
-        userService.verifyNewUser(confirmTokenRequest.token());
+    public void verifyAccount(UUID userId, ConfirmTokenRequest confirmTokenRequest) {
+        userService.verifyNewUser(userId, confirmTokenRequest.token());
     }
 
     @Override
