@@ -2,7 +2,6 @@ package com.rescuebites.api.users.services.implementations;
 
 import com.rescuebites.api.users.controllers.requests.LoginRequest;
 import com.rescuebites.api.users.controllers.requests.RegisterRequest;
-import com.rescuebites.api.users.controllers.requests.ResetPasswordRequest;
 import com.rescuebites.api.users.controllers.responses.AuthResponse;
 import com.rescuebites.api.users.data.mappers.UserMapper;
 import com.rescuebites.api.users.data.models.Token;
@@ -44,7 +43,7 @@ public class UserServiceImpl implements IUserService {
 
         //Generamos el token de confirmación y enviamos el email
         UUID confirmationToken = tokenService.saveUserToken(newUser).getTokenId();
-        String confirmAccountHtml = emailBuilder.buildConfirmAccount(newUser.getEmail(), confirmationToken);
+        String confirmAccountHtml = emailBuilder.buildConfirmAccount(newUser, confirmationToken);
         emailService.sendEmail(newUser.getEmail(), "Confirm your registration ✔", confirmAccountHtml);
     }
 
@@ -73,7 +72,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public void verifyNewUser(UUID tokenValue) {
+    public void verifyNewUser(UUID userId, UUID tokenValue) {
         Token token = tokenService.findByTokenOrThrowException(tokenValue);
         ifTokenIsExpiredThrowException(token);
 
@@ -95,7 +94,7 @@ public class UserServiceImpl implements IUserService {
         // Generamos nuevo token y enviamos email
         Token token = tokenService.saveUserToken(user);
         UUID newToken = token.getTokenId();
-        String resendConfirmAccountHtml = emailBuilder.buildResendConfirmAccount(user.getEmail(), newToken);
+        String resendConfirmAccountHtml = emailBuilder.buildResendConfirmAccount(user, newToken);
         emailService.sendEmail(user.getEmail(), "Confirm your registration ✔", resendConfirmAccountHtml);
     }
 
@@ -130,7 +129,7 @@ public class UserServiceImpl implements IUserService {
         // Generamos token de reseteo y enviamos email
         Token token = tokenService.saveUserToken(user);
         UUID resetToken = token.getTokenId();
-        String resetPasswordHtml = emailBuilder.buildResendConfirmAccount(user.getEmail(), resetToken);
+        String resetPasswordHtml = emailBuilder.buildResetPassword(user.getEmail(), resetToken);
         emailService.sendEmail(user.getEmail(), "Reset your password ✔", resetPasswordHtml);
     }
 

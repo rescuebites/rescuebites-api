@@ -1,5 +1,6 @@
 package com.rescuebites.api.shared;
 
+import com.rescuebites.api.users.data.models.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,51 +12,127 @@ public class EmailBuilder {
     @Value("${frontend.url}")
     private String frontendUrl;
 
-    public String buildConfirmAccount(String userEmail, UUID confirmationToken){
-        String confirmationLink =  frontendUrl + "/confirm?token=" + confirmationToken;
-
-        System.out.println("Generated token: " + confirmationToken);
-        //helper.setSubject("Confirm your registration ✔");
+    public String buildConfirmAccount(User user, UUID confirmationToken) {
+        String confirmationLink = frontendUrl + "/auth/activate?userId=" + user.getUserId()
+                + "&token=" + confirmationToken;
 
         return """
-                <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
-                    <h2 style="color: #2e6c80;">Welcome to Our Platform!</h2>
-                    <p style="font-size: 16px;">Hello,</p>
-                    <p style="font-size: 16px;">
-                        Thank you for registering. Please confirm your email address by clicking the button below:
+            <html>
+                <head>
+                    <style>
+                        a.confirm-button {
+                            display: inline-block;
+                            margin-top: 25px;
+                            padding: 14px 28px;
+                            background-color: #77A787;
+                            color: white !important;
+                            text-decoration: none;
+                            border-radius: 6px;
+                            font-weight: bold;
+                            transition: background-color 0.3s ease;
+                        }
+                        a.confirm-button:hover {
+                            background-color: #7fbf7f\s
+                        }
+                    </style>
+                </head>
+                <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #77A787; padding: 40px; text-align: center;">
+                    <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h2 style="color: #77A787; margin-bottom: 20px;">Welcome to RescueBites!</h2>
+                        <p style="font-size: 16px; color: #333;"><strong>Hi!, it's our pleasure that you're here</strong>,</p>
+                        <p style="font-size: 16px; color: #555;">
+                            Thank you for registering. To complete your registration, please confirm your email by clicking the button below:
+                        </p>
+                        <a href="%s" class="confirm-button">Confirm Account</a>
+                        <p style="margin-top: 25px; font-size: 14px; color: #888;">
+                            If you didn’t create this account, you can safely ignore this email.
+                        </p>
+                    </div>
+                </body>
+            </html>
+       \s""".formatted(confirmationLink);
+    }
+
+    public String buildResetPassword(String userEmail, UUID newToken) {
+        String confirmationLink = frontendUrl + "/api/users/reset-password?token=" + newToken;
+
+        return """
+          <html>
+            <head>
+                <style>
+                    a.confirm-button {
+                        display: inline-block;
+                        margin-top: 25px;
+                        padding: 14px 28px;
+                        background-color: #77A787;
+                        color: white !important;
+                        text-decoration: none;
+                        border-radius: 6px;
+                        font-weight: bold;
+                        transition: background-color 0.3s ease;
+                    }
+                    a.confirm-button:hover {
+                        background-color: #7fbf7f\s
+                    }
+                </style>
+            </head>
+            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #77A787; padding: 40px; text-align: center;">
+                <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <h2 style="color: #77A787; margin-bottom: 20px;">Account Confirmation - New Link</h2>
+                    <p style="font-size: 16px; color: #333;"><strong>Hi %s</strong>,</p>
+                    <p style="font-size: 16px; color: #555;">
+                        You (or someone else) requested a new confirmation link for your account.\s
+                                  Please confirm your email address by clicking the button below:
                     </p>
-                    <a href="%s" style="display: inline-block; margin-top: 20px; 
-                        padding: 12px 24px; background-color: #2e6c80; 
-                        color: white; text-decoration: none; border-radius: 5px;">
-                        Confirm Account
-                    </a>
-                    <p style="margin-top: 20px; font-size: 14px; color: #777;">
+                    <a href="%s" class="confirm-button">Confirm Account</a>
+                    <p style="margin-top: 25px; font-size: 14px; color: #888;">
                         If you didn’t create this account, you can safely ignore this email.
                     </p>
                 </div>
-                """.formatted(confirmationLink);
+            </body>
+          </html>
+       \s""".formatted(userEmail, confirmationLink);
     }
 
-    public String buildResendConfirmAccount(String userEmail, UUID newToken) {
-        String confirmationLink = frontendUrl + "/reset-password?token=" + newToken;
+    public String buildResendConfirmAccount(User user, UUID confirmationToken) {
+        String confirmationLink = frontendUrl + "/auth/activate?userId=" + user.getUserId()
+                + "&token=" + confirmationToken;
 
         return """
-            <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
-                <h2 style="color: #2e6c80;">Account Confirmation - New Link</h2>
-                <p style="font-size: 16px;">Hello %s,</p>
-                <p style="font-size: 16px;">
-                    You (or someone else) requested a new confirmation link for your account.
-                    Please confirm your email address by clicking the button below:
-                </p>
-                <a href="%s" style="display: inline-block; margin-top: 20px; 
-                    padding: 12px 24px; background-color: #2e6c80; 
-                    color: white; text-decoration: none; border-radius: 5px;">
-                    Confirm Account
-                </a>
-                <p style="margin-top: 20px; font-size: 14px; color: #777;">
-                    If you didn’t request this, you can safely ignore this email.
-                </p>
-            </div>
-            """.formatted(userEmail, confirmationLink);
+          <html>
+            <head>
+                <style>
+                    a.confirm-button {
+                        display: inline-block;
+                        margin-top: 25px;
+                        padding: 14px 28px;
+                        background-color: #77A787;
+                        color: white !important;
+                        text-decoration: none;
+                        border-radius: 6px;
+                        font-weight: bold;
+                        transition: background-color 0.3s ease;
+                    }
+                    a.confirm-button:hover {
+                        background-color: #7fbf7f\s
+                    }
+                </style>
+            </head>
+            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #77A787; padding: 40px; text-align: center;">
+                <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <h2 style="color: #77A787; margin-bottom: 20px;">Account Confirmation - New Link</h2>
+                    <p style="font-size: 16px; color: #333;"><strong>Hi %s</strong>,</p>
+                    <p style="font-size: 16px; color: #555;">
+                        You (or someone else) requested a new confirmation link for your account.\s
+                                  Please confirm your email address by clicking the button below:
+                    </p>
+                    <a href="%s" class="confirm-button">Confirm Account</a>
+                    <p style="margin-top: 25px; font-size: 14px; color: #888;">
+                        If you didn’t create this account, you can safely ignore this email.
+                    </p>
+                </div>
+            </body>
+          </html>
+       \s""".formatted(user.getEmail(), confirmationLink);
     }
 }
