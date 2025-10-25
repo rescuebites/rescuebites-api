@@ -1,6 +1,5 @@
 package com.rescuebites.api.security.filter;
 
-import com.rescuebites.api.users.repositories.ITokenRepository;
 import com.rescuebites.api.security.services.JwtService;
 import io.jsonwebtoken.ClaimJwtException;
 import jakarta.servlet.FilterChain;
@@ -30,7 +29,6 @@ import static com.rescuebites.api.security.utils.SecurityConstants.WHITELIST;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final ITokenRepository tokenRepository;
     private final UserDetailsService userDetailsService;
     private final PathMatcher pathMatcher;
     private final HandlerExceptionResolver handlerExceptionResolver;

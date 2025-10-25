@@ -1,7 +1,6 @@
 package com.rescuebites.api.client.controllers.responses;
 
-import com.rescuebites.api.shared.Image;
-import com.rescuebites.api.users.data.models.User;
+import com.rescuebites.api.users.controllers.responses.UserResponse;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -12,8 +11,8 @@ public record ClientResponse(
         String firstName,
         String lastName,
         LocalDate birthDate,
-        Image image,
+        ImageResponse image,
         String address,
-        User user,
+        UserResponse user,
         List<String> preferences
 ) {}

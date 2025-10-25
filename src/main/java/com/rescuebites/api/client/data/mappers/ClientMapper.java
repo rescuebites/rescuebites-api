@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.rescuebites.api.client.data.mappers.ImageMapper.toImageResponse;
+import static com.rescuebites.api.users.data.mappers.UserMapper.toUserResponse;
+
 @Component
 public class ClientMapper {
 
@@ -39,11 +42,11 @@ public class ClientMapper {
                 client.getFirstName(),
                 client.getLastName(),
                 client.getBirthDate(),
-                client.getImage(),
+                toImageResponse(client.getImage()),
                 client.getAddress(),
-                client.getUser(),
+                toUserResponse(client.getUser()),
                 client.getPreferences().stream()
-                        .map(Enum::name)
+                        .map(PreferenceType::name)
                         .collect(Collectors.toList())
         );
     }

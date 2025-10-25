@@ -5,7 +5,6 @@ import com.rescuebites.api.users.utils.PasswordMatches;
 import com.rescuebites.api.users.utils.ValidEmail;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 
 @PasswordMatches
 public record RegisterRequest (
