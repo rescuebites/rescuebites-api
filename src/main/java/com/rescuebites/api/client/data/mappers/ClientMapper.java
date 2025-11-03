@@ -34,6 +34,12 @@ public class ClientMapper {
     }
 
     public static ClientResponse toClientResponse(Client client) {
+        List<String> preferences = client.getPreferences() == null
+                ? List.of()
+                : client.getPreferences().stream()
+                .map(Enum::name)
+                .collect(Collectors.toList());
+
         return new ClientResponse(
                 client.getClientId(),
                 client.getFirstName(),
@@ -42,9 +48,7 @@ public class ClientMapper {
                 client.getImage(),
                 client.getAddress(),
                 client.getUser(),
-                client.getPreferences().stream()
-                        .map(Enum::name)
-                        .collect(Collectors.toList())
+                preferences
         );
     }
 }
