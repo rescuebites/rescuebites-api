@@ -2,6 +2,7 @@ package com.rescuebites.api.client.controllers.implementations;
 
 import com.rescuebites.api.client.controllers.interfaces.IClientController;
 import com.rescuebites.api.client.controllers.requests.CreateClientRequest;
+import com.rescuebites.api.client.controllers.requests.UpdateClientRequest;
 import com.rescuebites.api.client.controllers.responses.ClientResponse;
 import com.rescuebites.api.client.services.interfaces.IClientService;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +25,10 @@ public class ClientControllerImpl implements IClientController {
     @Override
     public ClientResponse getClientById(UUID clientId) {
         return clientService.getClientById(clientId);
+    }
+
+    @Override
+    public ClientResponse updateClient(UUID clientId, UpdateClientRequest updateClientRequest, MultipartFile profilePicture) {
+        return clientService.updateClient(clientId, updateClientRequest, profilePicture);
     }
 }

@@ -1,6 +1,7 @@
 package com.rescuebites.api.client.controllers.interfaces;
 
 import com.rescuebites.api.client.controllers.requests.CreateClientRequest;
+import com.rescuebites.api.client.controllers.requests.UpdateClientRequest;
 import com.rescuebites.api.client.controllers.responses.ClientResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -23,4 +24,10 @@ public interface IClientController {
     @GetMapping("/{id}")
     @ResponseStatus(OK)
     ClientResponse getClientById(@PathVariable("id") UUID clientId);
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(OK)
+    ClientResponse updateClient(@PathVariable("id") UUID clientId,
+                                @RequestPart("client") @Valid UpdateClientRequest updateClientRequest,
+                                @RequestPart(value = "profilePicture", required = false) MultipartFile profilePicture);
 }

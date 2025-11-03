@@ -37,6 +37,12 @@ public class ClientMapper {
     }
 
     public static ClientResponse toClientResponse(Client client) {
+        List<String> preferences = client.getPreferences() == null
+                ? List.of()
+                : client.getPreferences().stream()
+                        .map(PreferenceType::name)
+                        .collect(Collectors.toList());
+
         return new ClientResponse(
                 client.getClientId(),
                 client.getFirstName(),
@@ -45,9 +51,7 @@ public class ClientMapper {
                 toImageResponse(client.getImage()),
                 client.getAddress(),
                 toUserResponse(client.getUser()),
-                client.getPreferences().stream()
-                        .map(PreferenceType::name)
-                        .collect(Collectors.toList())
+                preferences
         );
     }
 }

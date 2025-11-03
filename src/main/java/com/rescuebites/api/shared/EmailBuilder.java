@@ -135,4 +135,47 @@ public class EmailBuilder {
           </html>
        \s""".formatted(user.getEmail(), confirmationLink);
     }
+
+    public String buildEmailUpdatedConfirmation(String fullName, String newEmail) {
+        String profileUrl = frontendUrl + "/profile";
+
+        return """
+            <html>
+              <head>
+                  <style>
+                      a.confirm-button {
+                          display: inline-block;
+                          margin-top: 25px;
+                          padding: 14px 28px;
+                          background-color: #77A787;
+                          color: white !important;
+                          text-decoration: none;
+                          border-radius: 6px;
+                          font-weight: bold;
+                          transition: background-color 0.3s ease;
+                      }
+                      a.confirm-button:hover {
+                          background-color: #7fbf7f\s
+                      }
+                  </style>
+              </head>
+              <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #77A787; padding: 40px; text-align: center;">
+                  <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                      <h2 style="color: #77A787; margin-bottom: 20px;">¡Tu email se actualizó correctamente!</h2>
+                      <p style="font-size: 16px; color: #333;"><strong>Hola %s</strong>,</p>
+                      <p style="font-size: 16px; color: #555;">
+                          Te confirmamos que tu correo electrónico asociado a RescueBites fue actualizado exitosamente.
+                      </p>
+                      <p style="font-size: 16px; color: #555;">
+                          <strong>Email registrado:</strong> %s
+                      </p>
+                      <a href="%s" class="confirm-button">Ir a mi perfil</a>
+                      <p style="margin-top: 25px; font-size: 14px; color: #888;">
+                          Si no realizaste este cambio, por favor restablece tu contraseña de inmediato desde la aplicación o contáctanos.
+                      </p>
+                  </div>
+              </body>
+            </html>
+        \s""".formatted(fullName, newEmail, profileUrl);
+    }
 }

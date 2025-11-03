@@ -133,6 +133,11 @@ public class UserServiceImpl implements IUserService {
         emailService.sendEmail(user.getEmail(), "Reset your password ✔", resetPasswordHtml);
     }
 
+    @Override
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
     private void ifUserIsNotEnabledThrowException(User user) {
         if (!user.isEnabled()) {
             throw new RuntimeException("Debes confirmar tu cuenta antes de iniciar sesión");
