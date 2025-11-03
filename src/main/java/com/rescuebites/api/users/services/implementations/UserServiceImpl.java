@@ -16,6 +16,7 @@ import com.rescuebites.api.shared.EmailBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -131,6 +132,43 @@ public class UserServiceImpl implements IUserService {
         UUID resetToken = token.getTokenId();
         String resetPasswordHtml = emailBuilder.buildResetPassword(user.getEmail(), resetToken);
         emailService.sendEmail(user.getEmail(), "Reset your password ✔", resetPasswordHtml);
+    }
+
+    @Override
+    public void updateEmail(User user, String newEmail) {
+        if (!StringUtils.hasText(newEmail)) {
+            throw new ValidationException("El email es obligatorio");
+        }
+
+        String normalizedEmail = newEmail.trim();
+        if (user.getEmail() != null && user.getEmail().equalsIgnoreCase(normalizedEmail)) {
+            user.setEmail(normalizedEmail);
+            userRepository.save(user);
+            return;
+        }
+
+        userRepository.findByEmail(normalizedEmail)
+                .filter(existingUser -> !existingUser.getUserId().equals(user.getUserId()))
+                .ifPresent(existingUser -> {
+                    throw new DuplicateResourceException("User", "email");
+                });
+
+        user.setEmail(normalizedEmail);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updatePassword(User user, String newPassword, String confirmNewPassword) {
+        if (!StringUtils.hasText(newPassword) || !StringUtils.hasText(confirmNewPassword)) {
+            throw new ValidationException("La contraseña y su confirmación son obligatorias");
+        }
+
+        if (!newPassword.equals(confirmNewPassword)) {
+            throw new ValidationException("Las contraseñas no coinciden");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
     private void ifUserIsNotEnabledThrowException(User user) {

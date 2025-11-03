@@ -24,4 +24,8 @@ public interface IUserService {
     void resetPassword(UUID token, String newPassword, String confirmNewPassword);
 
     void sendResetPasswordEmail(String email);
+
+    void updateEmail(User user, String newEmail);
+
+    void updatePassword(User user, String newPassword, String confirmNewPassword);
 }

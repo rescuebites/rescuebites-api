@@ -63,6 +63,7 @@ public class ClientServiceImpl implements IClientService {
         updateBasicInformation(client, updateClientRequest);
         updateClientUserIfRequired(client, updateClientRequest);
         updateClientPreferences(client, updateClientRequest);
+        updateUserCredentialsIfRequired(client, updateClientRequest);
         updateProfilePictureIfProvided(client, profilePicture);
 
         clientRepository.save(client);
@@ -151,6 +152,31 @@ public class ClientServiceImpl implements IClientService {
     private void updateClientPreferences(Client client, UpdateClientRequest updateClientRequest) {
         if (updateClientRequest.preferences() != null) {
             client.setPreferences(updateClientRequest.preferences());
+        }
+    }
+
+    private void updateUserCredentialsIfRequired(Client client, UpdateClientRequest updateClientRequest) {
+        if (updateClientRequest.email() == null
+                && updateClientRequest.password() == null
+                && updateClientRequest.confirmPassword() == null) {
+            return;
+        }
+
+        User user = client.getUser();
+        if (user == null) {
+            throw new ValidationException("El cliente no tiene un usuario asociado");
+        }
+
+        if (updateClientRequest.email() != null) {
+            userService.updateEmail(user, updateClientRequest.email());
+        }
+
+        if (updateClientRequest.password() != null || updateClientRequest.confirmPassword() != null) {
+            if (updateClientRequest.password() == null || updateClientRequest.confirmPassword() == null) {
+                throw new ValidationException("Debe proporcionar y confirmar la nueva contraseña");
+            }
+
+            userService.updatePassword(user, updateClientRequest.password(), updateClientRequest.confirmPassword());
         }
     }
 
