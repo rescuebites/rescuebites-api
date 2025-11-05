@@ -22,23 +22,21 @@ public class User {
     @Column(name = "userId")
     private UUID userId = UUID.randomUUID();
 
-    //private String username;
-
     private String email;
 
     private String password;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private Role role = Role.CLIENT; // El rol por defecto es CLIENT
+    private Role role = Role.CLIENT;
 
     @OneToMany(
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY
     )
     @Builder.Default
-    private List<Token> tokens = new ArrayList<>(); // Inicializamos la lista como una lista inmutable vacía (not nulls)
+    private List<Token> tokens = new ArrayList<>();
 
     @Builder.Default
-    private boolean enabled = false; //Se setea en true cuando el usuario confirma su email
+    private boolean enabled = false;
 }

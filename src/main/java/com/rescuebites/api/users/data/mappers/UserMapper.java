@@ -1,5 +1,6 @@
 package com.rescuebites.api.users.data.mappers;
 
+import com.rescuebites.api.client.controllers.requests.UpdateClientRequest;
 import com.rescuebites.api.users.controllers.requests.RegisterRequest;
 import com.rescuebites.api.users.controllers.responses.UserResponse;
 import com.rescuebites.api.users.data.models.User;
@@ -14,7 +15,6 @@ public class UserMapper {
     public User toUser(RegisterRequest registerRequest) {
         return User.builder()
                 .userId(UUID.randomUUID())
-                //.username(registerRequest.firstName())
                 .email(registerRequest.email())
                 .password(registerRequest.password())
                 .role(registerRequest.role())
@@ -29,4 +29,5 @@ public class UserMapper {
                 user.isEnabled()
         );
     }
+
 }
