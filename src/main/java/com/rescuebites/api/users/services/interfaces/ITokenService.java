@@ -10,6 +10,8 @@ public interface ITokenService {
 
     Token findByTokenOrThrowException(UUID token);
 
+    Token findLatestTokenByUser(User user);
+
     boolean canResendToken(User user);
 
     void deleteToken(Token token);

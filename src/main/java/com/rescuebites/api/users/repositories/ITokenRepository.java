@@ -17,6 +17,7 @@ public interface ITokenRepository extends JpaRepository<Token, UUID> {
     Optional<Token> findLatestByUser(@Param("user") User user);
 
      */
+    Optional<Token> findFirstByUserOrderByCreatedAtDesc(User user);
 
     //Cuenta los tokens creados por un usuario después de una fecha y hora específica
     long countByUserAndCreatedAtAfter(User user, LocalDateTime dateTime);

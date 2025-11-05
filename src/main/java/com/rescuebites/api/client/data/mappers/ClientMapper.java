@@ -1,6 +1,7 @@
 package com.rescuebites.api.client.data.mappers;
 
 import com.rescuebites.api.client.controllers.requests.CreateClientRequest;
+import com.rescuebites.api.client.controllers.requests.UpdateClientRequest;
 import com.rescuebites.api.client.controllers.responses.ClientResponse;
 import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.client.data.models.Client;
@@ -50,4 +51,18 @@ public class ClientMapper {
                         .collect(Collectors.toList())
         );
     }
+
+    public static void updateClientFromRequest(
+            Client client,
+            UpdateClientRequest request,
+            Image newImage,
+            List<PreferenceType> preferences
+    ) {
+            client.setFirstName(request.firstName());
+            client.setLastName(request.lastName());
+            client.setBirthDate(request.birthDate());
+            client.setAddress(request.address());
+            client.setPreferences(preferences);
+            client.setImage(newImage);
+      }
 }
