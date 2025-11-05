@@ -36,6 +36,12 @@ public class TokenServiceImpl implements ITokenService {
     }
 
     @Override
+    public Token findLatestTokenByUser(User user) {
+        return tokenRepository.findFirstByUserOrderByCreatedAtDesc(user)
+                .orElseThrow(() -> new ResourceNotFoundException("Token", "user", user.getUserId()));
+    }
+
+    @Override
     public boolean canResendToken(User user) {
         LocalDateTime hoursLimit = LocalDateTime.now().minusHours(HOURS_LIMIT);
         long tokensInLastHours = tokenRepository.countByUserAndCreatedAtAfter(user, hoursLimit);
