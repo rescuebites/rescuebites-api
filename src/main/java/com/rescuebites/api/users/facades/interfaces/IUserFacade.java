@@ -1,16 +1,19 @@
 package com.rescuebites.api.users.facades.interfaces;
 
 import com.rescuebites.api.users.data.models.User;
+import com.rescuebites.api.users.facades.commands.LoginValidationCommand;
+import com.rescuebites.api.users.facades.commands.PasswordPairCommand;
+import com.rescuebites.api.users.facades.commands.RegistrationValidationCommand;
 
 public interface IUserFacade {
 
-    void ifEmailAlreadyExistsThrowException(String email);
+    void validateRegistration(RegistrationValidationCommand command);
 
-    void verifyIfPasswordsMatch(String password, String confirmPassword);
+    void validateLogin(LoginValidationCommand command);
 
-    void validatePasswordOrThrowException(String rawPassword , User user);
+    void ensureEmailIsAvailable(String email);
 
-    void ifUserIsNotEnabledThrowException(User user);
+    void ensureUserIsPendingVerification(User user);
 
-    void ifUserIsEnabledThrowException(User user);
+    void ensurePasswordsMatch(PasswordPairCommand command);
 }

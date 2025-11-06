@@ -1,19 +1,22 @@
 package com.rescuebites.api.users.services.implementations;
 
+import com.rescuebites.api.exceptions.custom_exceptions.*;
+import com.rescuebites.api.shared.EmailBuilder;
 import com.rescuebites.api.users.controllers.requests.LoginRequest;
 import com.rescuebites.api.users.controllers.requests.RegisterRequest;
 import com.rescuebites.api.users.controllers.responses.AuthResponse;
 import com.rescuebites.api.users.data.mappers.UserMapper;
 import com.rescuebites.api.users.data.models.Token;
 import com.rescuebites.api.users.data.models.User;
-import com.rescuebites.api.exceptions.custom_exceptions.*;
+import com.rescuebites.api.users.facades.commands.LoginValidationCommand;
+import com.rescuebites.api.users.facades.commands.PasswordPairCommand;
+import com.rescuebites.api.users.facades.commands.RegistrationValidationCommand;
 import com.rescuebites.api.users.facades.interfaces.IUserFacade;
 import com.rescuebites.api.users.repositories.IUserRepository;
 import com.rescuebites.api.security.services.JwtService;
 import com.rescuebites.api.users.services.interfaces.IEmailService;
 import com.rescuebites.api.users.services.interfaces.ITokenService;
 import com.rescuebites.api.users.services.interfaces.IUserService;
-import com.rescuebites.api.shared.EmailBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,8 +39,11 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public void saveUser(RegisterRequest registerRequest) {
-        userFacade.ifEmailAlreadyExistsThrowException(registerRequest.email());
-        userFacade.verifyIfPasswordsMatch(registerRequest.password(), registerRequest.confirmPassword());
+        userFacade.validateRegistration(new RegistrationValidationCommand(
+                registerRequest.email(),
+                registerRequest.password(),
+                registerRequest.confirmPassword()
+        ));
 
         User newUser = userMapper.toUser(registerRequest);
         newUser.setPassword(passwordEncoder.encode(registerRequest.password()));
@@ -67,7 +73,7 @@ public class UserServiceImpl implements IUserService {
         ifTokenIsExpiredThrowException(token);
 
         User user = token.getUser();
-        userFacade.ifUserIsEnabledThrowException(user);
+        userFacade.ensureUserIsPendingVerification(user);
         user.setEnabled(true);
         userRepository.save(user);
 
@@ -78,7 +84,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public void resendConfirmationEmail(String email) {
         User user = findUserByEmailOrThrowException(email);
-        userFacade.ifUserIsEnabledThrowException(user);
+        userFacade.ensureUserIsPendingVerification(user);
         ifResendLimitExceededThrowException(user);
 
         // Generamos nuevo token y enviamos email
@@ -91,8 +97,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public AuthResponse verifyUser(LoginRequest loginRequest) {
         User user = findUserByEmailOrThrowException(loginRequest.email());
-        userFacade.validatePasswordOrThrowException(loginRequest.password(), user);
-        userFacade.ifUserIsNotEnabledThrowException(user);
+        userFacade.validateLogin(new LoginValidationCommand(loginRequest.password(), user));
 
         String token = jwtService.generateToken(user);
         return new AuthResponse(user.getUserId(), user.getEmail(), token, user.getRole());
@@ -100,7 +105,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public void resetPassword(UUID token, String newPassword, String confirmNewPassword) {
-        userFacade.verifyIfPasswordsMatch(newPassword, confirmNewPassword);
+        userFacade.ensurePasswordsMatch(new PasswordPairCommand(newPassword, confirmNewPassword));
         Token resetToken = tokenService.findByTokenOrThrowException(token);
         ifTokenIsExpiredThrowException(resetToken);
 

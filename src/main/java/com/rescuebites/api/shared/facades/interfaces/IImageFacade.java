@@ -1,20 +1,13 @@
 package com.rescuebites.api.shared.facades.interfaces;
 
 import com.rescuebites.api.shared.Image;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
+import com.rescuebites.api.shared.facades.commands.ProfilePictureCommand;
 
 public interface IImageFacade {
-    void ifProfilePictureExceedsMaximumSizeThrowException(MultipartFile multipartFile);
 
-    void ifProfilePictureIsNotJpgOrPngThrowException(String contentType);
+    Image processProfilePicture(ProfilePictureCommand command);
 
-    void ifProfilePictureIsMissingThrowException(MultipartFile multipartFile);
+    Image replaceProfilePicture(Image currentImage, ProfilePictureCommand command);
 
-    Image uploadAndSaveImage(MultipartFile multipartFile);
-
-    List<Image> uploadAndSaveImages(MultipartFile[] files);
-
-    void deleteImage(String publicId);
+    void removeImage(String publicId);
 }

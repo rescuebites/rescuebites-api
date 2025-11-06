@@ -1,54 +1,48 @@
 package com.rescuebites.api.users.facades.implementations;
 
-import com.rescuebites.api.exceptions.custom_exceptions.DuplicateResourceException;
-import com.rescuebites.api.exceptions.custom_exceptions.EmailAlreadyVerifiedException;
 import com.rescuebites.api.users.data.models.User;
+import com.rescuebites.api.users.facades.commands.LoginValidationCommand;
+import com.rescuebites.api.users.facades.commands.PasswordPairCommand;
+import com.rescuebites.api.users.facades.commands.RegistrationValidationCommand;
 import com.rescuebites.api.users.facades.interfaces.IUserFacade;
-import com.rescuebites.api.users.repositories.IUserRepository;
+import com.rescuebites.api.users.facades.policies.AccountStatusPolicy;
+import com.rescuebites.api.users.facades.policies.EmailAvailabilityPolicy;
+import com.rescuebites.api.users.facades.policies.PasswordPolicy;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class UserFacade implements IUserFacade {
 
-    private final IUserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final EmailAvailabilityPolicy emailAvailabilityPolicy;
+    private final PasswordPolicy passwordPolicy;
+    private final AccountStatusPolicy accountStatusPolicy;
 
     @Override
-    public void ifEmailAlreadyExistsThrowException(String email) {
-        if (userRepository.existsByEmail(email)){
-            throw new DuplicateResourceException("User", "email");
-        }
+    public void validateRegistration(RegistrationValidationCommand command) {
+        emailAvailabilityPolicy.ensureAvailable(command.email());
+        passwordPolicy.ensureMatch(new PasswordPairCommand(command.password(), command.confirmPassword()));
     }
 
     @Override
-    public void verifyIfPasswordsMatch(String password, String confirmPassword) {
-        if(!password.equals(confirmPassword)){
-            throw new IllegalArgumentException("Las contraseñas no coinciden");
-        }
-    }
-
-    // Valido las contraseñas ingresadas para el login.
-    @Override
-    public void validatePasswordOrThrowException(String rawPassword, User user) {
-        if(!passwordEncoder.matches(rawPassword, user.getPassword())){
-            throw new RuntimeException("Contraseña inválida.");
-        }
+    public void validateLogin(LoginValidationCommand command) {
+        passwordPolicy.ensureMatchesStored(command.rawPassword(), command.user());
+        accountStatusPolicy.ensureEnabled(command.user());
     }
 
     @Override
-    public void ifUserIsNotEnabledThrowException(User user) {
-        if (!user.isEnabled()) {
-            throw new RuntimeException("Debes confirmar tu cuenta antes de iniciar sesión");
-        }
+    public void ensureEmailIsAvailable(String email) {
+        emailAvailabilityPolicy.ensureAvailable(email);
     }
 
     @Override
-    public void ifUserIsEnabledThrowException(User user) {
-        if(user.isEnabled()){
-            throw new EmailAlreadyVerifiedException("El usuario ya ha sido verificado");
-        }
+    public void ensureUserIsPendingVerification(User user) {
+        accountStatusPolicy.ensurePendingVerification(user);
+    }
+
+    @Override
+    public void ensurePasswordsMatch(PasswordPairCommand command) {
+        passwordPolicy.ensureMatch(command);
     }
 }

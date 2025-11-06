@@ -9,12 +9,13 @@ import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.repositories.IClientRepository;
 import com.rescuebites.api.client.services.interfaces.IClientService;
 import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
-import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.shared.EmailBuilder;
 import com.rescuebites.api.shared.Image;
+import com.rescuebites.api.shared.facades.commands.ProfilePictureCommand;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
 import com.rescuebites.api.users.data.models.Token;
 import com.rescuebites.api.users.data.models.User;
+import com.rescuebites.api.users.facades.commands.PasswordPairCommand;
 import com.rescuebites.api.users.facades.interfaces.IUserFacade;
 import com.rescuebites.api.users.services.interfaces.IEmailService;
 import com.rescuebites.api.users.services.interfaces.ITokenService;
@@ -47,11 +48,9 @@ public class ClientServiceImpl implements IClientService {
     @Transactional
     public void createClient(CreateClientRequest createClientRequest, MultipartFile profilePicture) {
 
-        validateProfilePictureIfProvided(profilePicture);
-
         User user = userService.findByIdOrThrowException(createClientRequest.userId());
         List<PreferenceType> preferences = resolvePreferences(createClientRequest.preferences());
-        Image image = imageFacade.uploadAndSaveImage(profilePicture);
+        Image image = imageFacade.processProfilePicture(ProfilePictureCommand.optional(profilePicture));
 
         Client client = ClientMapper.toClient(createClientRequest, user, preferences, image);
         clientRepository.save(client);
@@ -72,7 +71,10 @@ public class ClientServiceImpl implements IClientService {
         Client client = findClientByIdOrThrowException(clientId);
 
         User user = client.getUser();
-        Image newImage = processProfilePictureIfProvided(client.getImage(), profilePicture);
+        Image newImage = imageFacade.replaceProfilePicture(
+                client.getImage(),
+                ProfilePictureCommand.optional(profilePicture)
+        );
         List<PreferenceType> preferences = resolvePreferences(updateClientRequest.preferences());
         ClientMapper.updateClientFromRequest(client, updateClientRequest, newImage, preferences);
 
@@ -86,17 +88,6 @@ public class ClientServiceImpl implements IClientService {
         if (emailChanged) {
             sendEmailChangeConfirmation(client, user);
         }
-    }
-
-    private Image processProfilePictureIfProvided(Image currentImage, MultipartFile profilePicture) {
-
-        validateProfilePictureIfProvided(profilePicture);
-
-        if (currentImage != null && StringUtils.hasText(currentImage.getPublicId())) {
-            imageFacade.deleteImage(currentImage.getPublicId());
-        }
-
-        return imageFacade.uploadAndSaveImage(profilePicture);
     }
 
     private void sendEmailChangeConfirmation(Client client, User user) {
@@ -117,7 +108,7 @@ public class ClientServiceImpl implements IClientService {
             return false;
         }
 
-        userFacade.ifEmailAlreadyExistsThrowException(trimmedEmail);
+        userFacade.ensureEmailIsAvailable(trimmedEmail);
         user.setEmail(trimmedEmail);
         return true;
     }
@@ -127,14 +118,7 @@ public class ClientServiceImpl implements IClientService {
             return;
         }
 
-        if (!StringUtils.hasText(newPassword) || !StringUtils.hasText(confirmNewPassword)) {
-            throw new ValidationException("Debe ingresar y confirmar la nueva contraseña");
-        }
-
-        if (!newPassword.equals(confirmNewPassword)) {
-            throw new ValidationException("Las contraseñas no coinciden");
-        }
-
+        userFacade.ensurePasswordsMatch(new PasswordPairCommand(newPassword, confirmNewPassword));
         user.setPassword(passwordEncoder.encode(newPassword));
     }
 
@@ -150,11 +134,4 @@ public class ClientServiceImpl implements IClientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Client", "id", clientId));
     }
 
-    private void validateProfilePictureIfProvided(MultipartFile profilePicture) {
-        if (profilePicture == null || profilePicture.isEmpty()) {
-            return ;
-        }
-        imageFacade.ifProfilePictureIsNotJpgOrPngThrowException(profilePicture.getContentType());
-        imageFacade.ifProfilePictureExceedsMaximumSizeThrowException(profilePicture);
-    }
 }
