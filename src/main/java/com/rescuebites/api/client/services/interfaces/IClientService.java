@@ -13,4 +13,6 @@ public interface IClientService {
     ClientResponse getClientById(UUID clientId);
 
     void updateClient(UUID clientId, UpdateClientRequest updateClientRequest, MultipartFile profilePicture);
+
+    void deleteClient(UUID clientId, boolean confirmed);
 }

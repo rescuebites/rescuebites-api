@@ -31,4 +31,9 @@ public class ClientControllerImpl implements IClientController {
     public void updateClient(UUID clientId, UpdateClientRequest updateClientRequest, MultipartFile profilePicture) {
         clientService.updateClient(clientId, updateClientRequest, profilePicture);
     }
+
+    @Override
+    public void deleteClient(UUID clientId, boolean confirmed) {
+        clientService.deleteClient(clientId, confirmed);
+    }
 }

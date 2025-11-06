@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
 @RequestMapping("/api/v1/clients")
@@ -30,4 +31,9 @@ public interface IClientController {
     void updateClient(@PathVariable("id") UUID clientId,
                                 @RequestPart("client") @Valid UpdateClientRequest updateClientRequest,
                                 @RequestPart(value = "profilePicture", required = false) MultipartFile profilePicture);
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(NO_CONTENT)
+    void deleteClient(@PathVariable("id") UUID clientId,
+                      @RequestParam(value = "confirmed", defaultValue = "false") boolean confirmed);
 }

@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -88,6 +89,37 @@ public class ClientServiceImpl implements IClientService {
         }
     }
 
+    @Override
+    @Transactional
+    public void deleteClient(UUID clientId, boolean confirmed) {
+
+        if (!confirmed) {
+            throw new ValidationException("Debes confirmar la eliminación de tu cuenta antes de continuar.");
+        }
+
+        Client client = findClientByIdOrThrowException(clientId);
+
+        User user = client.getUser();
+        Image currentImage = client.getImage();
+
+        if (currentImage != null && StringUtils.hasText(currentImage.getPublicId())) {
+            imageFacade.deleteImage(currentImage.getPublicId());
+        }
+
+        client.setImage(null);
+        client.setPreferences(new ArrayList<>());
+        client.setDeleted(true);
+        client.setDeletedAt(LocalDateTime.now());
+
+        user.setDeleted(true);
+        user.setEnabled(false);
+        user.setDeletedAt(LocalDateTime.now());
+
+        tokenService.deleteTokensByUser(user);
+
+        clientRepository.save(client);
+    }
+
     private Image processProfilePictureIfProvided(Image currentImage, MultipartFile profilePicture) {
 
         validateProfilePictureIfProvided(profilePicture);
@@ -146,7 +178,7 @@ public class ClientServiceImpl implements IClientService {
     }
 
     private Client findClientByIdOrThrowException(UUID clientId) {
-        return clientRepository.findById(clientId)
+        return clientRepository.findByClientIdAndDeletedFalse(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Client", "id", clientId));
     }
 

@@ -55,4 +55,9 @@ public class TokenServiceImpl implements ITokenService {
     public void deleteToken(Token token) {
         tokenRepository.delete(token);
     }
+
+    @Override
+    public void deleteTokensByUser(User user) {
+        tokenRepository.deleteAllByUser(user);
+    }
 }

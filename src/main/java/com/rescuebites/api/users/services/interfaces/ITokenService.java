@@ -16,8 +16,5 @@ public interface ITokenService {
 
     void deleteToken(Token token);
 
-    /*
-    void deleteToken(Token token);
-
-     */
+    void deleteTokensByUser(User user);
 }
