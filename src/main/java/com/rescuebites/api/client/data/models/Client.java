@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,6 +50,11 @@ public class Client {
     @ElementCollection(targetClass = PreferenceType.class)
     @Enumerated(EnumType.STRING)
     private List<PreferenceType> preferences;
+
+    @Builder.Default
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
 
     public String getFullName() {
         return firstName + " " + lastName;

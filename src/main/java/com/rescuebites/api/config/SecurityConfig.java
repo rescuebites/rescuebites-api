@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/clients/*").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/clients/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/reset-password/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/clients/*").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement

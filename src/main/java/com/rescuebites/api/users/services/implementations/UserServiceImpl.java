@@ -51,7 +51,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public User findByIdOrThrowException(UUID userId)  {
-        return userRepository.findById(userId)
+        return userRepository.findByUserIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
     }
 
@@ -108,7 +108,7 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        tokenService.deleteToken(resetToken);
+        tokenService.deleteTokensByUser(user);
     }
 
     @Override
