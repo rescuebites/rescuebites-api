@@ -49,10 +49,8 @@ public class TokenServiceImpl implements ITokenService {
         return tokensInLastHours < MAX_TOKENS_PER_HOUR;
     }
 
-    //POR EL MOMENTO NO SE UTILIZA, PERO SE DEJA POR SI SE NECESITA
-
     @Override
-    public void deleteToken(Token token) {
-        tokenRepository.delete(token);
+    public void deleteTokensByUser(User user) {
+        tokenRepository.deleteAllByUser(user);
     }
 }
