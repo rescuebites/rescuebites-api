@@ -16,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 
+import java.time.Clock;
+
 @Configuration
 public class ApplicationConfig {
 
@@ -52,5 +54,10 @@ public class ApplicationConfig {
         final AntPathMatcher matcher = new AntPathMatcher();
         matcher.setCaseSensitive(false);
         return matcher;
+    }
+
+    @Bean
+    public Clock clock() {
+        return Clock.systemDefaultZone();
     }
 }
