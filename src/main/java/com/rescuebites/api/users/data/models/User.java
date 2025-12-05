@@ -1,0 +1,48 @@
+package com.rescuebites.api.users.data.models;
+
+import com.rescuebites.api.security.enums.Role;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Entity(name = "users")
+@AllArgsConstructor
+@NoArgsConstructor
+@Data //Incluye getters, setters, toString, equals, and hashCode methods
+@Builder
+public class User {
+
+    @Id
+    @Column(name = "userId")
+    private UUID userId = UUID.randomUUID();
+
+    private String email;
+
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private Role role = Role.CLIENT;
+
+    @OneToMany(
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    @Builder.Default
+    private List<Token> tokens = new ArrayList<>();
+
+    @Builder.Default
+    private boolean enabled = false;
+
+    @Builder.Default
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
+}
