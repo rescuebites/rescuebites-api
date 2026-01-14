@@ -4,6 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.rescuebites.api.client.repositories.IImageRepository;
 import com.rescuebites.api.exceptions.custom_exceptions.ImageUploadException;
+import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.rescuebites.api.client.utils.Constants.MAXIMUM_FILE_SIZE;
+import static com.rescuebites.api.product.utils.Constants.MAX_IMAGES;
+import static com.rescuebites.api.product.utils.Constants.MIN_IMAGES;
 
 @Service
 @RequiredArgsConstructor
@@ -78,5 +81,40 @@ public class ImageFacade implements IImageFacade {
         } catch (IOException e) {
             throw new ImageUploadException("Error al borrar la imagen", e);
         }
+    }
+
+    @Override
+    public void validateImages(MultipartFile[] images) {
+        if (images == null || images.length == 0) {
+            throw new ValidationException(
+                    String.format("Debe cargar al menos %d imagen", MIN_IMAGES)
+            );
+        }
+
+        if (images.length > MAX_IMAGES) {
+            throw new ValidationException(
+                    String.format("No puede cargar más de %d imágenes", MAX_IMAGES)
+            );
+        }
+
+        Arrays.stream(images).forEach(image -> {
+            if (image == null || image.isEmpty()) {
+                throw new ValidationException("Todas las imágenes del producto deben ser válidas");
+            }
+            ifProfilePictureExceedsMaximumSizeThrowException(image);
+            ifProfilePictureIsNotJpgOrPngThrowException(image.getContentType());
+        });
+    }
+
+    @Override
+    public List<Image> processAndUpdateImages(List<Image> currentImages, MultipartFile[] newImages) {
+        validateImages(newImages);
+
+        // Eliminar imágenes antiguas de Cloudinary
+        if (currentImages != null && !currentImages.isEmpty()) {
+            currentImages.forEach(image -> deleteImage(image.getPublicId()));
+        }
+
+        return uploadAndSaveImages(newImages);
     }
 }

@@ -39,7 +39,7 @@ public class ProductManagementServiceImpl implements IProductManagementService {
         Commerce commerce = validationFacade.findCommerceById(commerceId);
 
         validationFacade.validateExpirationDate(request.expirationDate());
-        validationFacade.validateImages(images);
+        imageFacade.validateImages(images);
         validationFacade.validateCategoryAndCondition(request.category(), request.condition(), commerce);
 
         List<Image> storedImages = imageFacade.uploadAndSaveImages(images);
@@ -96,7 +96,9 @@ public class ProductManagementServiceImpl implements IProductManagementService {
         updateProductFields(product, request);
 
         if (images != null && images.length > 0) {
-            updateProductImages(product, images);
+            List<Image> newImages = imageFacade.processAndUpdateImages(product.getImages(), images);
+            product.getImages().clear();
+            product.setImages(newImages);
         }
 
         productRepository.save(product);
@@ -161,17 +163,5 @@ public class ProductManagementServiceImpl implements IProductManagementService {
         if (request.expirationDate() != null) {
             product.setExpirationDate(request.expirationDate());
         }
-    }
-
-    private void updateProductImages(Product product, MultipartFile[] images) {
-        validationFacade.validateImages(images);
-
-        // Eliminar imágenes antiguas
-        product.getImages().forEach(image -> imageFacade.deleteImage(image.getPublicId()));
-        product.getImages().clear();
-
-        // Agregar nuevas imágenes
-        List<Image> newImages = imageFacade.uploadAndSaveImages(images);
-        product.setImages(newImages);
     }
 }

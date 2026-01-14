@@ -5,9 +5,11 @@ import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundExceptio
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.product.data.enums.ProductCategory;
 import com.rescuebites.api.product.data.enums.ProductCondition;
+import com.rescuebites.api.shared.Image;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public interface IProductValidationFacade {
@@ -23,12 +25,6 @@ public interface IProductValidationFacade {
      * @throws ValidationException si la categoría o condición no son válidas
      */
     void validateCategoryAndCondition(ProductCategory category, ProductCondition condition, Commerce commerce);
-
-    /**
-     * Valida que las imágenes cumplan con los requisitos (cantidad, tamaño, formato)
-     * @throws ValidationException si las imágenes no son válidas
-     */
-    void validateImages(MultipartFile[] images);
 
     /**
      * Valida que la fecha de vencimiento sea futura

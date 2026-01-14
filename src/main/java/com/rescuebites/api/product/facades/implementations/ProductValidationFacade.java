@@ -12,24 +12,19 @@ import com.rescuebites.api.product.facades.interfaces.IProductValidationFacade;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Clock;
+//import java.time.Clock;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.rescuebites.api.product.utils.Constants.MAX_IMAGES;
-import static com.rescuebites.api.product.utils.Constants.MIN_IMAGES;
 
 @Service
 @RequiredArgsConstructor
 public class ProductValidationFacade implements IProductValidationFacade {
 
     private final ICommerceRepository commerceRepository;
-    private final IImageFacade imageFacade;
     //private final Clock clock;
 
     @Override
@@ -66,29 +61,6 @@ public class ProductValidationFacade implements IProductValidationFacade {
                             condition.getDisplayName())
             );
         }
-    }
-
-    @Override
-    public void validateImages(MultipartFile[] images) {
-        if (images == null || images.length == 0) {
-            throw new ValidationException(
-                    String.format("Debe cargar al menos %d imagen del producto", MIN_IMAGES)
-            );
-        }
-
-        if (images.length > MAX_IMAGES) {
-            throw new ValidationException(
-                    String.format("No puede cargar más de %d imágenes", MAX_IMAGES)
-            );
-        }
-
-        Arrays.stream(images).forEach(image -> {
-            if (image == null || image.isEmpty()) {
-                throw new ValidationException("Todas las imágenes del producto deben ser válidas");
-            }
-            imageFacade.ifProfilePictureExceedsMaximumSizeThrowException(image);
-            imageFacade.ifProfilePictureIsNotJpgOrPngThrowException(image.getContentType());
-        });
     }
 
     @Override
