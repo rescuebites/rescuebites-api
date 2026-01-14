@@ -32,6 +32,7 @@ public record CreateProductRequest(
         @Schema(description = "Precio original sin descuento", example = "150.00")
         BigDecimal originalPrice,
 
+        //ESTO POR LA IMAGEN DEBE SER EL PRECIO DEL PRODUCTO CON DESCUENTO
         @NotNull(message = "El porcentaje de descuento es requerido")
         @DecimalMin(value = "0.0", message = "El descuento no puede ser negativo")
         @DecimalMax(value = "100.0", message = "El descuento no puede superar el 100%")
