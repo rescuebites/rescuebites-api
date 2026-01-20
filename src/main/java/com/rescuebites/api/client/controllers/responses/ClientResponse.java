@@ -1,5 +1,6 @@
 package com.rescuebites.api.client.controllers.responses;
 
+import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.users.controllers.responses.UserResponse;
 
 import java.time.LocalDate;
@@ -14,5 +15,5 @@ public record ClientResponse(
         ImageResponse image,
         String address,
         UserResponse user,
-        List<String> preferences
+        List<PreferenceType> preferences
 ) {}

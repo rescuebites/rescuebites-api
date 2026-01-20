@@ -22,7 +22,7 @@ public interface IClientController {
 
     @GetMapping("/{clientId}")
     @ResponseStatus(OK)
-    ClientResponse getClientById(@PathVariable("clientId") UUID clientId);
+    ClientResponse getClientById(@PathVariable UUID clientId);
 
     @PutMapping(value = "/{clientId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(OK)

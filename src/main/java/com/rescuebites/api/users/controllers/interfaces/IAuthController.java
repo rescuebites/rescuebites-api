@@ -1,7 +1,7 @@
 package com.rescuebites.api.users.controllers.interfaces;
 
 import com.rescuebites.api.users.controllers.requests.LoginRequest;
-import com.rescuebites.api.users.controllers.requests.RegisterRequest;
+import com.rescuebites.api.users.controllers.requests.UserRegistrationRequest;
 import com.rescuebites.api.users.controllers.responses.AuthResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,7 +15,7 @@ public interface IAuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    void registerUser(@RequestBody @Valid RegisterRequest registerRequest);
+    void registerUser(@RequestBody @Valid UserRegistrationRequest userRegistrationRequest);
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
