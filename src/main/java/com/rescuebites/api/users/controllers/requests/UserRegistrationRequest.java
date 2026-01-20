@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 @PasswordMatches
-public record RegisterRequest (
+public record UserRegistrationRequest(
 
         @NotBlank(message = "El email es obligatorio")
         @ValidEmail
