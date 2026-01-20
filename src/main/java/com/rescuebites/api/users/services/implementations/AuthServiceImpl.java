@@ -1,7 +1,7 @@
 package com.rescuebites.api.users.services.implementations;
 
 import com.rescuebites.api.users.controllers.requests.LoginRequest;
-import com.rescuebites.api.users.controllers.requests.RegisterRequest;
+import com.rescuebites.api.users.controllers.requests.UserRegistrationRequest;
 import com.rescuebites.api.users.controllers.responses.AuthResponse;
 import com.rescuebites.api.users.services.interfaces.IAuthService;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +14,8 @@ public class AuthServiceImpl implements IAuthService {
     private final UserServiceImpl userService;
 
     @Override
-    public void register(RegisterRequest registerRequest) {
-        userService.saveUser(registerRequest);
+    public void register(UserRegistrationRequest userRegistrationRequest) {
+        userService.saveUser(userRegistrationRequest);
     }
 
     @Override
