@@ -4,27 +4,35 @@ import com.rescuebites.api.client.data.enums.PreferenceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public record CreateClientRequest(
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CreateClientRequest {
+
         @NotBlank(message = "El nombre es obligatorio")
-        String firstName,
+        private String firstName;
 
         @NotBlank(message = "El apellido es obligatorio")
-        String lastName,
+        private String lastName;
 
         @PastOrPresent(message = "La fecha de nacimiento no puede ser futura")
         @NotNull(message = "La fecha de nacimiento es obligatoria")
-        LocalDate birthDate,
+        private LocalDate birthDate;
 
         @NotBlank(message = "La dirección es obligatoria")
-        String address,
+        private String address;
 
         @NotNull(message = "El usuario es obligatorio")
-        UUID userId,
+        private UUID userId;
 
-        List<PreferenceType> preferences
-) {}
+        private List<PreferenceType> preferences = Collections.emptyList();
+}
