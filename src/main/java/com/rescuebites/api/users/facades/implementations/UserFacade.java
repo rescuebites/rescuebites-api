@@ -2,6 +2,7 @@ package com.rescuebites.api.users.facades.implementations;
 
 import com.rescuebites.api.exceptions.custom_exceptions.DuplicateResourceException;
 import com.rescuebites.api.exceptions.custom_exceptions.EmailAlreadyVerifiedException;
+import com.rescuebites.api.exceptions.custom_exceptions.PasswordsDoNotMatchException;
 import com.rescuebites.api.users.data.models.User;
 import com.rescuebites.api.users.facades.interfaces.IUserFacade;
 import com.rescuebites.api.users.repositories.IUserRepository;
@@ -26,7 +27,7 @@ public class UserFacade implements IUserFacade {
     @Override
     public void verifyIfPasswordsMatch(String password, String confirmPassword) {
         if(!password.equals(confirmPassword)){
-            throw new IllegalArgumentException("Las contraseñas no coinciden");
+            throw new PasswordsDoNotMatchException();
         }
     }
 

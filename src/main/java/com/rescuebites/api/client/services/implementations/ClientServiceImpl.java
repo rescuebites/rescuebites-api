@@ -3,14 +3,13 @@ package com.rescuebites.api.client.services.implementations;
 import com.rescuebites.api.client.controllers.requests.CreateClientRequest;
 import com.rescuebites.api.client.controllers.requests.UpdateClientRequest;
 import com.rescuebites.api.client.controllers.responses.ClientResponse;
-import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.client.data.mappers.ClientMapper;
 import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.repositories.IClientRepository;
 import com.rescuebites.api.client.services.interfaces.IClientService;
+import com.rescuebites.api.exceptions.custom_exceptions.PasswordsDoNotMatchException;
 import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
-import com.rescuebites.api.shared.EmailBuilder;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
 import com.rescuebites.api.users.data.models.Token;
@@ -21,6 +20,7 @@ import com.rescuebites.api.users.services.interfaces.ITokenService;
 import com.rescuebites.api.users.services.interfaces.IUserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -28,7 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -40,45 +39,40 @@ public class ClientServiceImpl implements IClientService {
     private final IUserFacade userFacade;
     private final IImageFacade imageFacade;
     private final ITokenService tokenService;
-    private final EmailBuilder emailBuilder;
     private final IEmailService emailService;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.default-profile-picture}")
+    private String defaultProfilePictureUrl;
 
     @Override
     @Transactional
     public void createClient(CreateClientRequest createClientRequest, MultipartFile profilePicture) {
+        User user = userService.findByIdOrThrowException(createClientRequest.getUserId());
+        Image image = getProfilePictureOrDefault(profilePicture);
 
-        validateProfilePictureIfProvided(profilePicture);
-
-        User user = userService.findByIdOrThrowException(createClientRequest.userId());
-        List<PreferenceType> preferences = resolvePreferences(createClientRequest.preferences());
-        Image image = imageFacade.uploadAndSaveImage(profilePicture);
-
-        Client client = ClientMapper.toClient(createClientRequest, user, preferences, image);
+        Client client = ClientMapper.toClient(createClientRequest, user, createClientRequest.getPreferences(), image);
         clientRepository.save(client);
     }
 
     @Override
     public ClientResponse getClientById(UUID clientId) {
-
-        Client client = findClientByIdOrThrowException(clientId);
-        return ClientMapper.toClientResponse(client);
+        return clientRepository.findByClientIdAndDeletedFalse(clientId)
+                .map(ClientMapper::toClientResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Client", "id", clientId));
     }
 
     @Override
     @Transactional
     public void updateClient(UUID clientId, UpdateClientRequest updateClientRequest, MultipartFile profilePicture) {
-
         Client client = findClientByIdOrThrowException(clientId);
-
         User user = client.getUser();
+
         Image newImage = processProfilePictureIfProvided(client.getImage(), profilePicture);
-        List<PreferenceType> preferences = resolvePreferences(updateClientRequest.preferences());
-        ClientMapper.updateClientFromRequest(client, updateClientRequest, newImage, preferences);
+        ClientMapper.updateClientFromRequest(client, updateClientRequest, newImage, updateClientRequest.getPreferences());
 
-        boolean emailChanged = updateEmailIfChanged(user, updateClientRequest.email());
-
-        updatePasswordIfProvided(user, updateClientRequest.password(), updateClientRequest.confirmPassword());
+        boolean emailChanged = updateEmailIfChanged(user, updateClientRequest.getEmail());
+        updatePasswordIfProvided(user, updateClientRequest.getPassword(), updateClientRequest.getConfirmPassword());
 
         user.setEnabled(false);
         clientRepository.save(client);
@@ -91,9 +85,7 @@ public class ClientServiceImpl implements IClientService {
     @Override
     @Transactional
     public void deleteClient(UUID clientId) {
-
         Client client = findClientByIdOrThrowException(clientId);
-
         User user = client.getUser();
         Image currentImage = client.getImage();
 
@@ -115,7 +107,26 @@ public class ClientServiceImpl implements IClientService {
         clientRepository.save(client);
     }
 
+    private Image getProfilePictureOrDefault(MultipartFile profilePicture) {
+        if (profilePicture == null || profilePicture.isEmpty()) {
+            return createDefaultProfilePicture();
+        }
+
+        validateProfilePictureIfProvided(profilePicture);
+        return imageFacade.uploadAndSaveImage(profilePicture);
+    }
+
+    private Image createDefaultProfilePicture() {
+        Image defaultImage = new Image();
+        defaultImage.setUrl(defaultProfilePictureUrl);
+        defaultImage.setPublicId(null);
+        return defaultImage;
+    }
+
     private Image processProfilePictureIfProvided(Image currentImage, MultipartFile profilePicture) {
+        if (profilePicture == null || profilePicture.isEmpty()) {
+            return currentImage;
+        }
 
         validateProfilePictureIfProvided(profilePicture);
 
@@ -127,11 +138,8 @@ public class ClientServiceImpl implements IClientService {
     }
 
     private void sendEmailChangeConfirmation(Client client, User user) {
-
         Token token = tokenService.findLatestTokenByUser(user);
-
-        String emailBody = emailBuilder.buildEmailUpdatedConfirmation(client.getFullName(), user, token.getTokenId());
-        emailService.sendEmail(user.getEmail(), "Email actualizado ✔", emailBody);
+        emailService.sendEmailUpdatedConfirmationEmail(user.getEmail(), client.getFullName(), user, token.getTokenId());
     }
 
     private boolean updateEmailIfChanged(User user, String newEmail) {
@@ -159,17 +167,10 @@ public class ClientServiceImpl implements IClientService {
         }
 
         if (!newPassword.equals(confirmNewPassword)) {
-            throw new ValidationException("Las contraseñas no coinciden");
+            throw new PasswordsDoNotMatchException();
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
-    }
-
-    private List<PreferenceType> resolvePreferences(List<PreferenceType> preferences) {
-        if (preferences == null) {
-            return new ArrayList<>();
-        }
-        return new ArrayList<>(preferences);
     }
 
     private Client findClientByIdOrThrowException(UUID clientId) {
@@ -179,7 +180,7 @@ public class ClientServiceImpl implements IClientService {
 
     private void validateProfilePictureIfProvided(MultipartFile profilePicture) {
         if (profilePicture == null || profilePicture.isEmpty()) {
-            return ;
+            return;
         }
         imageFacade.ifProfilePictureIsNotJpgOrPngThrowException(profilePicture.getContentType());
         imageFacade.ifProfilePictureExceedsMaximumSizeThrowException(profilePicture);

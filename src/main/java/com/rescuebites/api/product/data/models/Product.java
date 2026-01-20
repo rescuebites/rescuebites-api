@@ -30,7 +30,7 @@ import java.util.UUID;
 public class Product {
 
     @Id
-    @Column(name = "product_id")
+    @Column(name = "productId")
     @Builder.Default
     private UUID productId = UUID.randomUUID();
 
@@ -59,22 +59,12 @@ public class Product {
 
     private LocalDate expirationDate;
 
-    /*
-    @ElementCollection(targetClass = ProductCategory.class)
-    @CollectionTable(
-            name = "product_checks",
-            joinColumns = @JoinColumn(name = "product_id")
-    )
     @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private List<ProductCategory> checks = new ArrayList<>();
-     */
+    private ProductCategory category;
 
     @Enumerated(EnumType.STRING)
-    private ProductCategory category; // QUÉ es
-
-    @Enumerated(EnumType.STRING)
-    private ProductCondition condition; // CÓMO está
+    @Column(name = "product_condition", nullable = false)
+    private ProductCondition condition;
 
     @Enumerated(EnumType.STRING)
     private CommerceTypeEnum commerceType; // DÓNDE se vende
