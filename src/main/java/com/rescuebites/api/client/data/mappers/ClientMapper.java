@@ -55,11 +55,23 @@ public class ClientMapper {
             Image newImage,
             List<PreferenceType> preferences
     ) {
-        client.setFirstName(request.getFirstName());
-        client.setLastName(request.getLastName());
-        client.setBirthDate(request.getBirthDate());
-        client.setAddress(request.getAddress());
-        client.setPreferences(preferences);
-        client.setImage(newImage);
+        if (request.getFirstName() != null) {
+            client.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            client.setLastName(request.getLastName());
+        }
+        if (request.getBirthDate() != null) {
+            client.setBirthDate(request.getBirthDate());
+        }
+        if (request.getAddress() != null) {
+            client.setAddress(request.getAddress());
+        }
+        if (preferences != null && !preferences.isEmpty()) {
+            client.setPreferences(preferences);
+        }
+        if (newImage != null) {
+            client.setImage(newImage);
+        }
     }
 }
