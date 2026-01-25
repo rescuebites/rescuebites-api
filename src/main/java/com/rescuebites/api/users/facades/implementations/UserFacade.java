@@ -1,13 +1,17 @@
 package com.rescuebites.api.users.facades.implementations;
 
-import com.rescuebites.api.exceptions.custom_exceptions.DuplicateResourceException;
-import com.rescuebites.api.exceptions.custom_exceptions.EmailAlreadyVerifiedException;
+import com.rescuebites.api.exceptions.custom_exceptions.*;
+import com.rescuebites.api.users.data.models.Token;
 import com.rescuebites.api.users.data.models.User;
 import com.rescuebites.api.users.facades.interfaces.IUserFacade;
 import com.rescuebites.api.users.repositories.IUserRepository;
+import com.rescuebites.api.users.services.interfaces.ITokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +19,7 @@ public class UserFacade implements IUserFacade {
 
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ITokenService tokenService;
 
     @Override
     public void ifEmailAlreadyExistsThrowException(String email) {
@@ -26,7 +31,7 @@ public class UserFacade implements IUserFacade {
     @Override
     public void verifyIfPasswordsMatch(String password, String confirmPassword) {
         if(!password.equals(confirmPassword)){
-            throw new IllegalArgumentException("Las contraseñas no coinciden");
+            throw new PasswordsDoNotMatchException();
         }
     }
 
@@ -50,5 +55,54 @@ public class UserFacade implements IUserFacade {
         if(user.isEnabled()){
             throw new EmailAlreadyVerifiedException("El usuario ya ha sido verificado");
         }
+    }
+
+    @Override
+    public void validateTokenNotExpired(Token token) {
+        if (token.getTokenExpirationDate() == null ||
+                token.getTokenExpirationDate().isBefore(LocalDateTime.now())) {
+            throw new TokenExpiredException("El token ha expirado. Solicita un nuevo enlace");
+        }
+    }
+
+    @Override
+    public void validateResendLimit(User user) {
+        if (!tokenService.canResendToken(user)) {
+            throw new TooManyRequestsException(
+                    "Has superado el límite de reenvíos. Intenta nuevamente más tarde"
+            );
+        }
+    }
+
+    @Override
+    public boolean validateAndCheckEmailChange(User user, String newEmail) {
+        if (!StringUtils.hasText(newEmail)) {
+            return false;
+        }
+
+        String trimmedEmail = newEmail.trim();
+
+        if (trimmedEmail.equals(user.getEmail())) {
+            return false;
+        }
+
+        ifEmailAlreadyExistsThrowException(trimmedEmail);
+        return true;
+    }
+
+    @Override
+    public void validatePasswordsIfProvided(String password, String confirmPassword) {
+        boolean hasPassword = StringUtils.hasText(password);
+        boolean hasConfirmPassword = StringUtils.hasText(confirmPassword);
+
+        if (!hasPassword && !hasConfirmPassword) {
+            return;
+        }
+
+        if (hasPassword != hasConfirmPassword) {
+            throw new ValidationException("Debe ingresar y confirmar la nueva contraseña");
+        }
+
+        verifyIfPasswordsMatch(password, confirmPassword);
     }
 }

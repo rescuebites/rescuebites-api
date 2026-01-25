@@ -18,13 +18,13 @@ public interface IClientController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(CREATED)
     void createClient(@RequestPart("client") @Valid CreateClientRequest createClientRequest,
-                      @RequestPart(value = "profilePicture", required = false) MultipartFile profilePicture);
+                                      @RequestPart(value = "profilePicture", required = false) MultipartFile profilePicture);
 
     @GetMapping("/{clientId}")
     @ResponseStatus(OK)
-    ClientResponse getClientById(@PathVariable("clientId") UUID clientId);
+    ClientResponse getClientById(@PathVariable UUID clientId);
 
-    @PutMapping(value = "/{clientId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "/{clientId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(OK)
     void updateClient(@PathVariable("clientId") UUID clientId,
                                 @RequestPart("client") @Valid UpdateClientRequest updateClientRequest,

@@ -1,9 +1,16 @@
 package com.rescuebites.api.users.services.interfaces;
 
-import org.springframework.scheduling.annotation.Async;
+import com.rescuebites.api.users.data.models.User;
+
+import java.util.UUID;
 
 public interface IEmailService {
 
-    @Async
-    void sendEmail(String to, String subject, String htmlContent);
+    void sendConfirmAccountEmail(User user, UUID token);
+
+    void sendResendConfirmAccountEmail(User user, UUID token);
+
+    void sendResetPasswordEmail(String email, UUID token);
+
+    void sendEmailUpdatedConfirmationEmail(User user, UUID token);
 }

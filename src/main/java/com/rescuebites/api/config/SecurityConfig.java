@@ -33,25 +33,51 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/**").permitAll()
+
+                        // AUTENTICACIÓN (Público)
+                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+
+                        // GESTIÓN DE USUARIOS (Público)
                         .requestMatchers(HttpMethod.POST, "/api/users/*/verify-account").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/resend-verification-account").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/reset-password/email").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()
+
+                        // CLIENTS
+                        // Crear cliente (público - después del registro)
                         .requestMatchers(HttpMethod.POST, "/api/v1/clients").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/clients/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/clients/*").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/clients/*").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/reset-password/**").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/clients/*").permitAll()
+
+                        // Operaciones de cliente (solo CLIENT role + ownership)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/clients/*").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/clients/*").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/clients/*").hasRole("CLIENT")
+
+                        // COMMERCES
+                        // Crear comercio (público - después del registro)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/commerces").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/commerces/**").permitAll()
+
+                        // Operaciones de comercio (solo COMMERCE role + ownership)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*").hasRole("COMMERCE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/commerces/*").hasRole("COMMERCE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/commerces/*").hasRole("COMMERCE")
+
+                        // PRODUCTS
+                        .requestMatchers("/api/v1/products/**").hasRole("COMMERCE")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .httpBasic(httpSecurityHttpBasicConfigurer -> httpSecurityHttpBasicConfigurer
-                        .authenticationEntryPoint(globalAuthenticationEntryPoint))
+                .httpBasic(httpBasic -> httpBasic
+                        .authenticationEntryPoint(globalAuthenticationEntryPoint)
+                )
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .logout(logout -> logout.logoutSuccessUrl("/").permitAll());
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

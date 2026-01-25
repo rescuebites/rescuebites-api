@@ -9,40 +9,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
-/*
-ACLARACIÓN: Para la customización de las excepciones, optamos por hacerlas UNCHECKED,
-es decir, extendiendo de RuntimeException. Esto nos permite subirlas hasta
-el controlador @ControllerAdvice y se transformen en una respuesta HTTP.
- */
-
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    /*
-    // Excepción general
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "Error interno del servidor");
-        response.put("message", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
-
-    // Excepción personalizada para errores de envío de mail
-    @ExceptionHandler(MessagingException.class)
-    public ResponseEntity<Map<String, Object>> handleMessagingException(MessagingException ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "Error al enviar el correo");
-        response.put("message", "El correo ingresado no existe");
-        response.put("status", HttpStatus.BAD_REQUEST.value());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-
-     */
-
-    //Averiguar si cumple con cubrir los @Valid en el controlador
     // Manejo de excepciones para errores inesperados
     @ExceptionHandler({RuntimeException.class, Exception.class})
     public ResponseEntity<ApiError> handleAll(Exception ex, WebRequest request) {
@@ -67,7 +38,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    //Esto es para cubrir cuando se intenta registrar el email,...
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ApiError> handleDuplicate(DuplicateResourceException ex) {
         logger.error("Duplicate resource error: {}", ex.getMessage());
@@ -114,12 +84,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(EmailAlreadyVerifiedException.class)
-    public ResponseEntity<ApiError> handleTokenExpired(EmailAlreadyVerifiedException ex) {
+    public ResponseEntity<ApiError> handleEmailAlreadyVerified(EmailAlreadyVerifiedException ex) {
         logger.error("Email already verified error: {}", ex.getMessage(), ex);
         ApiError error = new ApiError(
                 HttpStatus.CONFLICT.value(),
                 ex.getMessage(),
-                "Verification token has expired"
+                "Email has already been verified"
         );
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
@@ -144,5 +114,27 @@ public class GlobalExceptionHandler {
                 "Image upload failed"
         );
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(PasswordsDoNotMatchException.class)
+    public ResponseEntity<ApiError> handlePasswordsDoNotMatch(PasswordsDoNotMatchException ex) {
+        logger.error("Passwords do not match error: {}", ex.getMessage());
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                "Password validation failed"
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiError> handleUnauthorizedException(UnauthorizedException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.FORBIDDEN.value(),
+                ex.getMessage(),
+                "You´re not authorized to access to this resource"
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 }

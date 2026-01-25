@@ -1,6 +1,7 @@
 package com.rescuebites.api.shared;
 
 import com.rescuebites.api.client.data.models.Client;
+import com.rescuebites.api.commerce.data.models.Commerce;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,4 +27,8 @@ public class Image {
 
     @OneToOne(mappedBy = "image")
     private Client client;
+
+    @ManyToOne
+    @JoinColumn(name = "commerce_id")
+    private Commerce commerce;
 }

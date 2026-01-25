@@ -136,7 +136,7 @@ public class EmailBuilder {
        \s""".formatted(user.getEmail(), confirmationLink);
     }
 
-    public String buildEmailUpdatedConfirmation(String fullName, User user, UUID confirmationToken) {
+    public String buildEmailUpdatedConfirmation(User user, UUID confirmationToken) {
         String profileUrl = frontendUrl + "/auth/activate?userId=" + user.getUserId()
                 + "&token=" + confirmationToken;
 
@@ -163,7 +163,7 @@ public class EmailBuilder {
               <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #77A787; padding: 40px; text-align: center;">
                   <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                       <h2 style="color: #77A787; margin-bottom: 20px;">¡Tu email se actualizó correctamente!</h2>
-                      <p style="font-size: 16px; color: #333;"><strong>Hola %s</strong>,</p>
+                      <p style="font-size: 16px; color: #333;"><strong>Hola!</strong>,</p>
                       <p style="font-size: 16px; color: #555;">
                           Te confirmamos que tu correo electrónico asociado a RescueBites fue actualizado exitosamente.
                       </p>
@@ -177,6 +177,6 @@ public class EmailBuilder {
                   </div>
               </body>
             </html>
-        \s""".formatted(fullName, user.getEmail(), profileUrl);
+        \s""".formatted(user.getEmail(), profileUrl);
     }
 }

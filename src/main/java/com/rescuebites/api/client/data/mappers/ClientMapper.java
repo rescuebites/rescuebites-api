@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static com.rescuebites.api.client.data.mappers.ImageMapper.toImageResponse;
 import static com.rescuebites.api.users.data.mappers.UserMapper.toUserResponse;
@@ -27,10 +26,10 @@ public class ClientMapper {
     ) {
         return Client.builder()
                 .clientId(UUID.randomUUID())
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .birthDate(request.birthDate())
-                .address(request.address())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .birthDate(request.getBirthDate())
+                .address(request.getAddress())
                 .user(user)
                 .preferences(preferences)
                 .image(image)
@@ -46,9 +45,7 @@ public class ClientMapper {
                 toImageResponse(client.getImage()),
                 client.getAddress(),
                 toUserResponse(client.getUser()),
-                client.getPreferences().stream()
-                        .map(PreferenceType::name)
-                        .collect(Collectors.toList())
+                client.getPreferences()
         );
     }
 
@@ -58,11 +55,23 @@ public class ClientMapper {
             Image newImage,
             List<PreferenceType> preferences
     ) {
-            client.setFirstName(request.firstName());
-            client.setLastName(request.lastName());
-            client.setBirthDate(request.birthDate());
-            client.setAddress(request.address());
+        if (request.getFirstName() != null) {
+            client.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            client.setLastName(request.getLastName());
+        }
+        if (request.getBirthDate() != null) {
+            client.setBirthDate(request.getBirthDate());
+        }
+        if (request.getAddress() != null) {
+            client.setAddress(request.getAddress());
+        }
+        if (preferences != null && !preferences.isEmpty()) {
             client.setPreferences(preferences);
+        }
+        if (newImage != null) {
             client.setImage(newImage);
-      }
+        }
+    }
 }

@@ -54,6 +54,8 @@ public class Client {
     @Builder.Default
     private boolean deleted = false;
 
+    private LocalDateTime updatedAt;
+
     private LocalDateTime deletedAt;
 
     public String getFullName() {

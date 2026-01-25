@@ -1,24 +1,27 @@
 package com.rescuebites.api.users.services.implementations;
 
 import com.rescuebites.api.users.controllers.requests.LoginRequest;
-import com.rescuebites.api.users.controllers.requests.RegisterRequest;
+import com.rescuebites.api.users.controllers.requests.UserRegistrationRequest;
 import com.rescuebites.api.users.controllers.responses.AuthResponse;
 import com.rescuebites.api.users.data.mappers.UserMapper;
 import com.rescuebites.api.users.data.models.Token;
 import com.rescuebites.api.users.data.models.User;
 import com.rescuebites.api.exceptions.custom_exceptions.*;
+import com.rescuebites.api.users.events.PasswordResetRequestedEvent;
+import com.rescuebites.api.users.events.ResendConfirmationEvent;
+import com.rescuebites.api.users.events.UserRegisteredEvent;
 import com.rescuebites.api.users.facades.interfaces.IUserFacade;
 import com.rescuebites.api.users.repositories.IUserRepository;
 import com.rescuebites.api.security.services.JwtService;
 import com.rescuebites.api.users.services.interfaces.IEmailService;
 import com.rescuebites.api.users.services.interfaces.ITokenService;
 import com.rescuebites.api.users.services.interfaces.IUserService;
-import com.rescuebites.api.shared.EmailBuilder;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -31,61 +34,59 @@ public class UserServiceImpl implements IUserService {
     private final ITokenService tokenService;
     private final IEmailService emailService;
     private final JwtService jwtService;
-    private final EmailBuilder emailBuilder;
     private final IUserFacade userFacade;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    public void saveUser(RegisterRequest registerRequest) {
-        userFacade.ifEmailAlreadyExistsThrowException(registerRequest.email());
-        userFacade.verifyIfPasswordsMatch(registerRequest.password(), registerRequest.confirmPassword());
+    @Transactional
+    public void saveUser(UserRegistrationRequest userRegistrationRequest) {
+        userFacade.ifEmailAlreadyExistsThrowException(userRegistrationRequest.email());
+        userFacade.verifyIfPasswordsMatch(userRegistrationRequest.password(), userRegistrationRequest.confirmPassword());
 
-        User newUser = userMapper.toUser(registerRequest);
-        newUser.setPassword(passwordEncoder.encode(registerRequest.password()));
+        User newUser = userMapper.toUser(userRegistrationRequest);
+        newUser.setPassword(passwordEncoder.encode(userRegistrationRequest.password()));
         userRepository.save(newUser);
 
-        //Generamos el token de confirmación y enviamos el email
+        // Generamos el token de confirmación y enviamos el email
         UUID confirmationToken = tokenService.saveUserToken(newUser).getTokenId();
-        String confirmAccountHtml = emailBuilder.buildConfirmAccount(newUser, confirmationToken);
-        emailService.sendEmail(newUser.getEmail(), "Confirm your registration ✔", confirmAccountHtml);
+        eventPublisher.publishEvent(new UserRegisteredEvent(newUser, confirmationToken));
     }
 
     @Override
-    public User findByIdOrThrowException(UUID userId)  {
+    public User findByIdOrThrowException(UUID userId) {
         return userRepository.findByUserIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
     }
 
     @Override
-    public User findUserByEmailOrThrowException(String email){
+    public User findUserByEmailOrThrowException(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
     }
 
     @Override
+    @Transactional
     public void verifyNewUser(UUID userId, UUID tokenValue) {
         Token token = tokenService.findByTokenOrThrowException(tokenValue);
-        ifTokenIsExpiredThrowException(token);
+        userFacade.validateTokenNotExpired(token);
 
         User user = token.getUser();
         userFacade.ifUserIsEnabledThrowException(user);
         user.setEnabled(true);
         userRepository.save(user);
-
-        //Eliminamos el token una vez que se ha verificado el usuario
-        //tokenService.deleteToken(token);
     }
 
     @Override
+    @Transactional
     public void resendConfirmationEmail(String email) {
         User user = findUserByEmailOrThrowException(email);
         userFacade.ifUserIsEnabledThrowException(user);
-        ifResendLimitExceededThrowException(user);
+        userFacade.validateResendLimit(user);
 
         // Generamos nuevo token y enviamos email
         Token token = tokenService.saveUserToken(user);
         UUID newToken = token.getTokenId();
-        String resendConfirmAccountHtml = emailBuilder.buildResendConfirmAccount(user, newToken);
-        emailService.sendEmail(user.getEmail(), "Confirm your registration ✔", resendConfirmAccountHtml);
+        eventPublisher.publishEvent(new ResendConfirmationEvent(user, newToken));
     }
 
     @Override
@@ -99,10 +100,11 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    @Transactional
     public void resetPassword(UUID token, String newPassword, String confirmNewPassword) {
         userFacade.verifyIfPasswordsMatch(newPassword, confirmNewPassword);
         Token resetToken = tokenService.findByTokenOrThrowException(token);
-        ifTokenIsExpiredThrowException(resetToken);
+        userFacade.validateTokenNotExpired(resetToken);
 
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -112,26 +114,14 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    @Transactional
     public void sendResetPasswordEmail(String email) {
         User user = findUserByEmailOrThrowException(email);
-        ifResendLimitExceededThrowException(user);
+        userFacade.validateResendLimit(user);
 
         // Generamos token de reseteo y enviamos email
         Token token = tokenService.saveUserToken(user);
         UUID resetToken = token.getTokenId();
-        String resetPasswordHtml = emailBuilder.buildResetPassword(user.getEmail(), resetToken);
-        emailService.sendEmail(user.getEmail(), "Reset your password ✔", resetPasswordHtml);
-    }
-
-    private void ifResendLimitExceededThrowException(User user) {
-        if (!tokenService.canResendToken(user)) {
-            throw new TooManyRequestsException("Has superado el límite de reenvíos. Intenta nuevamente más tarde");
-        }
-    }
-
-    private void ifTokenIsExpiredThrowException(Token token) {
-        if (token.getTokenExpirationDate() == null || token.getTokenExpirationDate().isBefore(LocalDateTime.now())) {
-            throw new TokenExpiredException("El token ha expirado. Solicita un nuevo enlace");
-        }
+        eventPublisher.publishEvent(new PasswordResetRequestedEvent(user, resetToken));
     }
 }
