@@ -9,11 +9,9 @@ import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.product.data.enums.ProductCategory;
 import com.rescuebites.api.product.data.enums.ProductCondition;
 import com.rescuebites.api.product.facades.interfaces.IProductValidationFacade;
-import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-//import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
@@ -25,11 +23,10 @@ import java.util.stream.Collectors;
 public class ProductValidationFacade implements IProductValidationFacade {
 
     private final ICommerceRepository commerceRepository;
-    //private final Clock clock;
 
     @Override
     public Commerce findCommerceById(UUID commerceId) {
-        return commerceRepository.findByCommerceIdAndActiveTrue(commerceId)
+        return commerceRepository.findByCommerceIdAndDeletedFalse(commerceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Commerce", "id", commerceId));
     }
 
