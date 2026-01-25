@@ -84,12 +84,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(EmailAlreadyVerifiedException.class)
-    public ResponseEntity<ApiError> handleTokenExpired(EmailAlreadyVerifiedException ex) {
+    public ResponseEntity<ApiError> handleEmailAlreadyVerified(EmailAlreadyVerifiedException ex) {
         logger.error("Email already verified error: {}", ex.getMessage(), ex);
         ApiError error = new ApiError(
                 HttpStatus.CONFLICT.value(),
                 ex.getMessage(),
-                "Verification token has expired"
+                "Email has already been verified"
         );
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
@@ -125,5 +125,16 @@ public class GlobalExceptionHandler {
                 "Password validation failed"
         );
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiError> handleUnauthorizedException(UnauthorizedException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.FORBIDDEN.value(),
+                ex.getMessage(),
+                "You´re not authorized to access to this resource"
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 }

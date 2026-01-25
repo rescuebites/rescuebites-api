@@ -5,15 +5,13 @@ public class SecurityConstants {
     private SecurityConstants() {}
 
     public static final String[] WHITELIST = {
+            // Autenticación
+            "/auth/register",
             "/auth/login",
-            "/api/users/reset-password/**",
+
+            // Verificación de cuenta y recuperación de contraseña
             "/api/users/*/verify-account",
-            "/api/v1/clients",
-            "/api/v1/clients/**",
-            "/auth/register"
+            "/api/users/resend-verification-account",
+            "/api/users/reset-password/**",
     };
-
-    public static final String TOKEN_PREFIX = "Bearer ";
-    public static final String HEADER_STRING = "Authorization";
-
 }
