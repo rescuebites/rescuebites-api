@@ -1,5 +1,6 @@
 package com.rescuebites.api.users.facades.interfaces;
 
+import com.rescuebites.api.users.data.models.Token;
 import com.rescuebites.api.users.data.models.User;
 
 public interface IUserFacade {
@@ -13,4 +14,12 @@ public interface IUserFacade {
     void ifUserIsNotEnabledThrowException(User user);
 
     void ifUserIsEnabledThrowException(User user);
+
+    void validateTokenNotExpired(Token token);
+
+    void validateResendLimit(User user);
+
+    boolean validateAndCheckEmailChange(User user, String newEmail);
+
+    void validatePasswordsIfProvided(String password, String confirmPassword);
 }
