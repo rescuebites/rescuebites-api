@@ -10,6 +10,7 @@ import java.util.UUID;
 @Repository
 public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
 
-    Optional<Commerce> findByCommerceIdAndActiveTrue(UUID commerceId);
+    Optional<Commerce> findByCommerceIdAndDeletedFalse(UUID commerceId);
 
+    boolean existsByNameAndDeletedFalse(String name);
 }
