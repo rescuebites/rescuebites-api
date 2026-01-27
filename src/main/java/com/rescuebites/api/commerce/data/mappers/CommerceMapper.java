@@ -3,6 +3,7 @@ package com.rescuebites.api.commerce.data.mappers;
 import com.rescuebites.api.client.data.mappers.ImageMapper;
 import com.rescuebites.api.commerce.controllers.requests.CreateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
+import com.rescuebites.api.commerce.controllers.responses.CommercePublicResponse;
 import com.rescuebites.api.commerce.controllers.responses.CommerceResponse;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.data.models.CommerceType;
@@ -60,6 +61,16 @@ public class CommerceMapper {
                         .map(ImageMapper::toImageResponse)
                         .collect(Collectors.toList()),
                 toUserResponse(commerce.getUser())
+        );
+    }
+
+    public static CommercePublicResponse toCommercePublicResponse(Commerce commerce) {
+        return new CommercePublicResponse(
+                commerce.getCommerceId(),
+                commerce.getName(),
+                commerce.getImages().stream()
+                        .map(ImageMapper::toImageResponse)
+                        .collect(Collectors.toList())
         );
     }
 
