@@ -1,5 +1,6 @@
 package com.rescuebites.api.product.controllers.responses;
 
+import com.rescuebites.api.client.controllers.responses.ImageResponse;
 import com.rescuebites.api.product.data.enums.ProductCategory;
 import com.rescuebites.api.product.data.enums.ProductCondition;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -49,9 +50,8 @@ public record ProductResponse(
         LocalDate expirationDate,
 
         @Schema(description = "URLs de las imágenes del producto")
-        List<String> imageUrls,
+        List<ImageResponse> images,
 
-        // ⭐ NUEVO CAMPO
         @Schema(description = "Indica si el producto está activo")
         Boolean active
 ) {
