@@ -64,8 +64,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/commerces/*").hasRole("COMMERCE")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/commerces/*").hasRole("COMMERCE")
 
-                        // PRODUCTS
-                        .requestMatchers("/api/v1/products/**").hasRole("COMMERCE")
+                        .requestMatchers(HttpMethod.POST,"/api/v1/commerces/*/products").hasRole("COMMERCE")
+
+                        // Operaciones del HOME del cliente
+                        .requestMatchers(HttpMethod.GET,"/api/v1/public/**").permitAll()
 
                         .anyRequest().authenticated()
                 )

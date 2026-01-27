@@ -1,6 +1,8 @@
 package com.rescuebites.api.product.services.implementations;
 
+import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
+import com.rescuebites.api.product.controllers.responses.ProductPublicResponse;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
 import com.rescuebites.api.product.data.mappers.ProductMapper;
 import com.rescuebites.api.product.data.models.Product;
@@ -52,5 +54,23 @@ public class PublicProductServiceImpl implements IPublicProductService {
         Page<Product> products = productRepository.findActiveByCommerceId(commerceId, pageable);
 
         return products.map(ProductMapper::toProductResponse);
+    }
+
+    @Override
+    @Transactional
+    public Page<ProductResponse> getAllActiveProductsOrderedByPrice(Pageable pageable) {
+        Page<Product> products = productRepository.findAllActiveOrderByDiscountedPriceAsc(pageable);
+        return products.map(ProductMapper::toProductResponse);
+    }
+
+    @Override
+    @Transactional
+    public Page<ProductPublicResponse> getActiveProductsByCommerceTypeOrderedByPrice(
+            CommerceTypeEnum commerceType,
+            Pageable pageable
+    ) {
+        Page<Product> products = productRepository
+                .findActiveByCommerceTypeOrderByDiscountedPriceAsc(commerceType, pageable);
+        return products.map(ProductMapper::toProductPublicResponse);
     }
 }

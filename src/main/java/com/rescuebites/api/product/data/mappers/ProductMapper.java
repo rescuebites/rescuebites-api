@@ -1,7 +1,9 @@
 package com.rescuebites.api.product.data.mappers;
 
+import com.rescuebites.api.client.data.mappers.ImageMapper;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
+import com.rescuebites.api.product.controllers.responses.ProductPublicResponse;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
 import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.shared.Image;
@@ -43,9 +45,24 @@ public class ProductMapper {
                 product.getCondition(),
                 product.getExpirationDate(),
                 product.getImages().stream()
-                        .map(Image::getUrl)
+                        .map(ImageMapper::toImageResponse)
                         .collect(Collectors.toList()),
                 product.getActive()
+        );
+    }
+
+    public static ProductPublicResponse toProductPublicResponse(Product product) {
+        return new ProductPublicResponse(
+                product.getProductId(),
+                product.getName(),
+                product.getStock(),
+                product.getOriginalPrice(),
+                product.getDiscountPercentage(),
+                product.getDiscountedPrice(),
+                product.getExpirationDate(),
+                product.getImages().stream()
+                        .map(ImageMapper::toImageResponse)
+                        .collect(Collectors.toList())
         );
     }
 }

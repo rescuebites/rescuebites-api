@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
-@RequestMapping("/api/v1/commerce/{commerceId}/products")
+@RequestMapping("/api/v1/commerces/{commerceId}/products")
 @Tag(name = "Products", description = "Gestión de productos del comercio")
 public interface IProductManagementController {
 
@@ -47,14 +47,14 @@ public interface IProductManagementController {
     );
 
     @GetMapping
-    @Operation(summary = "Listar productos del comercio")
+    @Operation(summary = "Listar productos del comercio (activo o inactivo)")
     Page<ProductResponse> getProductsByCommerce(
             @PathVariable UUID commerceId,
             Pageable pageable
     );
 
     @GetMapping("/{productId}")
-    @Operation(summary = "Obtener detalle de un producto")
+    @Operation(summary = "Obtener detalle de un producto (activo o inactivo)")
     ProductResponse getProduct(
             @PathVariable UUID commerceId,
             @PathVariable UUID productId
