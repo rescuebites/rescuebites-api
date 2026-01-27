@@ -45,7 +45,6 @@ public class ProductManagementServiceImpl implements IProductManagementService {
         List<Image> storedImages = imageFacade.uploadAndSaveImages(images);
 
         Product product = ProductMapper.toProduct(request, commerce, storedImages);
-        commerce.getProducts().add(product);
 
         productRepository.save(product);
     }
@@ -98,7 +97,7 @@ public class ProductManagementServiceImpl implements IProductManagementService {
         if (images != null && images.length > 0) {
             List<Image> newImages = imageFacade.processAndUpdateImages(product.getImages(), images);
             product.getImages().clear();
-            product.setImages(newImages);
+            product.getImages().addAll(newImages);
         }
 
         productRepository.save(product);
