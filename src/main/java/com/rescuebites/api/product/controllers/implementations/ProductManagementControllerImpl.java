@@ -40,12 +40,6 @@ public class ProductManagementControllerImpl implements IProductManagementContro
     }
 
     @Override
-    public void deleteProduct(UUID commerceId, UUID productId) {
-        productManagementService.deleteProduct(commerceId, productId);
-    }
-
-    // ⭐ NUEVOS MÉTODOS
-    @Override
     public void activateProduct(UUID commerceId, UUID productId) {
         productManagementService.activateProduct(commerceId, productId);
     }
