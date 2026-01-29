@@ -20,8 +20,6 @@ public interface IProductManagementService {
 
     void updateProduct(UUID commerceId, UUID productId, UpdateProductRequest request, MultipartFile[] images);
 
-    void deleteProduct(UUID commerceId, UUID productId);
-
     void activateProduct(UUID commerceId, UUID productId);
 
     void deactivateProduct(UUID commerceId, UUID productId);

@@ -1,8 +1,10 @@
 package com.rescuebites.api.product.data.mappers;
 
+import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.client.data.mappers.ImageMapper;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
+import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.controllers.responses.ProductPublicResponse;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
 import com.rescuebites.api.product.data.models.Product;
@@ -13,18 +15,23 @@ import java.util.stream.Collectors;
 
 public class ProductMapper {
 
-    public static Product toProduct(CreateProductRequest request, Commerce commerce, List<Image> images) {
+    public static Product toProduct(
+            CreateProductRequest request,
+            Commerce commerce,
+            List<Image> images,
+            List<PreferenceType> preferences) {
         return Product.builder()
                 .commerce(commerce)
-                .name(request.name())
-                .description(request.description())
-                .stock(request.stock())
-                .originalPrice(request.originalPrice())
-                .discountPercentage(request.discountPercentage())
-                .category(request.category())
-                .condition(request.condition())
+                .name(request.getName())
+                .description(request.getDescription())
+                .stock(request.getStock())
+                .originalPrice(request.getOriginalPrice())
+                .discountPercentage(request.getDiscountPercentage())
+                .category(request.getCategory())
+                .condition(request.getCondition())
                 .commerceType(commerce.getCommerceTypes().get(0).getName())
-                .expirationDate(request.expirationDate())
+                .expirationDate(request.getExpirationDate())
+                .preferenceType(preferences)
                 .images(images)
                 .active(true)
                 .build();
@@ -43,11 +50,13 @@ public class ProductMapper {
                 product.getDiscountedPrice(),
                 product.getCategory(),
                 product.getCondition(),
+                product.getCondition().getDisplayName(),
                 product.getExpirationDate(),
                 product.getImages().stream()
                         .map(ImageMapper::toImageResponse)
                         .collect(Collectors.toList()),
-                product.getActive()
+                product.getActive(),
+                product.getPreferenceType()
         );
     }
 
@@ -64,5 +73,47 @@ public class ProductMapper {
                         .map(ImageMapper::toImageResponse)
                         .collect(Collectors.toList())
         );
+    }
+
+    public static void updateProductFromRequest(
+            Product product,
+            UpdateProductRequest request,
+            List<PreferenceType> preferences,
+            List<Image> newImages
+            ) {
+        if (request.getName() != null) {
+            product.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            product.setDescription(request.getDescription());
+        }
+        if (request.getStock() != null) {
+            product.setStock(request.getStock());
+        }
+        if (request.getOriginalPrice() != null) {
+            product.setOriginalPrice(request.getOriginalPrice());
+        }
+        if (request.getDiscountPercentage() != null) {
+            product.setDiscountPercentage(request.getDiscountPercentage());
+        }
+        if (request.getCategory() != null) {
+            product.setCategory(request.getCategory());
+        }
+        if (request.getCondition() != null) {
+            product.setCondition(request.getCondition());
+        }
+        if (request.getExpirationDate() != null) {
+            product.setExpirationDate(request.getExpirationDate());
+        }
+        if (preferences != null && !preferences.isEmpty()) {
+            product.setPreferenceType(preferences);
+        }
+        if (newImages != null && !newImages.isEmpty()) {
+            product.getImages().clear();
+            newImages.forEach(image -> {
+                image.setProduct(product);
+                product.getImages().add(image);
+            });
+        }
     }
 }

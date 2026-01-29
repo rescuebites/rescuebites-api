@@ -60,20 +60,12 @@ public interface IProductManagementController {
             @PathVariable UUID productId
     );
 
-    @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Actualizar un producto")
     void updateProduct(@PathVariable UUID commerceId,
                        @PathVariable UUID productId,
                        @RequestPart("product") @Valid UpdateProductRequest request,
                        @RequestPart(value = "images", required = false) MultipartFile[] images);
-
-    @DeleteMapping("/{productId}")
-    @ResponseStatus(NO_CONTENT)
-    @Operation(summary = "Eliminar producto")
-    void deleteProduct(
-            @PathVariable UUID commerceId,
-            @PathVariable UUID productId
-    );
 
     @PatchMapping("/{productId}/activate")
     @ResponseStatus(NO_CONTENT)
@@ -85,7 +77,7 @@ public interface IProductManagementController {
 
     @PatchMapping("/{productId}/deactivate")
     @ResponseStatus(NO_CONTENT)
-    @Operation(summary = "Desactivar producto")
+    @Operation(summary = "Desactivar / eliminar producto")
     void deactivateProduct(
             @PathVariable UUID commerceId,
             @PathVariable UUID productId

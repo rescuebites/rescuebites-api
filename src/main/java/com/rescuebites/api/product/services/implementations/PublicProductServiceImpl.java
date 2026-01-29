@@ -47,10 +47,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
     @Transactional
     public Page<ProductResponse> getActiveProductsByCommerce(UUID commerceId, Pageable pageable) {
 
-        // Validar que el comercio exista
         validationFacade.validateCommerceExists(commerceId);
-
-        // Obtener solo productos activos del comercio
         Page<Product> products = productRepository.findActiveByCommerceId(commerceId, pageable);
 
         return products.map(ProductMapper::toProductResponse);

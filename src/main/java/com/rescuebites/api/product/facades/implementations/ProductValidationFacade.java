@@ -6,11 +6,15 @@ import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.commerce.repositories.ICommerceRepository;
 import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
+import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.data.enums.ProductCategory;
 import com.rescuebites.api.product.data.enums.ProductCondition;
+import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.product.facades.interfaces.IProductValidationFacade;
+import com.rescuebites.api.product.repositories.IProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -23,11 +27,19 @@ import java.util.stream.Collectors;
 public class ProductValidationFacade implements IProductValidationFacade {
 
     private final ICommerceRepository commerceRepository;
+    private final IProductRepository productRepository;
 
     @Override
     public Commerce findCommerceById(UUID commerceId) {
         return commerceRepository.findByCommerceIdAndDeletedFalse(commerceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Commerce", "id", commerceId));
+    }
+
+    @Override
+    public Product findProductByIdAndCommerceIdOrThrowException(UUID productId, UUID commerceId) {
+        return productRepository
+                .findByIdAndCommerceId(productId, commerceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
     }
 
     @Override
@@ -77,5 +89,42 @@ public class ProductValidationFacade implements IProductValidationFacade {
         if (!commerceRepository.existsById(commerceId)) {
             throw new ResourceNotFoundException("Commerce", "id", commerceId);
         }
+    }
+
+    @Override
+    public void validateAtLeastOneFieldToUpdate(UpdateProductRequest request) {
+        boolean hasAtLeastOneField = StringUtils.hasText(request.getName()) ||
+                StringUtils.hasText(request.getDescription()) ||
+                request.getStock() != null ||
+                request.getOriginalPrice() != null ||
+                request.getDiscountPercentage() != null ||
+                request.getCategory() != null ||
+                request.getCondition() != null ||
+                request.getExpirationDate() != null ||
+                (request.getPreferences() != null && !request.getPreferences().isEmpty());
+
+        if (!hasAtLeastOneField) {
+            throw new ValidationException("Debe modificar al menos un campo del producto");
+        }
+    }
+
+    @Override
+    public void validateAndProcessCategoryConditionUpdate(Product product, UpdateProductRequest request) {
+        if (request.getCategory() == null && request.getCondition() == null) {
+            return;
+        }
+
+        // Determinar qué valores usar para la validación
+        ProductCategory categoryToValidate = request.getCategory() != null ?
+                request.getCategory() : product.getCategory();
+
+        ProductCondition conditionToValidate = request.getCondition() != null ?
+                request.getCondition() : product.getCondition();
+
+        validateCategoryAndCondition(
+                categoryToValidate,
+                conditionToValidate,
+                product.getCommerce()
+        );
     }
 }

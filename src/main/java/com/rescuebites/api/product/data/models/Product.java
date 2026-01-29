@@ -1,5 +1,6 @@
 package com.rescuebites.api.product.data.models;
 
+import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.product.data.enums.ProductCategory;
@@ -19,6 +20,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -68,7 +70,10 @@ public class Product {
     private ProductCondition condition;
 
     @Enumerated(EnumType.STRING)
-    private CommerceTypeEnum commerceType; // DÓNDE se vende
+    private List<PreferenceType> preferenceType;
+
+    @Enumerated(EnumType.STRING)
+    private CommerceTypeEnum commerceType;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinTable(
@@ -82,6 +87,8 @@ public class Product {
     @Builder.Default
     @Column(nullable = false)
     private Boolean active = true;
+
+    private LocalDateTime updateAt;
 
     public BigDecimal getDiscountedPrice() {
         if (originalPrice == null || discountPercentage == null) {

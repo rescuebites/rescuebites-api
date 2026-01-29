@@ -147,4 +147,13 @@ public class ImageFacade implements IImageFacade {
 
         return uploadedImage;
     }
+
+    @Override
+    public List<Image> processImagesIfProvided(List<Image> currentImages, MultipartFile[] newImages) {
+        if (newImages == null || newImages.length == 0) {
+            return currentImages;
+        }
+
+        return processAndUpdateImages(currentImages, newImages);
+    }
 }
