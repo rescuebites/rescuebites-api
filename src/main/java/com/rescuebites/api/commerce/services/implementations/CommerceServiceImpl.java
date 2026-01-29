@@ -51,10 +51,10 @@ public class CommerceServiceImpl implements ICommerceService {
         commerceFacade.ifCommerceNameAlreadyExistsThrowException(createCommerceRequest.getName());
 
         imageFacade.validateImages(images);
-        List<Image> uploadedImages = imageFacade.uploadAndSaveImages(images);
+        List<Image> storedProduct = imageFacade.uploadAndSaveImages(images);
         List<CommerceType> commerceTypes = commerceFacade.getOrCreateCommerceTypes(createCommerceRequest.getCommerceTypes());
 
-        Commerce commerce = CommerceMapper.toCommerce(createCommerceRequest, user, commerceTypes, uploadedImages);
+        Commerce commerce = CommerceMapper.toCommerce(createCommerceRequest, user, commerceTypes, storedProduct);
         commerceRepository.save(commerce);
     }
 
@@ -75,15 +75,15 @@ public class CommerceServiceImpl implements ICommerceService {
 
         boolean emailChanged = commerceFacade.validateAndProcessUpdate(user, updateCommerceRequest);
 
-        List<Image> newImages = processImagesIfProvided(commerce.getImages(), images);
+        List<Image> newImages = imageFacade.processImagesIfProvided(commerce.getImages(), images);
 
         List<CommerceType> commerceTypes = updateCommerceRequest.getCommerceTypes() != null && !updateCommerceRequest.getCommerceTypes().isEmpty()
                 ? commerceFacade.getOrCreateCommerceTypes(updateCommerceRequest.getCommerceTypes())
                 : null;
 
         CommerceMapper.updateCommerceFromRequest(commerce, updateCommerceRequest, commerceTypes, newImages);
-
         commerceFacade.applyUserChanges(user, updateCommerceRequest, emailChanged);
+
         commerce.setUpdatedAt(LocalDateTime.now());
         commerceRepository.save(commerce);
 
@@ -118,14 +118,6 @@ public class CommerceServiceImpl implements ICommerceService {
         user.setDeletedAt(LocalDateTime.now());
 
         commerceRepository.save(commerce);
-    }
-
-    private List<Image> processImagesIfProvided(List<Image> currentImages, MultipartFile[] newImages) {
-        if (newImages == null || newImages.length == 0) {
-            return currentImages;
-        }
-
-        return imageFacade.processAndUpdateImages(currentImages, newImages);
     }
 
     private void sendEmailChangeConfirmation(User user) {

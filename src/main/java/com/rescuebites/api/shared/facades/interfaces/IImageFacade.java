@@ -34,4 +34,6 @@ public interface IImageFacade {
     List<Image> processAndUpdateImages(List<Image> currentImages, MultipartFile[] newImages);
 
     Image replaceImage(Image currentImage, MultipartFile newImage);
+
+    List<Image> processImagesIfProvided(List<Image> currentImages, MultipartFile[] newImages);
 }
