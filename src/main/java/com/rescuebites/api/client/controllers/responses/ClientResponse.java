@@ -14,6 +14,7 @@ public record ClientResponse(
         LocalDate birthDate,
         ImageResponse image,
         String address,
+        String phone,
         UserResponse user,
         List<PreferenceType> preferences
 ) {}
