@@ -2,6 +2,7 @@ package com.rescuebites.api.commerce.repositories;
 
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.commerce.data.models.Commerce;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @Repository
 public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
 
+    @Cacheable(value = "commerceById", key = "#commerceId")
     Optional<Commerce> findByCommerceIdAndDeletedFalse(UUID commerceId);
 
     boolean existsByNameAndDeletedFalse(String name);
