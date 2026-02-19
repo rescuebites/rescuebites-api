@@ -2,6 +2,7 @@ package com.rescuebites.api.commerce.controllers.implementations;
 
 import com.rescuebites.api.commerce.controllers.interfaces.ICommerceController;
 import com.rescuebites.api.commerce.controllers.requests.CreateCommerceRequest;
+import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceCredentialsRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.responses.CommerceResponse;
 import com.rescuebites.api.commerce.services.interfaces.ICommerceService;
@@ -35,5 +36,10 @@ public class CommerceControllerImpl implements ICommerceController {
     @Override
     public void deleteCommerce(UUID commerceId) {
         commerceService.deleteCommerce(commerceId);
+    }
+
+    @Override
+    public void updateCredentials(UUID commerceId, UpdateCommerceCredentialsRequest request) {
+        commerceService.updateCommerceCredentials(commerceId, request);
     }
 }
