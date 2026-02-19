@@ -40,7 +40,7 @@ public class Commerce {
     @Size(max = 255, message = "La descripción debe tener entre 1 y 255 caracteres")
     private String description;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "commerce_commerce_types",
             joinColumns = @JoinColumn(name = "commerce_id"),
@@ -67,6 +67,12 @@ public class Commerce {
             message = "El número de celular debe tener el formato válido argentino"
     )
     private String phone;
+
+    @Column(name = "mercado_pago_access_token")
+    private String mercadoPagoAccessToken;
+
+    @Column(name = "mercado_pago_webhook_secret")
+    private String mercadoPagoWebhookSecret;
 
     @OneToMany(mappedBy = "commerce", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

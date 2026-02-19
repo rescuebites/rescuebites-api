@@ -1,6 +1,7 @@
 package com.rescuebites.api.commerce.services.implementations;
 
 import com.rescuebites.api.commerce.controllers.requests.CreateCommerceRequest;
+import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceCredentialsRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.responses.CommerceResponse;
 import com.rescuebites.api.commerce.data.mappers.CommerceMapper;
@@ -9,14 +10,11 @@ import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.commerce.repositories.ICommerceRepository;
 import com.rescuebites.api.commerce.services.interfaces.ICommerceService;
-import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
 import com.rescuebites.api.security.utils.SecurityUtils;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
 import com.rescuebites.api.users.data.models.User;
 import com.rescuebites.api.users.events.EmailUpdatedEvent;
-import com.rescuebites.api.users.facades.interfaces.IUserFacade;
-import com.rescuebites.api.users.services.interfaces.IEmailService;
 import com.rescuebites.api.users.services.interfaces.ITokenService;
 import com.rescuebites.api.users.services.interfaces.IUserService;
 import jakarta.transaction.Transactional;
@@ -46,7 +44,6 @@ public class CommerceServiceImpl implements ICommerceService {
     @Transactional
     public void createCommerce(CreateCommerceRequest createCommerceRequest, MultipartFile[] images) {
         User user = userService.findByIdOrThrowException(createCommerceRequest.getUserId());
-        SecurityUtils.validateOwnership(user.getEmail());
 
         commerceFacade.ifCommerceNameAlreadyExistsThrowException(createCommerceRequest.getName());
 
@@ -60,7 +57,7 @@ public class CommerceServiceImpl implements ICommerceService {
 
     @Override
     public CommerceResponse getCommerceById(UUID commerceId) {
-        Commerce commerce = findCommerceByIdOrThrowException(commerceId);
+        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
         SecurityUtils.validateOwnership(commerce.getUser().getEmail());
 
         return CommerceMapper.toCommerceResponse(commerce);
@@ -69,7 +66,7 @@ public class CommerceServiceImpl implements ICommerceService {
     @Override
     @Transactional
     public void updateCommerce(UUID commerceId, UpdateCommerceRequest updateCommerceRequest, MultipartFile[] images) {
-        Commerce commerce = findCommerceByIdOrThrowException(commerceId);
+        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
         User user = commerce.getUser();
         SecurityUtils.validateOwnership(user.getEmail());
 
@@ -95,7 +92,7 @@ public class CommerceServiceImpl implements ICommerceService {
     @Override
     @Transactional
     public void deleteCommerce(UUID commerceId) {
-        Commerce commerce = findCommerceByIdOrThrowException(commerceId);
+        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
         User user = commerce.getUser();
         SecurityUtils.validateOwnership(user.getEmail());
         List<Image> currentImages = commerce.getImages();
@@ -120,13 +117,21 @@ public class CommerceServiceImpl implements ICommerceService {
         commerceRepository.save(commerce);
     }
 
+    @Override
+    @Transactional
+    public void updateCommerceCredentials(UUID commerceId, UpdateCommerceCredentialsRequest request) {
+        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
+        SecurityUtils.validateOwnership(commerce.getUser().getEmail());
+
+        commerce.setMercadoPagoAccessToken(request.getMercadoPagoAccessToken());
+        commerce.setMercadoPagoWebhookSecret(request.getMercadoPagoWebhookSecret());
+        commerce.setUpdatedAt(LocalDateTime.now());
+
+        commerceRepository.save(commerce);
+    }
+
     private void sendEmailChangeConfirmation(User user) {
         UUID tokenId = tokenService.findLatestTokenByUser(user).getTokenId();
         eventPublisher.publishEvent(new EmailUpdatedEvent(user, tokenId));
-    }
-
-    private Commerce findCommerceByIdOrThrowException(UUID commerceId) {
-        return commerceRepository.findByCommerceIdAndDeletedFalse(commerceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Commerce", "id", commerceId));
     }
 }
