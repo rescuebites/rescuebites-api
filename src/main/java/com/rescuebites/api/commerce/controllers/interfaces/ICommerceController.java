@@ -1,8 +1,14 @@
 package com.rescuebites.api.commerce.controllers.interfaces;
 
 import com.rescuebites.api.commerce.controllers.requests.CreateCommerceRequest;
+import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceCredentialsRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.responses.CommerceResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -33,4 +39,24 @@ public interface ICommerceController {
     @DeleteMapping("/{commerceId}")
     @ResponseStatus(NO_CONTENT)
     void deleteCommerce(@PathVariable UUID commerceId);
+
+    @PatchMapping("/{commerceId}/credentials")
+    @ResponseStatus(OK)
+    @Operation(
+            summary = "Actualizar credenciales de Mercado Pago",
+            description = "Permite al dueño del comercio actualizar su access token y webhook secret de Mercado Pago"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Credenciales actualizadas exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Credenciales inválidas"),
+            @ApiResponse(responseCode = "403", description = "No tienes permiso para actualizar este comercio"),
+            @ApiResponse(responseCode = "404", description = "Comercio no encontrado")
+    })
+    void updateCredentials(
+            @Parameter(description = "ID del comercio", required = true)
+            @PathVariable UUID commerceId,
+
+            @Parameter(description = "Nuevas credenciales de Mercado Pago", required = true)
+            @RequestBody @Valid UpdateCommerceCredentialsRequest request
+    );
 }
