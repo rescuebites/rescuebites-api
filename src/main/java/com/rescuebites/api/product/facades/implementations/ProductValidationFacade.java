@@ -17,10 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
 
 @Service
 @RequiredArgsConstructor
@@ -36,35 +33,37 @@ public class ProductValidationFacade implements IProductValidationFacade {
     }
 
     @Override
-    public Product findProductByIdAndCommerceIdOrThrowException(UUID productId, UUID commerceId) {
+    public Product findProductByIdAndCommerceIdOrThrowException(
+            UUID productId,
+            UUID commerceId
+    ) {
         return productRepository
                 .findByIdAndCommerceId(productId, commerceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
     }
 
     @Override
-    public void validateCategoryAndCondition(ProductCategory category, ProductCondition condition, Commerce commerce) {
+    public void validateCategoryAndCondition(
+            ProductCategory category,
+            ProductCondition condition,
+            Commerce commerce
+    ) {
 
-        Set<CommerceTypeEnum> commerceTypes = commerce.getCommerceTypes().stream()
+        // Obtengo el tipo de comercio principal
+        CommerceTypeEnum commerceType = commerce.getCommerceTypes()
+                .stream()
+                .findFirst()
                 .map(CommerceType::getName)
-                .collect(Collectors.toSet());
+                .orElseThrow(() -> new ValidationException("El comercio no tiene un tipo asignado"));
 
-        // Validar categoría
-        boolean categoryAllowed = commerceTypes.stream()
-                .anyMatch(category::isAllowedFor);
-
-        if (!categoryAllowed) {
+        if (!ProductCategory.getAllowedFor(commerceType).contains(category)) {
             throw new ValidationException(
                     String.format("La categoría '%s' no es válida para este tipo de comercio",
                             category.getDisplayName())
             );
         }
 
-        // Validar condición
-        boolean conditionAllowed = commerceTypes.stream()
-                .anyMatch(condition::isAllowedFor);
-
-        if (!conditionAllowed) {
+        if (!ProductCondition.getAllowedFor(commerceType).contains(condition)) {
             throw new ValidationException(
                     String.format("La condición '%s' no es válida para este tipo de comercio",
                             condition.getDisplayName())
@@ -95,6 +94,7 @@ public class ProductValidationFacade implements IProductValidationFacade {
     public void validateAtLeastOneFieldToUpdate(UpdateProductRequest request) {
         boolean hasAtLeastOneField = StringUtils.hasText(request.getName()) ||
                 StringUtils.hasText(request.getDescription()) ||
+                // Stock es válido si NO es null (incluyendo 0)
                 request.getStock() != null ||
                 request.getOriginalPrice() != null ||
                 request.getDiscountPercentage() != null ||

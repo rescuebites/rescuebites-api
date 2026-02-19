@@ -1,6 +1,7 @@
 package com.rescuebites.api.product.data.enums;
 
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
+import lombok.Getter;
 
 import java.util.EnumSet;
 
@@ -47,6 +48,7 @@ public enum ProductCategory {
     OTHER(EnumSet.allOf(CommerceTypeEnum.class), "Otro");
 
     private final EnumSet<CommerceTypeEnum> supportedCommerceTypes;
+    @Getter
     private final String displayName;
 
     ProductCategory(EnumSet<CommerceTypeEnum> supportedCommerceTypes, String displayName) {
@@ -56,10 +58,6 @@ public enum ProductCategory {
 
     public boolean isAllowedFor(CommerceTypeEnum commerceType) {
         return supportedCommerceTypes.contains(commerceType);
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 
     public static EnumSet<ProductCategory> getAllowedFor(CommerceTypeEnum commerceType) {

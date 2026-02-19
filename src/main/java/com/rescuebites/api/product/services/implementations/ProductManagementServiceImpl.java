@@ -14,6 +14,7 @@ import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,11 @@ public class ProductManagementServiceImpl implements IProductManagementService {
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {"activeProducts", "productsByCommerce", "productById",
+                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
+            allEntries = true
+    )
     public void createProduct(UUID commerceId, CreateProductRequest request, MultipartFile[] images) {
         Commerce commerce = productValidationFacade.findCommerceById(commerceId);
 
@@ -81,12 +87,18 @@ public class ProductManagementServiceImpl implements IProductManagementService {
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {"activeProducts", "productsByCommerce", "productById",
+                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
+            allEntries = true
+    )
     public void updateProduct(UUID commerceId, UUID productId, UpdateProductRequest request, MultipartFile[] images) {
         Product product = productValidationFacade.findProductByIdAndCommerceIdOrThrowException(productId, commerceId);
         SecurityUtils.validateOwnership(product.getCommerce().getUser().getEmail());
 
         productValidationFacade.validateAtLeastOneFieldToUpdate(request);
         productValidationFacade.validateExpirationDate(request.getExpirationDate());
+
         productValidationFacade.validateAndProcessCategoryConditionUpdate(
                 product,
                 request
@@ -96,6 +108,13 @@ public class ProductManagementServiceImpl implements IProductManagementService {
                 product.getImages(),
                 images
         );
+
+        if (request.getStock() != null &&
+            product.getStock() == 0 &&
+            request.getStock() > 0 &&
+            !product.getActive()) {
+            product.setActive(true);
+        }
 
         ProductMapper.updateProductFromRequest(
                 product, request,
@@ -109,6 +128,11 @@ public class ProductManagementServiceImpl implements IProductManagementService {
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {"activeProducts", "productsByCommerce", "productById",
+                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
+            allEntries = true
+    )
     public void activateProduct(UUID commerceId, UUID productId) {
         Product product = productValidationFacade.findProductByIdAndCommerceIdOrThrowException(productId, commerceId);
         SecurityUtils.validateOwnership(product.getCommerce().getUser().getEmail());
@@ -119,6 +143,11 @@ public class ProductManagementServiceImpl implements IProductManagementService {
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {"activeProducts", "productsByCommerce", "productById",
+                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
+            allEntries = true
+    )
     public void deactivateProduct(UUID commerceId, UUID productId) {
         Product product = productValidationFacade.findProductByIdAndCommerceIdOrThrowException(productId, commerceId);
         SecurityUtils.validateOwnership(product.getCommerce().getUser().getEmail());

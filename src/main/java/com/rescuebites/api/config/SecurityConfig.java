@@ -54,6 +54,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/clients/*").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/clients/*").hasRole("CLIENT")
 
+                        // CART (Solo clientes)
+                        .requestMatchers("/api/v1/clients/*/cart/**").hasRole("CLIENT")
+
+                        // ORDERS - Client
+                        .requestMatchers("/api/v1/clients/*/orders/**").hasRole("CLIENT")
+
                         // COMMERCES
                         // Crear comercio (público - después del registro)
                         .requestMatchers(HttpMethod.POST, "/api/v1/commerces").permitAll()
@@ -68,6 +74,11 @@ public class SecurityConfig {
 
                         // Operaciones del HOME del cliente
                         .requestMatchers(HttpMethod.GET,"/api/v1/public/**").permitAll()
+
+                        // PAYMENTS
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/orders/*/create-preference").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll() // Webhook de Mercado Pago
+                        .requestMatchers(HttpMethod.GET, "/api/v1/payments/**").permitAll() // URLs de retorno
 
                         .anyRequest().authenticated()
                 )

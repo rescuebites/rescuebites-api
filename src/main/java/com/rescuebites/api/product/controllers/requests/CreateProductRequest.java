@@ -55,10 +55,12 @@ public class CreateProductRequest{
         @Schema(description = "Estado/condición del producto", example = "RIPE")
         private ProductCondition condition;
 
+        @NotNull(message = "La fecha de vencimiento es obligatoria")
         @Future(message = "La fecha de vencimiento debe ser futura")
-        @Schema(description = "Fecha de vencimiento (opcional)", example = "2025-12-31")
+        @Schema(description = "Fecha de vencimiento", example = "2025-12-31")
         private LocalDate expirationDate;
 
+        @NotNull(message = "Las preferencias son obligatorias")
         @Schema(description = "Preferencias alimenticias")
         private List<PreferenceType> preferences = Collections.emptyList();
 }
