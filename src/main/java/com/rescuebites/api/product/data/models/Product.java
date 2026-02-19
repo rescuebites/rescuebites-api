@@ -7,11 +7,7 @@ import com.rescuebites.api.product.data.enums.ProductCategory;
 import com.rescuebites.api.product.data.enums.ProductCondition;
 import com.rescuebites.api.shared.Image;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -48,7 +44,7 @@ public class Product {
     private String description;
 
     @NotNull(message = "El stock es obligatorio")
-    @Positive(message = "El stock debe ser mayor a cero")
+    @PositiveOrZero(message = "El stock debe ser mayor a cero")
     private Integer stock;
 
     @NotNull(message = "El precio original es obligatorio")
