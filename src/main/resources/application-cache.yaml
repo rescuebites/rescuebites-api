@@ -1,0 +1,10 @@
+spring:
+  cache:
+    type: redis
+    redis:
+      time-to-live: ${REDIS_CACHE_TTL}  # 1 hora por defecto
+      key-prefix: "rescuebites:"
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+    database: ${REDIS_DATABASE}

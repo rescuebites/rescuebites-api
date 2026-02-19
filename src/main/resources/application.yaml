@@ -9,10 +9,11 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: ${DDL_AUTO}
     show-sql: true
+    open-in-view: false
 
   main:
     allow-bean-definition-overriding: true
@@ -29,14 +30,32 @@ spring:
           starttls:
             enable: true
 
+  cache:
+    type: simple
+
   profiles:
     active: ${SPRING_PROFILE:development}
+
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: false
+      rest:
+        page-parameter-name: page
+        size-parameter-name: size
+        sort-parameter-name: sort
 
 frontend:
   url: ${FRONTEND_URL}
 
 app:
   url: ${APP_URL}
+
+payment:
+  redirect:
+    success-url: ${PAYMENT_REDIRECT_SUCCESS_URL}
+    failure-url: ${PAYMENT_REDIRECT_FAILURE_URL}
+    pending-url: ${PAYMENT_REDIRECT_PENDING_URL}
 
 springdoc:
   api-docs:
@@ -45,3 +64,7 @@ springdoc:
     path: /swagger-ui.html
     enabled: true
   show-actuator: false
+
+logging:
+  level:
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR

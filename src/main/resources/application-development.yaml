@@ -1,6 +1,6 @@
 jwt:
-  secret: "GfH9j1/ZQ4g9cQh3PQV2mRupzP3vB6fJ4qFq1xTzp0A6qX6Jk9kBAQ=="
-  access-token-expiration: 3600000
+  secret: ${JWT_SECRET}
+  access-token-expiration: ${JWT_EXPIRATION}
 
 frontend:
   url: ${FRONTEND_URL}
@@ -13,3 +13,28 @@ cloudinary:
   cloud-name: ${CLOUD_NAME}
   api-key: ${CLOUD_API_KEY}
   api-secret: ${CLOUD_API_SECRET}
+
+notifications:
+  use-whatsapp: false
+  use-email: true
+
+mercadopago:
+  access-token: ${MERCADO_PAGO_ACCESS_TOKEN}
+  webhook-secret: ${MERCADO_PAGO_WEBHOOK_SECRET}
+  webhook-url: ${MERCADO_PAGO_WEBHOOK_URL}
+  # URL pública (ngrok) para redirecciones - Mercado Pago las requiere accesibles desde internet
+  success-url: ${MERCADO_PAGO_PUBLIC_URL}/api/v1/payments/success
+  failure-url: ${MERCADO_PAGO_PUBLIC_URL}/api/v1/payments/failure
+  pending-url: ${MERCADO_PAGO_PUBLIC_URL}/api/v1/payments/pending
+
+# URLs de redirección para el frontend después de los pagos
+payment:
+  redirect:
+    success-url: ${PAYMENT_REDIRECT_SUCCESS_URL}
+    failure-url: ${PAYMENT_REDIRECT_FAILURE_URL}
+    pending-url: ${PAYMENT_REDIRECT_PENDING_URL}
+
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID}
+  auth-token: ${TWILIO_AUTH_TOKEN}
+  whatsapp-from: ${TWILIO_WHATSAPP_FROM}
