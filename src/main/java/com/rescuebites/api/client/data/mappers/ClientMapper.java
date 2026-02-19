@@ -30,6 +30,7 @@ public class ClientMapper {
                 .lastName(request.getLastName())
                 .birthDate(request.getBirthDate())
                 .address(request.getAddress())
+                .phone(request.getPhone())
                 .user(user)
                 .preferences(preferences)
                 .image(image)
@@ -44,6 +45,7 @@ public class ClientMapper {
                 client.getBirthDate(),
                 toImageResponse(client.getImage()),
                 client.getAddress(),
+                client.getPhone(),
                 toUserResponse(client.getUser()),
                 client.getPreferences()
         );
@@ -66,6 +68,9 @@ public class ClientMapper {
         }
         if (request.getAddress() != null) {
             client.setAddress(request.getAddress());
+        }
+        if(request.getPhone() != null){
+            client.setPhone(request.getPhone());
         }
         if (preferences != null && !preferences.isEmpty()) {
             client.setPreferences(preferences);
