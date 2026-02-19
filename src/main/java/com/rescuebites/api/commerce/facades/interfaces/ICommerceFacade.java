@@ -1,14 +1,19 @@
 package com.rescuebites.api.commerce.facades.interfaces;
 
-import com.rescuebites.api.client.controllers.requests.UpdateClientRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
+import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.users.data.models.User;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface ICommerceFacade {
+
+    Commerce findCommerceByIdOrThrowException(UUID commerceId);
+
+    void validateCommerceOwnership(UUID commerceId);
 
     void ifCommerceNameAlreadyExistsThrowException(String name);
 
