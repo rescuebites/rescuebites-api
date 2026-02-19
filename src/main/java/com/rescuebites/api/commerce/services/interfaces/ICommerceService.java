@@ -16,4 +16,6 @@ public interface ICommerceService {
     void updateCommerce(UUID commerceId, UpdateCommerceRequest updateCommerceRequest, MultipartFile[] images);
 
     void deleteCommerce(UUID commerceId);
+
+    void updateCommerceCredentials(UUID commerceId, com.rescuebites.api.commerce.controllers.requests.UpdateCommerceCredentialsRequest request);
 }
