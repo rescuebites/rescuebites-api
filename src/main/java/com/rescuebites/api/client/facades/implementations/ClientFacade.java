@@ -1,7 +1,10 @@
 package com.rescuebites.api.client.facades.implementations;
 
 import com.rescuebites.api.client.controllers.requests.UpdateClientRequest;
+import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.facades.interfaces.IClientFacade;
+import com.rescuebites.api.client.repositories.IClientRepository;
+import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
@@ -14,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class ClientFacade implements IClientFacade {
@@ -22,6 +27,13 @@ public class ClientFacade implements IClientFacade {
     private final IImageFacade imageFacade;
     private final ITokenService tokenService;
     private final PasswordEncoder passwordEncoder;
+    private final IClientRepository clientRepository;
+
+    @Override
+    public Client findClientByIdOrThrowException(UUID clientId) {
+        return clientRepository.findByClientIdAndDeletedFalse(clientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Client", "id", clientId));
+    }
 
     @Override
     public Image processProfilePictureForCreation(MultipartFile profilePicture, String defaultProfilePictureUrl) {

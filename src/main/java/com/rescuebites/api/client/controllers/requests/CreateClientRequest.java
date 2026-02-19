@@ -4,6 +4,7 @@ import com.rescuebites.api.client.data.enums.PreferenceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +31,13 @@ public class CreateClientRequest {
 
         @NotBlank(message = "La dirección es obligatoria")
         private String address;
+
+        @NotBlank(message = "El teléfono es obligatorio")
+        @Pattern(
+                regexp = "^\\+54(9)?[0-9]{10}$",
+                message = "El número de celular debe tener el formato válido argentino, ej: +549XXXXXXXX"
+        )
+        private String phone;
 
         @NotNull(message = "El usuario es obligatorio")
         private UUID userId;

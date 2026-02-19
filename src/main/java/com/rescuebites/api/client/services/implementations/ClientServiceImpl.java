@@ -8,7 +8,6 @@ import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.facades.interfaces.IClientFacade;
 import com.rescuebites.api.client.repositories.IClientRepository;
 import com.rescuebites.api.client.services.interfaces.IClientService;
-import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
 import com.rescuebites.api.security.utils.SecurityUtils;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.users.data.models.User;
@@ -43,7 +42,6 @@ public class ClientServiceImpl implements IClientService {
     @Transactional
     public void createClient(CreateClientRequest createClientRequest, MultipartFile profilePicture) {
         User user = userService.findByIdOrThrowException(createClientRequest.getUserId());
-        SecurityUtils.validateOwnership(user.getEmail());
 
         Image image = clientFacade.processProfilePictureForCreation(profilePicture, defaultProfilePictureUrl);
         Client client = ClientMapper.toClient(createClientRequest, user, createClientRequest.getPreferences(), image);
@@ -52,7 +50,7 @@ public class ClientServiceImpl implements IClientService {
 
     @Override
     public ClientResponse getClientById(UUID clientId) {
-        Client client = findClientByIdOrThrowException(clientId);
+        Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
 
         return ClientMapper.toClientResponse(client);
@@ -61,7 +59,7 @@ public class ClientServiceImpl implements IClientService {
     @Override
     @Transactional
     public void updateClient(UUID clientId, UpdateClientRequest updateClientRequest, MultipartFile profilePicture) {
-        Client client = findClientByIdOrThrowException(clientId);
+        Client client = clientFacade.findClientByIdOrThrowException(clientId);
         User user = client.getUser();
         SecurityUtils.validateOwnership(user.getEmail());
 
@@ -83,7 +81,7 @@ public class ClientServiceImpl implements IClientService {
     @Override
     @Transactional
     public void deleteClient(UUID clientId) {
-        Client client = findClientByIdOrThrowException(clientId);
+        Client client = clientFacade.findClientByIdOrThrowException(clientId);
         User user = client.getUser();
         SecurityUtils.validateOwnership(user.getEmail());
 
@@ -100,11 +98,6 @@ public class ClientServiceImpl implements IClientService {
 
         tokenService.deleteTokensByUser(user);
         clientRepository.save(client);
-    }
-
-    private Client findClientByIdOrThrowException(UUID clientId) {
-        return clientRepository.findByClientIdAndDeletedFalse(clientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Client", "id", clientId));
     }
 
     private void sendEmailChangeConfirmation(User user) {
