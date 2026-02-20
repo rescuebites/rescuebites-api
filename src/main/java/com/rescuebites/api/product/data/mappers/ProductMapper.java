@@ -42,6 +42,10 @@ public class ProductMapper {
                 product.getProductId(),
                 product.getCommerce().getCommerceId(),
                 product.getCommerce().getName(),
+                product.getCommerce().getImages().stream()
+                        .map(ImageMapper::toImageResponse)
+                        .collect(Collectors.toList()),
+                product.getCommerce().getOpeningHours(),
                 product.getName(),
                 product.getDescription(),
                 product.getStock(),
