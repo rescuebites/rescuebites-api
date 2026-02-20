@@ -47,7 +47,6 @@ public class CommerceMapper {
 
     public static CommerceResponse toCommerceResponse(Commerce commerce) {
         return new CommerceResponse(
-                commerce.getCommerceId(),
                 commerce.getName(),
                 commerce.getDescription(),
                 commerce.getCommerceTypes().stream()
@@ -59,8 +58,7 @@ public class CommerceMapper {
                 commerce.getPhone(),
                 commerce.getImages().stream()
                         .map(ImageMapper::toImageResponse)
-                        .collect(Collectors.toList()),
-                toUserResponse(commerce.getUser())
+                        .collect(Collectors.toList())
         );
     }
 

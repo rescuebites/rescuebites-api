@@ -21,6 +21,8 @@ public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
 
     boolean existsByNameAndDeletedFalse(String name);
 
+    Page<Commerce> findByDeletedFalse(Pageable pageable);
+
     @Query("SELECT DISTINCT c FROM commerces c " +
             "JOIN c.commerceTypes ct " +
             "WHERE ct.name = :commerceType AND c.deleted = false")

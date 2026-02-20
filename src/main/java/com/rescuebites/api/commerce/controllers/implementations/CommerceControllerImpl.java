@@ -24,11 +24,6 @@ public class CommerceControllerImpl implements ICommerceController {
     }
 
     @Override
-    public CommerceResponse getCommerceById(UUID commerceId) {
-        return commerceService.getCommerceById(commerceId);
-    }
-
-    @Override
     public void updateCommerce(UUID commerceId, UpdateCommerceRequest updateCommerceRequest, MultipartFile[] images) {
         commerceService.updateCommerce(commerceId, updateCommerceRequest, images);
     }
