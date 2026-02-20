@@ -3,7 +3,6 @@ package com.rescuebites.api.commerce.controllers.interfaces;
 import com.rescuebites.api.commerce.controllers.requests.CreateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceCredentialsRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
-import com.rescuebites.api.commerce.controllers.responses.CommerceResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -25,10 +24,6 @@ public interface ICommerceController {
     @ResponseStatus(CREATED)
     void createCommerce(@RequestPart("commerce") @Valid CreateCommerceRequest createCommerceRequest,
                         @RequestPart("images") MultipartFile[] images);
-
-    @GetMapping("/{commerceId}")
-    @ResponseStatus(OK)
-    CommerceResponse getCommerceById(@PathVariable UUID commerceId);
 
     @PatchMapping(value = "/{commerceId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(OK)

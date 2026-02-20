@@ -23,6 +23,12 @@ public record ProductResponse(
         @Schema(description = "Nombre del comercio")
         String commerceName,
 
+        @Schema(description = "Imágenes del comercio")
+        List<ImageResponse> commerceImages,
+
+        @Schema(description = "Horario de apertura del comercio")
+        String commerceOpeningHours,
+
         @Schema(description = "Nombre del producto")
         String name,
 
@@ -54,7 +60,7 @@ public record ProductResponse(
         LocalDate expirationDate,
 
         @Schema(description = "URLs de las imágenes del producto")
-        List<ImageResponse> images,
+        List<ImageResponse> productImages,
 
         @Schema(description = "Indica si el producto está activo")
         Boolean active,

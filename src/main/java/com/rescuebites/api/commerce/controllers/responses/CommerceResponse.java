@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.UUID;
 
 public record CommerceResponse(
-        UUID commerceId,
         String name,
         String description,
         List<CommerceTypeEnum> commerceTypes,
@@ -16,6 +15,5 @@ public record CommerceResponse(
         String address,
         String locality,
         String phone,
-        List<ImageResponse> images,
-        UserResponse user
+        List<ImageResponse> images
 ) {}

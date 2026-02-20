@@ -72,8 +72,11 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST,"/api/v1/commerces/*/products").hasRole("COMMERCE")
 
-                        // Operaciones del HOME del cliente
-                        .requestMatchers(HttpMethod.GET,"/api/v1/public/**").permitAll()
+                        // Operaciones del HOME del cliente (Públicas)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/type/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/**").permitAll()
 
                         // PAYMENTS
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/orders/*/create-preference").hasRole("CLIENT")

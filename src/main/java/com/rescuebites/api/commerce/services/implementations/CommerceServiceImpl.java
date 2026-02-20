@@ -56,14 +56,6 @@ public class CommerceServiceImpl implements ICommerceService {
     }
 
     @Override
-    public CommerceResponse getCommerceById(UUID commerceId) {
-        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
-        SecurityUtils.validateOwnership(commerce.getUser().getEmail());
-
-        return CommerceMapper.toCommerceResponse(commerce);
-    }
-
-    @Override
     @Transactional
     public void updateCommerce(UUID commerceId, UpdateCommerceRequest updateCommerceRequest, MultipartFile[] images) {
         Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);

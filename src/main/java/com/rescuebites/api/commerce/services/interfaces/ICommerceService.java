@@ -11,8 +11,6 @@ public interface ICommerceService {
 
     void createCommerce(CreateCommerceRequest createCommerceRequest, MultipartFile[] images);
 
-    CommerceResponse getCommerceById(UUID commerceId);
-
     void updateCommerce(UUID commerceId, UpdateCommerceRequest updateCommerceRequest, MultipartFile[] images);
 
     void deleteCommerce(UUID commerceId);
