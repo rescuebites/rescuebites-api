@@ -53,9 +53,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/clients/*").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/clients/*").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/clients/*").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/clients/*/search").hasRole("CLIENT")
 
                         // CART (Solo clientes)
                         .requestMatchers("/api/v1/clients/*/cart/**").hasRole("CLIENT")
+
+                        // PRODUCTS - Client (preferencias)
+                        .requestMatchers("/api/v1/clients/*/products/**").hasRole("CLIENT")
 
                         // ORDERS - Client
                         .requestMatchers("/api/v1/clients/*/orders/**").hasRole("CLIENT")
@@ -77,6 +81,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/type/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/**").permitAll()
+
+                        // SEARCH (Búsqueda pública)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/search/*").permitAll()
 
                         // PAYMENTS
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/orders/*/create-preference").hasRole("CLIENT")

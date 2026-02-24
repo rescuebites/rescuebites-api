@@ -65,8 +65,11 @@ public class Product {
     @Column(name = "product_condition", nullable = false)
     private ProductCondition condition;
 
+    @ElementCollection(targetClass = PreferenceType.class, fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    private List<PreferenceType> preferenceType;
+    @CollectionTable(name = "product_preferences", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "preference_type")
+    private List<PreferenceType> preferenceType = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private CommerceTypeEnum commerceType;
