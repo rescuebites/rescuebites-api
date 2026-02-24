@@ -57,6 +57,9 @@ public class SecurityConfig {
                         // CART (Solo clientes)
                         .requestMatchers("/api/v1/clients/*/cart/**").hasRole("CLIENT")
 
+                        // PRODUCTS - Client (preferencias)
+                        .requestMatchers("/api/v1/clients/*/products/**").hasRole("CLIENT")
+
                         // ORDERS - Client
                         .requestMatchers("/api/v1/clients/*/orders/**").hasRole("CLIENT")
 

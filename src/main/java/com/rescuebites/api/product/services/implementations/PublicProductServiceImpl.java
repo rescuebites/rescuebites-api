@@ -18,9 +18,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-/**
- * Servicio público de consulta de productos para clientes
- */
 @Service
 @RequiredArgsConstructor
 public class PublicProductServiceImpl implements IPublicProductService {
@@ -56,10 +53,8 @@ public class PublicProductServiceImpl implements IPublicProductService {
     )
     @Transactional
     public Page<ProductResponse> getActiveProductsByCommerce(UUID commerceId, Pageable pageable) {
-
         validationFacade.validateCommerceExists(commerceId);
         Page<Product> products = productRepository.findActiveByCommerceId(commerceId, pageable);
-
         return products.map(ProductMapper::toProductResponse);
     }
 

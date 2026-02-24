@@ -2,7 +2,6 @@ package com.rescuebites.api.client.repositories;
 
 import com.rescuebites.api.client.data.models.Client;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Optional;
 import java.util.UUID;
 

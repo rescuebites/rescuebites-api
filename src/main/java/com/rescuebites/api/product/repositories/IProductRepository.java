@@ -1,5 +1,6 @@
 package com.rescuebites.api.product.repositories;
 
+import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.product.data.models.Product;
 import org.springframework.data.domain.Page;
@@ -9,13 +10,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface IProductRepository extends JpaRepository<Product, UUID> {
 
-    // Queries para el dueño del comercio (ve todos los productos, activos e inactivos)
+    /*
+    Queries para el dueño del comercio (ve todos los productos, activos e inactivos)
+     */
+
     @Query("SELECT p FROM products p WHERE p.commerce.commerceId = :commerceId")
     Page<Product> findByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
 
@@ -25,7 +30,10 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
             @Param("commerceId") UUID commerceId
     );
 
-    // Queries para clientes (solo productos activos)
+    /*
+     Queries para el home (solo productos activos)
+     */
+
     @Query("SELECT p FROM products p WHERE p.active = true")
     Page<Product> findAllActive(Pageable pageable);
 
@@ -43,6 +51,92 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
             "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
     Page<Product> findActiveByCommerceTypeOrderByDiscountedPriceAsc(
             @Param("commerceType") CommerceTypeEnum commerceType,
+            Pageable pageable
+    );
+
+    /*
+    Queries para filtrar productos según las preferencias del cliente
+     */
+
+    @Query("SELECT DISTINCT p FROM products p " +
+            "WHERE p.active = true " +
+            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0 " +
+            "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
+    Page<Product> findActiveProductsWithPreferences(
+            @Param("preferences") List<PreferenceType> preferences,
+            Pageable pageable
+    );
+
+    /*
+     Queries para búsqueda optimizada (barra de búsqueda)
+     */
+
+    @Query("SELECT p FROM products p WHERE p.active = true " +
+            "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+            "ORDER BY CASE " +
+            "  WHEN LOWER(p.name) LIKE LOWER(CONCAT(:query, '%')) THEN 0 " +
+            "  ELSE 1 " +
+            "END, p.name ASC")
+    Page<Product> findActiveByNameContaining(
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    @Query("SELECT p FROM products p WHERE p.active = true " +
+            "AND (LOWER(p.description) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+            "AND p.productId NOT IN (SELECT p2.productId FROM products p2 WHERE LOWER(p2.name) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<Product> findActiveByDescriptionContainingExcludingName(
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    @Query("SELECT p FROM products p WHERE p.active = true " +
+            "AND p.commerce.commerceId IN (SELECT c.commerceId FROM commerces c " +
+            "WHERE c.deleted = false AND LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<Product> findActiveByCommerceName(
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    /*
+        Queries para productos filtrados por preferencias del cliente (registrado o logueado)
+     */
+
+    @Query("SELECT p FROM products p WHERE p.active = true " +
+            "AND p.commerce.commerceId = :commerceId " +
+            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0")
+    List<Product> findActiveByCommerceWithPreferences(
+            @Param("commerceId") UUID commerceId,
+            @Param("preferences") List<PreferenceType> preferences
+    );
+
+    @Query("SELECT DISTINCT p FROM products p " +
+            "WHERE p.active = true " +
+            "AND p.commerce.commerceId = :commerceId " +
+            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0")
+    Page<Product> findActiveByCommerceIdWithPreferences(
+            @Param("commerceId") UUID commerceId,
+            @Param("preferences") List<PreferenceType> preferences,
+            Pageable pageable
+    );
+
+    @Query("SELECT DISTINCT p FROM products p " +
+            "WHERE p.active = true " +
+            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0 " +
+            "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
+    Page<Product> findActiveProductsWithPreferencesOrderByPrice(
+            @Param("preferences") List<PreferenceType> preferences,
+            Pageable pageable
+    );
+
+    @Query("SELECT DISTINCT p FROM products p " +
+            "WHERE p.active = true " +
+            "AND p.commerceType = :commerceType " +
+            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0 " +
+            "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
+    Page<Product> findActiveByCommerceTypeWithPreferencesOrderByPrice(
+            @Param("commerceType") CommerceTypeEnum commerceType,
+            @Param("preferences") List<PreferenceType> preferences,
             Pageable pageable
     );
 }
