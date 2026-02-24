@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
-@RequestMapping("/api/v1/commerce/{commerceId}/products")
+@RequestMapping("/api/v1/commerces/{commerceId}/products")
 @Tag(name = "Products", description = "Gestión de productos del comercio")
 public interface IProductManagementController {
 
@@ -47,33 +47,25 @@ public interface IProductManagementController {
     );
 
     @GetMapping
-    @Operation(summary = "Listar productos del comercio")
+    @Operation(summary = "Listar productos del comercio (activo o inactivo)")
     Page<ProductResponse> getProductsByCommerce(
             @PathVariable UUID commerceId,
             Pageable pageable
     );
 
     @GetMapping("/{productId}")
-    @Operation(summary = "Obtener detalle de un producto")
+    @Operation(summary = "Obtener detalle de un producto (activo o inactivo)")
     ProductResponse getProduct(
             @PathVariable UUID commerceId,
             @PathVariable UUID productId
     );
 
-    @PutMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Actualizar un producto")
     void updateProduct(@PathVariable UUID commerceId,
                        @PathVariable UUID productId,
                        @RequestPart("product") @Valid UpdateProductRequest request,
                        @RequestPart(value = "images", required = false) MultipartFile[] images);
-
-    @DeleteMapping("/{productId}")
-    @ResponseStatus(NO_CONTENT)
-    @Operation(summary = "Eliminar producto")
-    void deleteProduct(
-            @PathVariable UUID commerceId,
-            @PathVariable UUID productId
-    );
 
     @PatchMapping("/{productId}/activate")
     @ResponseStatus(NO_CONTENT)
@@ -85,7 +77,7 @@ public interface IProductManagementController {
 
     @PatchMapping("/{productId}/deactivate")
     @ResponseStatus(NO_CONTENT)
-    @Operation(summary = "Desactivar producto")
+    @Operation(summary = "Desactivar / eliminar producto")
     void deactivateProduct(
             @PathVariable UUID commerceId,
             @PathVariable UUID productId

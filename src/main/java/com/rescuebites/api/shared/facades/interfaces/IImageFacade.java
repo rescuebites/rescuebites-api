@@ -11,8 +11,6 @@ public interface IImageFacade {
 
     void ifProfilePictureIsNotJpgOrPngThrowException(String contentType);
 
-    void ifProfilePictureIsMissingThrowException(MultipartFile multipartFile);
-
     Image uploadAndSaveImage(MultipartFile multipartFile);
 
     List<Image> uploadAndSaveImages(MultipartFile[] files);
@@ -34,4 +32,8 @@ public interface IImageFacade {
      * @throws ValidationException si las imágenes no son válidas
      */
     List<Image> processAndUpdateImages(List<Image> currentImages, MultipartFile[] newImages);
+
+    Image replaceImage(Image currentImage, MultipartFile newImage);
+
+    List<Image> processImagesIfProvided(List<Image> currentImages, MultipartFile[] newImages);
 }

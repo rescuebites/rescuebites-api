@@ -6,6 +6,7 @@ import com.rescuebites.api.users.data.models.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,6 +44,13 @@ public class Client {
     @NotBlank(message = "La dirección es obligatoria")
     private String address;
 
+    @NotBlank(message = "El teléfono es obligatorio")
+    @Pattern(
+            regexp = "^\\+54(9)?[0-9]{10}$",
+            message = "El número de celular debe tener el formato válido argentino"
+    )
+    private String phone;
+
     @OneToOne
     @JoinColumn(name = "userId", nullable = false)
     private User user;
@@ -53,6 +61,8 @@ public class Client {
 
     @Builder.Default
     private boolean deleted = false;
+
+    private LocalDateTime updatedAt;
 
     private LocalDateTime deletedAt;
 

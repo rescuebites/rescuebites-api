@@ -23,27 +23,27 @@ public class EmailServiceImpl implements IEmailService {
     private final EmailBuilder emailBuilder;
 
     @Override
-    public void sendConfirmAccountEmail(String to, User user, UUID token) {
+    public void sendConfirmAccountEmail(User user, UUID token) {
         String htmlContent = emailBuilder.buildConfirmAccount(user, token);
-        sendEmail(to, "Confirm your registration ✔", htmlContent);
+        sendEmail(user.getEmail(),"Confirm your registration ✔", htmlContent);
     }
 
     @Override
-    public void sendResendConfirmAccountEmail(String to, User user, UUID token) {
+    public void sendResendConfirmAccountEmail(User user, UUID token) {
         String htmlContent = emailBuilder.buildResendConfirmAccount(user, token);
-        sendEmail(to, "Confirm your registration ✔", htmlContent);
+        sendEmail(user.getEmail(), "Confirm your registration ✔", htmlContent);
     }
 
     @Override
-    public void sendResetPasswordEmail(String to, String email, UUID token) {
+    public void sendResetPasswordEmail(String email, UUID token) {
         String htmlContent = emailBuilder.buildResetPassword(email, token);
-        sendEmail(to, "Reset your password ✔", htmlContent);
+        sendEmail(email, "Reset your password ✔", htmlContent);
     }
 
     @Override
-    public void sendEmailUpdatedConfirmationEmail(String to, String fullName, User user, UUID token) {
-        String htmlContent = emailBuilder.buildEmailUpdatedConfirmation(fullName, user, token);
-        sendEmail(to, "Email actualizado ✔", htmlContent);
+    public void sendEmailUpdatedConfirmationEmail(User user, UUID token) {
+        String htmlContent = emailBuilder.buildEmailUpdatedConfirmation(user, token);
+        sendEmail(user.getEmail(), "Email actualizado ✔", htmlContent);
     }
 
     private void sendEmail(String to, String subject, String htmlContent) {
@@ -58,7 +58,7 @@ public class EmailServiceImpl implements IEmailService {
 
             javaMailSender.send(message);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send email to " + to, e);
+            throw new RuntimeException("Failed to send email", e);
         }
     }
 }

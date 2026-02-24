@@ -1,23 +1,22 @@
 package com.rescuebites.api.product.data.models;
 
+import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.product.data.enums.ProductCategory;
 import com.rescuebites.api.product.data.enums.ProductCondition;
 import com.rescuebites.api.shared.Image;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -45,7 +44,7 @@ public class Product {
     private String description;
 
     @NotNull(message = "El stock es obligatorio")
-    @Positive(message = "El stock debe ser mayor a cero")
+    @PositiveOrZero(message = "El stock debe ser mayor a cero")
     private Integer stock;
 
     @NotNull(message = "El precio original es obligatorio")
@@ -67,7 +66,10 @@ public class Product {
     private ProductCondition condition;
 
     @Enumerated(EnumType.STRING)
-    private CommerceTypeEnum commerceType; // DÓNDE se vende
+    private List<PreferenceType> preferenceType;
+
+    @Enumerated(EnumType.STRING)
+    private CommerceTypeEnum commerceType;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinTable(
@@ -82,12 +84,16 @@ public class Product {
     @Column(nullable = false)
     private Boolean active = true;
 
+    private LocalDateTime updateAt;
+
     public BigDecimal getDiscountedPrice() {
         if (originalPrice == null || discountPercentage == null) {
             return BigDecimal.ZERO;
         }
-        BigDecimal discountFactor = discountPercentage.divide(BigDecimal.valueOf(100));
-        return originalPrice.subtract(originalPrice.multiply(discountFactor));
+        BigDecimal discountFactor = discountPercentage.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+        BigDecimal discountedPrice = originalPrice.subtract(originalPrice.multiply(discountFactor));
+
+        return discountedPrice.setScale(2, RoundingMode.HALF_UP);
     }
 }
 

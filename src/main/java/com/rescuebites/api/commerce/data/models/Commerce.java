@@ -5,7 +5,6 @@ import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.users.data.models.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -13,6 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -37,12 +37,10 @@ public class Commerce {
     @Column(nullable = false)
     private String name;
 
-    @NotBlank(message = "La descripción es obligatoria")
-    @Size(min = 1, max = 255, message = "La descripción debe tener entre 1 y 255 caracteres")
+    @Size(max = 255, message = "La descripción debe tener entre 1 y 255 caracteres")
     private String description;
 
-    @NotEmpty(message = "El tipo de comercio es obligatorio")
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "commerce_commerce_types",
             joinColumns = @JoinColumn(name = "commerce_id"),
@@ -59,19 +57,33 @@ public class Commerce {
     @Column(nullable = false)
     private String address;
 
+    @NotBlank(message = "La localidad es obligatoria")
+    @Column(nullable = false)
+    private String locality;
+
     @NotBlank(message = "El teléfono es obligatorio")
     @Pattern(
             regexp = "^\\+54(9)?[0-9]{10}$",
-            message = "El número de celular debe tener el formato válido argentino, ej: +54911XXXXXXXX"
+            message = "El número de celular debe tener el formato válido argentino"
     )
     private String phone;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "image_id", referencedColumnName = "imageId")
-    private Image image;
+    @Column(name = "mercado_pago_access_token")
+    private String mercadoPagoAccessToken;
+
+    @Column(name = "mercado_pago_webhook_secret")
+    private String mercadoPagoWebhookSecret;
+
+    @OneToMany(mappedBy = "commerce", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Image> images = new ArrayList<>();
 
     @Builder.Default
-    private boolean active = false;
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
+
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "commerce", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

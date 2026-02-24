@@ -1,6 +1,8 @@
 package com.rescuebites.api.shared;
 
 import com.rescuebites.api.client.data.models.Client;
+import com.rescuebites.api.commerce.data.models.Commerce;
+import com.rescuebites.api.product.data.models.Product;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,4 +28,12 @@ public class Image {
 
     @OneToOne(mappedBy = "image")
     private Client client;
+
+    @ManyToOne
+    @JoinColumn(name = "commerce_id")
+    private Commerce commerce;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
 }

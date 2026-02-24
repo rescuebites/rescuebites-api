@@ -1,5 +1,6 @@
 package com.rescuebites.api.product.repositories;
 
+import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.product.data.models.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,8 +19,6 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
     @Query("SELECT p FROM products p WHERE p.commerce.commerceId = :commerceId")
     Page<Product> findByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
 
-    //Optional<Product> findByProductIdAndCommerceCommerceId(UUID productId, UUID commerceId);
-
     @Query("SELECT p FROM products p WHERE p.productId = :productId AND p.commerce.commerceId = :commerceId")
     Optional<Product> findByIdAndCommerceId(
             @Param("productId") UUID productId,
@@ -35,4 +34,15 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
 
     @Query("SELECT p FROM products p WHERE p.commerce.commerceId = :commerceId AND p.active = true")
     Page<Product> findActiveByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
+
+    @Query("SELECT p FROM products p WHERE p.active = true ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
+    Page<Product> findAllActiveOrderByDiscountedPriceAsc(Pageable pageable);
+
+    @Query("SELECT p FROM products p " +
+            "WHERE p.active = true AND p.commerceType = :commerceType " +
+            "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
+    Page<Product> findActiveByCommerceTypeOrderByDiscountedPriceAsc(
+            @Param("commerceType") CommerceTypeEnum commerceType,
+            Pageable pageable
+    );
 }

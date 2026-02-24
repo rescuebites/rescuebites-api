@@ -9,6 +9,7 @@ import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -31,29 +32,24 @@ public class ImageFacade implements IImageFacade {
     @Override
     public void ifProfilePictureExceedsMaximumSizeThrowException(MultipartFile multipartFile) {
         if (multipartFile.getSize() > MAXIMUM_FILE_SIZE) {
-            throw new IllegalArgumentException("La foto no debe superar los 2MB");
+            throw new ValidationException("La foto no debe superar los 2MB");
         }
     }
 
     @Override
     public void ifProfilePictureIsNotJpgOrPngThrowException(String contentType) {
         if (!("image/jpeg".equals(contentType) || "image/png".equals(contentType))) {
-            throw new IllegalArgumentException("La foto debe estar en formato JPG o PNG");
-        }
-    }
-
-    @Override
-    public void ifProfilePictureIsMissingThrowException(MultipartFile multipartFile) {
-        if (multipartFile == null || multipartFile.isEmpty()) {
-            throw new IllegalArgumentException("Debe carga al menos una foto");
+            throw new ValidationException("La foto debe estar en formato JPG o PNG");
         }
     }
 
     @Override
     public Image uploadAndSaveImage(MultipartFile multipartFile) {
-        try{
-            Map<String, Object> uploadResult = cloudinary.uploader().upload(multipartFile.getBytes(),
-                    ObjectUtils.asMap("folder", "uploads"));
+        try {
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(
+                    multipartFile.getBytes(),
+                    ObjectUtils.asMap("folder", "uploads")
+            );
 
             return Image.builder()
                     .imageId(UUID.randomUUID())
@@ -75,6 +71,10 @@ public class ImageFacade implements IImageFacade {
 
     @Override
     public void deleteImage(String publicId) {
+        if (!StringUtils.hasText(publicId)) {
+            return; // Si no tiene publicId (imagen default), no hacer nada
+        }
+
         try {
             cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
             imageRepository.deleteByPublicId(publicId);
@@ -85,7 +85,8 @@ public class ImageFacade implements IImageFacade {
 
     @Override
     public void validateImages(MultipartFile[] images) {
-        if (images == null || images.length == 0) {
+        if (images == null || images.length == 0 ||
+                Arrays.stream(images).allMatch(img -> img == null || img.isEmpty())) {
             throw new ValidationException(
                     String.format("Debe cargar al menos %d imagen", MIN_IMAGES)
             );
@@ -99,7 +100,7 @@ public class ImageFacade implements IImageFacade {
 
         Arrays.stream(images).forEach(image -> {
             if (image == null || image.isEmpty()) {
-                throw new ValidationException("Todas las imágenes del producto deben ser válidas");
+                throw new ValidationException("Todas las imágenes deben ser válidas");
             }
             ifProfilePictureExceedsMaximumSizeThrowException(image);
             ifProfilePictureIsNotJpgOrPngThrowException(image.getContentType());
@@ -110,11 +111,49 @@ public class ImageFacade implements IImageFacade {
     public List<Image> processAndUpdateImages(List<Image> currentImages, MultipartFile[] newImages) {
         validateImages(newImages);
 
-        // Eliminar imágenes antiguas de Cloudinary
+        // Subir nuevas primero (si falla, no perdemos las anteriores)
+        List<Image> uploadedImages = uploadAndSaveImages(newImages);
+
+        // Borrar anteriores solo si la subida fue exitosa
         if (currentImages != null && !currentImages.isEmpty()) {
-            currentImages.forEach(image -> deleteImage(image.getPublicId()));
+            List<String> publicIdsToDelete = currentImages.stream()
+                    .filter(image -> StringUtils.hasText(image.getPublicId()))
+                    .map(Image::getPublicId)
+                    .toList();
+
+            currentImages.clear();
+            publicIdsToDelete.forEach(this::deleteImage);
         }
 
-        return uploadAndSaveImages(newImages);
+        return uploadedImages;
+    }
+
+    @Override
+    public Image replaceImage(Image currentImage, MultipartFile newImage) {
+        if (newImage == null || newImage.isEmpty()) {
+            return currentImage;
+        }
+
+        ifProfilePictureIsNotJpgOrPngThrowException(newImage.getContentType());
+        ifProfilePictureExceedsMaximumSizeThrowException(newImage);
+
+        // Subir nueva primero (si falla, no perdemos la anterior)
+        Image uploadedImage = uploadAndSaveImage(newImage);
+
+        // Borrar anterior solo si la subida fue exitosa
+        if (currentImage != null && StringUtils.hasText(currentImage.getPublicId())) {
+            deleteImage(currentImage.getPublicId());
+        }
+
+        return uploadedImage;
+    }
+
+    @Override
+    public List<Image> processImagesIfProvided(List<Image> currentImages, MultipartFile[] newImages) {
+        if (newImages == null || newImages.length == 0) {
+            return currentImages;
+        }
+
+        return processAndUpdateImages(currentImages, newImages);
     }
 }

@@ -6,5 +6,6 @@ public enum PreferenceType {
     VEGETARIAN,
     GLUTEN_FREE,
     LACTOSE_FREE,
-    LOW_SODIUM
+    LOW_SODIUM,
+    OTHER
 }

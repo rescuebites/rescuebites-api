@@ -1,6 +1,6 @@
 package com.rescuebites.api.product.controllers.responses;
 
-import com.rescuebites.api.commerce.controllers.responses.CommerceBasicResponse;
+import com.rescuebites.api.commerce.controllers.responses.CommerceResponse;
 import com.rescuebites.api.product.data.enums.ProductCategory;
 import com.rescuebites.api.product.data.enums.ProductCondition;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,7 +17,7 @@ public record ProductDetailResponse(
         UUID productId,
 
         @Schema(description = "Información del comercio")
-        CommerceBasicResponse commerce,
+        CommerceResponse commerce,
 
         @Schema(description = "Nombre del producto")
         String name,

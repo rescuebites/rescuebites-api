@@ -1,26 +1,26 @@
 package com.rescuebites.api.product.services.implementations;
 
 import com.rescuebites.api.commerce.data.models.Commerce;
-import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
 import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
 import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
-import com.rescuebites.api.product.data.enums.ProductCategory;
-import com.rescuebites.api.product.data.enums.ProductCondition;
 import com.rescuebites.api.product.data.mappers.ProductMapper;
 import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.product.facades.interfaces.IProductValidationFacade;
 import com.rescuebites.api.product.repositories.IProductRepository;
 import com.rescuebites.api.product.services.interfaces.IProductManagementService;
+import com.rescuebites.api.security.utils.SecurityUtils;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,22 +30,35 @@ public class ProductManagementServiceImpl implements IProductManagementService {
 
     private final IProductRepository productRepository;
     private final IImageFacade imageFacade;
-    private final IProductValidationFacade validationFacade;
+    private final IProductValidationFacade productValidationFacade;
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {"activeProducts", "productsByCommerce", "productById",
+                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
+            allEntries = true
+    )
     public void createProduct(UUID commerceId, CreateProductRequest request, MultipartFile[] images) {
+        Commerce commerce = productValidationFacade.findCommerceById(commerceId);
 
-        Commerce commerce = validationFacade.findCommerceById(commerceId);
-
-        validationFacade.validateExpirationDate(request.expirationDate());
+        SecurityUtils.validateOwnership(commerce.getUser().getEmail());
+        productValidationFacade.validateExpirationDate(request.getExpirationDate());
         imageFacade.validateImages(images);
-        validationFacade.validateCategoryAndCondition(request.category(), request.condition(), commerce);
+        productValidationFacade.validateCategoryAndCondition(
+                request.getCategory(),
+                request.getCondition(),
+                commerce
+        );
 
         List<Image> storedImages = imageFacade.uploadAndSaveImages(images);
 
-        Product product = ProductMapper.toProduct(request, commerce, storedImages);
-        commerce.getProducts().add(product);
+        Product product = ProductMapper.toProduct(
+                request,
+                commerce,
+                storedImages,
+                request.getPreferences()
+        );
 
         productRepository.save(product);
     }
@@ -53,75 +66,76 @@ public class ProductManagementServiceImpl implements IProductManagementService {
     @Override
     @Transactional
     public Page<ProductResponse> getProductsByCommerce(UUID commerceId, Pageable pageable) {
+        Commerce commerce = productValidationFacade.findCommerceById(commerceId);
+        SecurityUtils.validateOwnership(commerce.getUser().getEmail());
 
-        validationFacade.validateCommerceExists(commerceId);
-
-        Page<Product> products = productRepository.findByCommerceId(commerceId, pageable);
-
+        Page<Product> products = productRepository.findByCommerceId(
+                commerceId,
+                pageable
+        );
         return products.map(ProductMapper::toProductResponse);
     }
 
     @Override
     @Transactional
     public ProductResponse getProductByCommerceAndId(UUID commerceId, UUID productId) {
-
-        Product product = productRepository
-                .findByIdAndCommerceId(productId, commerceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        Product product = productValidationFacade.findProductByIdAndCommerceIdOrThrowException(productId, commerceId);
+        SecurityUtils.validateOwnership(product.getCommerce().getUser().getEmail());
 
         return ProductMapper.toProductResponse(product);
     }
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {"activeProducts", "productsByCommerce", "productById",
+                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
+            allEntries = true
+    )
     public void updateProduct(UUID commerceId, UUID productId, UpdateProductRequest request, MultipartFile[] images) {
+        Product product = productValidationFacade.findProductByIdAndCommerceIdOrThrowException(productId, commerceId);
+        SecurityUtils.validateOwnership(product.getCommerce().getUser().getEmail());
 
-        Product product = productRepository
-                .findByIdAndCommerceId(productId, commerceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        productValidationFacade.validateAtLeastOneFieldToUpdate(request);
+        productValidationFacade.validateExpirationDate(request.getExpirationDate());
 
-        if (request.expirationDate() != null) {
-            validationFacade.validateExpirationDate(request.expirationDate());
+        productValidationFacade.validateAndProcessCategoryConditionUpdate(
+                product,
+                request
+        );
+
+        List<Image> newImages = imageFacade.processImagesIfProvided(
+                product.getImages(),
+                images
+        );
+
+        if (request.getStock() != null &&
+            product.getStock() == 0 &&
+            request.getStock() > 0 &&
+            !product.getActive()) {
+            product.setActive(true);
         }
 
-        if (request.category() != null || request.condition() != null) {
-            ProductCategory categoryToValidate = request.category() != null ?
-                    request.category() : product.getCategory();
-            ProductCondition conditionToValidate = request.condition() != null ?
-                    request.condition() : product.getCondition();
-
-            validationFacade.validateCategoryAndCondition(categoryToValidate, conditionToValidate, product.getCommerce());
-        }
-
-        updateProductFields(product, request);
-
-        if (images != null && images.length > 0) {
-            List<Image> newImages = imageFacade.processAndUpdateImages(product.getImages(), images);
-            product.getImages().clear();
-            product.setImages(newImages);
-        }
+        ProductMapper.updateProductFromRequest(
+                product, request,
+                request.getPreferences(),
+                newImages
+        );
+        product.setUpdateAt(LocalDateTime.now());
 
         productRepository.save(product);
     }
 
     @Override
     @Transactional
-    public void deleteProduct(UUID commerceId, UUID productId) {
-
-        Product product = productRepository
-                .findByIdAndCommerceId(productId, commerceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
-
-        product.setActive(false);
-        productRepository.save(product);
-    }
-
-    @Override
-    @Transactional
+    @CacheEvict(
+            value = {"activeProducts", "productsByCommerce", "productById",
+                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
+            allEntries = true
+    )
     public void activateProduct(UUID commerceId, UUID productId) {
-        Product product = productRepository
-                .findByIdAndCommerceId(productId, commerceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        Product product = productValidationFacade.findProductByIdAndCommerceIdOrThrowException(productId, commerceId);
+        SecurityUtils.validateOwnership(product.getCommerce().getUser().getEmail());
 
         product.setActive(true);
         productRepository.save(product);
@@ -129,39 +143,16 @@ public class ProductManagementServiceImpl implements IProductManagementService {
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {"activeProducts", "productsByCommerce", "productById",
+                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
+            allEntries = true
+    )
     public void deactivateProduct(UUID commerceId, UUID productId) {
-        Product product = productRepository
-                .findByIdAndCommerceId(productId, commerceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        Product product = productValidationFacade.findProductByIdAndCommerceIdOrThrowException(productId, commerceId);
+        SecurityUtils.validateOwnership(product.getCommerce().getUser().getEmail());
 
         product.setActive(false);
         productRepository.save(product);
-    }
-
-    private void updateProductFields(Product product, UpdateProductRequest request) {
-        if (request.name() != null) {
-            product.setName(request.name());
-        }
-        if (request.description() != null) {
-            product.setDescription(request.description());
-        }
-        if (request.stock() != null) {
-            product.setStock(request.stock());
-        }
-        if (request.originalPrice() != null) {
-            product.setOriginalPrice(request.originalPrice());
-        }
-        if (request.discountPercentage() != null) {
-            product.setDiscountPercentage(request.discountPercentage());
-        }
-        if (request.category() != null) {
-            product.setCategory(request.category());
-        }
-        if (request.condition() != null) {
-            product.setCondition(request.condition());
-        }
-        if (request.expirationDate() != null) {
-            product.setExpirationDate(request.expirationDate());
-        }
     }
 }

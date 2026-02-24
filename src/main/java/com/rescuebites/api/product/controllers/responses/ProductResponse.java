@@ -1,5 +1,7 @@
 package com.rescuebites.api.product.controllers.responses;
 
+import com.rescuebites.api.client.controllers.responses.ImageResponse;
+import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.product.data.enums.ProductCategory;
 import com.rescuebites.api.product.data.enums.ProductCondition;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,6 +22,12 @@ public record ProductResponse(
 
         @Schema(description = "Nombre del comercio")
         String commerceName,
+
+        @Schema(description = "Imágenes del comercio")
+        List<ImageResponse> commerceImages,
+
+        @Schema(description = "Horario de apertura del comercio")
+        String commerceOpeningHours,
 
         @Schema(description = "Nombre del producto")
         String name,
@@ -45,14 +53,19 @@ public record ProductResponse(
         @Schema(description = "Condición del producto")
         ProductCondition condition,
 
+        @Schema(description = "Nombre legible de la condición")
+        String conditionDisplayName,
+
         @Schema(description = "Fecha de vencimiento")
         LocalDate expirationDate,
 
         @Schema(description = "URLs de las imágenes del producto")
-        List<String> imageUrls,
+        List<ImageResponse> productImages,
 
-        // ⭐ NUEVO CAMPO
         @Schema(description = "Indica si el producto está activo")
-        Boolean active
+        Boolean active,
+
+        @Schema(description = "Preferencias alimenticias de un cliente")
+        List<PreferenceType> preferences
 ) {
 }
