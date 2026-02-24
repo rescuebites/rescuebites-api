@@ -7,6 +7,7 @@ import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
 import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.controllers.responses.ProductPublicResponse;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
+import com.rescuebites.api.shared.controllers.responses.SearchProductResponse;
 import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.shared.Image;
 
@@ -62,6 +63,36 @@ public class ProductMapper {
                 product.getActive(),
                 product.getPreferenceType()
         );
+    }
+
+    public static SearchProductResponse toSearchProductResponse(Product product) {
+        return new SearchProductResponse(
+                product.getProductId(),
+                product.getCommerce().getCommerceId(),
+                product.getCommerce().getName(),
+                product.getCommerce().getOpeningHours(),
+                product.getName(),
+                product.getDescription(),
+                product.getStock(),
+                product.getOriginalPrice(),
+                product.getDiscountPercentage(),
+                product.getDiscountedPrice(),
+                product.getCategory(),
+                product.getCondition(),
+                product.getCondition().getDisplayName(),
+                product.getExpirationDate(),
+                product.getImages().stream()
+                        .map(ImageMapper::toImageResponse)
+                        .collect(Collectors.toList()),
+                product.getActive(),
+                product.getPreferenceType()
+        );
+    }
+
+    public static List<SearchProductResponse> toProductResponseList(List<Product> products) {
+        return products.stream()
+                .map(ProductMapper::toSearchProductResponse)
+                .toList();
     }
 
     public static ProductPublicResponse toProductPublicResponse(Product product) {

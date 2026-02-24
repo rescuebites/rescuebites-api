@@ -30,4 +30,15 @@ public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
             @Param("commerceType") CommerceTypeEnum commerceType,
             Pageable pageable
     );
+
+    @Query("SELECT c FROM commerces c WHERE c.deleted = false " +
+            "AND LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
+            "ORDER BY CASE " +
+            "  WHEN LOWER(c.name) LIKE LOWER(CONCAT(:query, '%')) THEN 0 " +
+            "  ELSE 1 " +
+            "END, c.name ASC")
+    Page<Commerce> findActiveByNameContaining(
+            @Param("query") String query,
+            Pageable pageable
+    );
 }

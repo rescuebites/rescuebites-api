@@ -14,6 +14,9 @@ public class SecurityConstants {
             "/api/users/resend-verification-account",
             "/api/users/reset-password/**",
 
+            // Búsqueda pública
+            "/api/v1/search",
+
             // Webhook de Mercado Pago (debe estar público para recibir notificaciones)
             "/api/v1/payments/webhook",
     };
