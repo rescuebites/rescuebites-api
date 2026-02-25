@@ -21,7 +21,7 @@ public class ProductMapper {
             Commerce commerce,
             List<Image> images,
             List<PreferenceType> preferences) {
-        return Product.builder()
+        Product product = Product.builder()
                 .commerce(commerce)
                 .name(request.getName())
                 .description(request.getDescription())
@@ -36,6 +36,9 @@ public class ProductMapper {
                 .images(images)
                 .active(true)
                 .build();
+
+        images.forEach(image -> image.setProduct(product));
+        return product;
     }
 
     public static ProductResponse toProductResponse(Product product) {

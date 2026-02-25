@@ -28,7 +28,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
     @Override
     @Cacheable(
             value = "activeProducts",
-            key = "'all-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize"
+            key = "'all-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
     @Transactional
     public Page<ProductResponse> getAllActiveProducts(Pageable pageable) {
@@ -49,7 +49,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
     @Override
     @Cacheable(
             value = "productsByCommerce",
-            key = "#commerceId + '-page-' + #pageable.pageNumber"
+            key = "#commerceId + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
     @Transactional
     public Page<ProductResponse> getActiveProductsByCommerce(UUID commerceId, Pageable pageable) {
@@ -61,7 +61,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
     @Override
     @Cacheable(
             value = "activeProductsSortedByPrice",
-            key = "'all-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize"
+            key = "'all-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
     @Transactional
     public Page<ProductResponse> getAllActiveProductsOrderedByPrice(Pageable pageable) {
@@ -72,7 +72,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
     @Override
     @Cacheable(
             value = "activeProductsByCommerceTypeSortedByPrice",
-            key = "#commerceType + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize"
+            key = "#commerceType + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
     @Transactional
     public Page<ProductPublicResponse> getActiveProductsByCommerceTypeOrderedByPrice(
