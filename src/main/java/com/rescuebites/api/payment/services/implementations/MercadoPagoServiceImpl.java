@@ -24,8 +24,8 @@ public class MercadoPagoServiceImpl implements IMercadoPagoService {
     }
 
     @Override
-    public Optional<PaymentWebhookData> processWebhookNotification(String notificationBody) {
-        return webhookProcessor.processWebhookNotification(notificationBody);
+    public Optional<PaymentWebhookData> processWebhookNotification(String notificationBody, String xSignature, String xRequestId) {
+        return webhookProcessor.processWebhookNotification(notificationBody, xSignature, xRequestId);
     }
 }
 

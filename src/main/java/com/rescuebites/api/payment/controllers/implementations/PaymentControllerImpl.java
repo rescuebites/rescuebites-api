@@ -23,8 +23,8 @@ public class PaymentControllerImpl implements IPaymentController {
     }
 
     @Override
-    public void handleMercadoPagoWebhook(String notification) {
-        paymentService.processWebhookNotification(notification);
+    public void handleMercadoPagoWebhook(String notification, String xSignature, String xRequestId) {
+        paymentService.processWebhookNotification(notification, xSignature, xRequestId);
     }
 
     @Override

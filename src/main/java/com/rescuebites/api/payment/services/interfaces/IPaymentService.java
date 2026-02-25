@@ -8,7 +8,5 @@ public interface IPaymentService {
 
     PaymentLinkResponse createPaymentPreference(UUID orderId);
 
-    void processWebhookNotification(String notification);
-
-    void confirmPayment(UUID orderId, String paymentId);
+    void processWebhookNotification(String notification, String xSignature, String xRequestId);
 }

@@ -51,9 +51,9 @@ public class PaymentServiceImpl implements IPaymentService {
 
     @Override
     @Transactional
-    public void processWebhookNotification(String notification) {
+    public void processWebhookNotification(String notification, String xSignature, String xRequestId) {
         try {
-            mercadoPagoService.processWebhookNotification(notification)
+            mercadoPagoService.processWebhookNotification(notification, xSignature, xRequestId)
                     .ifPresent(this::handleWebhookData);
         } catch (IgnorableWebhookException ignored) {
             // Webhooks de verificación/ping sin datos válidos - ignorar silenciosamente
@@ -70,12 +70,6 @@ public class PaymentServiceImpl implements IPaymentService {
             case "rejected" -> log.warn("Pago rechazado para pedido: {}", webhookData.orderId());
             default -> log.warn("Estado de pago desconocido: {}", webhookData.status());
         }
-    }
-
-    @Override
-    @Transactional
-    public void confirmPayment(UUID orderId, String paymentId) {
-        paymentConfirmationService.confirmPayment(orderId, paymentId);
     }
 
     private Order getOrderOrThrow(UUID orderId) {

@@ -10,5 +10,5 @@ public interface IMercadoPagoService {
 
     PaymentLinkResponse createPaymentPreference(Order order);
 
-    Optional<PaymentWebhookData> processWebhookNotification(String notification);
+    Optional<PaymentWebhookData> processWebhookNotification(String notification, String xSignature, String xRequestId);
 }
