@@ -47,7 +47,6 @@ public class SecurityConfig {
                         // CLIENTS
                         // Crear cliente (público - después del registro)
                         .requestMatchers(HttpMethod.POST, "/api/v1/clients").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/clients/**").permitAll()
 
                         // Operaciones de cliente (solo CLIENT role + ownership)
                         .requestMatchers(HttpMethod.GET, "/api/v1/clients/*").hasRole("CLIENT")
@@ -67,7 +66,6 @@ public class SecurityConfig {
                         // COMMERCES
                         // Crear comercio (público - después del registro)
                         .requestMatchers(HttpMethod.POST, "/api/v1/commerces").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/commerces/**").permitAll()
 
                         // Operaciones de comercio (solo COMMERCE role + ownership)
                         .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*").hasRole("COMMERCE")
