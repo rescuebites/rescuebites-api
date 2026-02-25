@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.resources.payment.Payment;
+import com.rescuebites.api.order.data.models.Order;
 import com.rescuebites.api.order.repositories.IOrderRepository;
 import com.rescuebites.api.payment.controllers.responses.PaymentWebhookData;
 import com.rescuebites.api.exceptions.custom_exceptions.IgnorableWebhookException;
@@ -22,12 +23,20 @@ public class WebhookProcessor {
 
     private final ObjectMapper objectMapper;
     private final IOrderRepository orderRepository;
+    private final WebhookSignatureValidator signatureValidator;
 
-    public Optional<PaymentWebhookData> processWebhookNotification(String notificationBody) {
+    public Optional<PaymentWebhookData> processWebhookNotification(
+            String notificationBody, String xSignature, String xRequestId) {
+
         JsonNode notification = parseWebhookNotification(notificationBody);
         validateNotificationType(notification);
 
-        Long paymentId = extractPaymentId(notification);
+        String dataId = extractDataId(notification);
+
+        // Validar firma HMAC antes de procesar
+        signatureValidator.validateSignature(xSignature, xRequestId, dataId);
+
+        Long paymentId = Long.valueOf(dataId);
         return processPaymentNotification(paymentId);
     }
 
@@ -42,7 +51,6 @@ public class WebhookProcessor {
     private void validateNotificationType(JsonNode notification) {
         JsonNode typeNode = notification.get("type");
 
-        // Si no hay type, intentar obtener de data.type (formato alternativo)
         if (typeNode == null || typeNode.isNull()) {
             JsonNode dataNode = notification.get("data");
             if (dataNode != null && !dataNode.isNull()) {
@@ -50,7 +58,6 @@ public class WebhookProcessor {
             }
         }
 
-        // Si aún no hay type, es un webhook de verificación - ignorar
         if (typeNode == null || typeNode.isNull()) {
             throw new IgnorableWebhookException("Webhook sin campo 'type' - ignorado");
         }
@@ -61,42 +68,46 @@ public class WebhookProcessor {
         }
     }
 
-    private Long extractPaymentId(JsonNode notification) {
+    private String extractDataId(JsonNode notification) {
         JsonNode dataNode = notification.get("data");
         if (dataNode == null || dataNode.get("id") == null) {
             throw new IllegalArgumentException("El webhook no contiene ID de pago válido");
         }
-        return dataNode.get("id").asLong();
+        return dataNode.get("id").asText();
     }
 
     private Optional<PaymentWebhookData> processPaymentNotification(Long paymentId) {
-        try {
-            Payment payment = new PaymentClient().get(paymentId);
-            return extractPaymentWebhookData(payment, paymentId);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
-        }
-    }
+        synchronized (MercadoPagoConfigUtil.class) {
+            try {
+                // Primero obtener el pago con el token global configurado
+                Payment payment = new PaymentClient().get(paymentId);
+                String externalReference = payment.getExternalReference();
 
-    private Optional<PaymentWebhookData> extractPaymentWebhookData(Payment payment, Long paymentId) {
-        String externalReference = payment.getExternalReference();
+                if (externalReference == null) {
+                    throw new IllegalArgumentException(
+                            "El pago " + paymentId + " no tiene external reference");
+                }
 
-        if (externalReference == null) {
-            throw new IllegalArgumentException("El pago " + paymentId + " no tiene external reference");
-        }
+                UUID orderId = UUID.fromString(externalReference);
 
-        try {
-            UUID orderId = UUID.fromString(externalReference);
-            configureCommerceTokenForOrder(orderId);
-            return Optional.of(new PaymentWebhookData(orderId, String.valueOf(paymentId), payment.getStatus()));
+                // Configurar token del comercio ANTES de cualquier operación posterior
+                configureCommerceTokenForOrder(orderId);
 
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("UUID inválido en external reference: " + externalReference, e);
+                return Optional.of(new PaymentWebhookData(
+                        orderId, String.valueOf(paymentId), payment.getStatus()));
+
+            } catch (IllegalArgumentException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new IllegalArgumentException(
+                        "Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
+            }
         }
     }
 
     private void configureCommerceTokenForOrder(UUID orderId) {
-        orderRepository.findById(orderId).ifPresent(order -> {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        orderOpt.ifPresent(order -> {
             String token = order.getCommerce().getMercadoPagoAccessToken();
             MercadoPagoConfigUtil.configureCommerceToken(token);
         });

@@ -7,7 +7,7 @@ public class MercadoPagoConfigUtil {
     private MercadoPagoConfigUtil() {
     }
 
-    public static void configureCommerceToken(String commerceAccessToken) {
+    public static synchronized void configureCommerceToken(String commerceAccessToken) {
         if (commerceAccessToken != null && !commerceAccessToken.isBlank()) {
             MercadoPagoConfig.setAccessToken(commerceAccessToken);
         }
