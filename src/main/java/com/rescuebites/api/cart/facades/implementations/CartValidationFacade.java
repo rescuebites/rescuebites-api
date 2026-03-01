@@ -5,6 +5,9 @@ import com.rescuebites.api.cart.facades.interfaces.ICartValidationFacade;
 import com.rescuebites.api.cart.repositories.ICartRepository;
 import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.repositories.IClientRepository;
+import com.rescuebites.api.commerce.data.enums.CommerceScheduleStatus;
+import com.rescuebites.api.commerce.data.models.Commerce;
+import com.rescuebites.api.commerce.utils.BusinessHoursUtils;
 import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
 import com.rescuebites.api.exceptions.custom_exceptions.UnauthorizedException;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
@@ -13,6 +16,7 @@ import com.rescuebites.api.product.repositories.IProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -60,6 +64,18 @@ public class CartValidationFacade implements ICartValidationFacade {
     public void validateCartBelongsToClient(Cart cart, UUID clientId) {
         if (!cart.getClient().getClientId().equals(clientId)) {
             throw new UnauthorizedException("Este carrito no pertenece al cliente autenticado");
+        }
+    }
+
+    @Override
+    public void validateCommerceNotClosedForDay(Commerce commerce) {
+        CommerceScheduleStatus status = BusinessHoursUtils.getCommerceStatus(
+                commerce, LocalDateTime.now());
+
+        if (status.isClosedForDay()) {
+            throw new ValidationException(
+                    "El comercio '" + commerce.getName() + "' está cerrado por hoy. " +
+                            "No es posible agregar productos a tu carrito en este momento");
         }
     }
 }
