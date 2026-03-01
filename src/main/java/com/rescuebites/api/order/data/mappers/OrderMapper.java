@@ -56,6 +56,7 @@ public class OrderMapper {
                 order.getPaymentMethod(),
                 order.getCreatedAt(),
                 order.getConfirmedAt(),
+                order.getScheduledPickupTime(),
                 order.getNotes()
         );
     }
