@@ -14,10 +14,17 @@ public class SecurityConstants {
             "/api/users/resend-verification-account",
             "/api/users/reset-password/**",
 
+            // Endpoints públicos (home, comercios, productos)
+            "/api/v1/public/**",
+
             // Búsqueda pública
             "/api/v1/search",
+            "/api/v1/search/**",
 
-            // Webhook de Mercado Pago (debe estar público para recibir notificaciones)
+            // Webhook y URLs de retorno de Mercado Pago
             "/api/v1/payments/webhook",
+            "/api/v1/payments/success",
+            "/api/v1/payments/failure",
+            "/api/v1/payments/pending",
     };
 }
