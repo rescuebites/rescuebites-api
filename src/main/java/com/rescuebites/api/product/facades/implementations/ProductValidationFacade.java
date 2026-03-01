@@ -27,12 +27,6 @@ public class ProductValidationFacade implements IProductValidationFacade {
     private final IProductRepository productRepository;
 
     @Override
-    public Commerce findCommerceById(UUID commerceId) {
-        return commerceRepository.findByCommerceIdAndDeletedFalse(commerceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Commerce", "id", commerceId));
-    }
-
-    @Override
     public Product findProductByIdAndCommerceIdOrThrowException(
             UUID productId,
             UUID commerceId

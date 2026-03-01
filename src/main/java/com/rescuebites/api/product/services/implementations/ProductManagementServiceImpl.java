@@ -1,6 +1,7 @@
 package com.rescuebites.api.product.services.implementations;
 
 import com.rescuebites.api.commerce.data.models.Commerce;
+import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
 import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
@@ -31,6 +32,7 @@ public class ProductManagementServiceImpl implements IProductManagementService {
     private final IProductRepository productRepository;
     private final IImageFacade imageFacade;
     private final IProductValidationFacade productValidationFacade;
+    private final ICommerceFacade commerceFacade;
 
     @Override
     @Transactional
@@ -40,7 +42,7 @@ public class ProductManagementServiceImpl implements IProductManagementService {
             allEntries = true
     )
     public void createProduct(UUID commerceId, CreateProductRequest request, MultipartFile[] images) {
-        Commerce commerce = productValidationFacade.findCommerceById(commerceId);
+        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
 
         SecurityUtils.validateOwnership(commerce.getUser().getEmail());
         productValidationFacade.validateExpirationDate(request.getExpirationDate());
@@ -66,7 +68,7 @@ public class ProductManagementServiceImpl implements IProductManagementService {
     @Override
     @Transactional
     public Page<ProductResponse> getProductsByCommerce(UUID commerceId, Pageable pageable) {
-        Commerce commerce = productValidationFacade.findCommerceById(commerceId);
+        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
         SecurityUtils.validateOwnership(commerce.getUser().getEmail());
 
         Page<Product> products = productRepository.findByCommerceId(
