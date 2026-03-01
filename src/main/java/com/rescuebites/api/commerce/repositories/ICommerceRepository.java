@@ -19,6 +19,11 @@ public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
     @Cacheable(value = "commerceById", key = "#commerceId")
     Optional<Commerce> findByCommerceIdAndDeletedFalse(UUID commerceId);
 
+    @Query("SELECT c FROM commerces c " +
+            "LEFT JOIN FETCH c.images " +
+            "WHERE c.commerceId = :commerceId AND c.deleted = false")
+    Optional<Commerce> findByIdWithDetails(@Param("commerceId") UUID commerceId);
+
     boolean existsByNameAndDeletedFalse(String name);
 
     Page<Commerce> findByDeletedFalse(Pageable pageable);

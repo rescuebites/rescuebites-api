@@ -1,21 +1,23 @@
 package com.rescuebites.api.commerce.data.mappers;
 
 import com.rescuebites.api.client.data.mappers.ImageMapper;
+import com.rescuebites.api.commerce.controllers.requests.BusinessHoursRequest;
 import com.rescuebites.api.commerce.controllers.requests.CreateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.responses.CommercePublicResponse;
 import com.rescuebites.api.commerce.controllers.responses.CommerceResponse;
+import com.rescuebites.api.commerce.data.models.BusinessHours;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.users.data.models.User;
 import org.springframework.stereotype.Component;
 
+import java.time.DayOfWeek;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static com.rescuebites.api.users.data.mappers.UserMapper.toUserResponse;
 
 @Component
 public class CommerceMapper {
@@ -32,11 +34,15 @@ public class CommerceMapper {
                 .name(request.getName())
                 .description(request.getDescription())
                 .commerceTypes(commerceTypes)
-                .openingHours(request.getOpeningHours())
                 .address(request.getAddress())
                 .locality(request.getLocality())
                 .phone(request.getPhone())
                 .build();
+
+        // Asociar horarios al comercio
+        List<BusinessHours> businessHours = BusinessHoursMapper.toBusinessHoursList(
+                request.getBusinessHours(), commerce);
+        commerce.getBusinessHours().addAll(businessHours);
 
         // Asociar las imágenes al comercio
         images.forEach(image -> image.setCommerce(commerce));
@@ -52,7 +58,7 @@ public class CommerceMapper {
                 commerce.getCommerceTypes().stream()
                         .map(CommerceType::getName)
                         .collect(Collectors.toList()),
-                commerce.getOpeningHours(),
+                BusinessHoursMapper.toBusinessHoursResponseList(commerce.getBusinessHours()),
                 commerce.getAddress(),
                 commerce.getLocality(),
                 commerce.getPhone(),
@@ -87,8 +93,25 @@ public class CommerceMapper {
         if (commerceTypes != null && !commerceTypes.isEmpty()) {
             commerce.setCommerceTypes(commerceTypes);
         }
-        if (request.getOpeningHours() != null) {
-            commerce.setOpeningHours(request.getOpeningHours());
+        if (request.getBusinessHours() != null && !request.getBusinessHours().isEmpty()) {
+            Map<DayOfWeek, BusinessHours> existingByDay = commerce.getBusinessHours().stream()
+                    .collect(Collectors.toMap(BusinessHours::getDayOfWeek, bh -> bh));
+
+            for (BusinessHoursRequest bhRequest : request.getBusinessHours()) {
+                BusinessHours existing = existingByDay.get(bhRequest.getDayOfWeek());
+                if (existing != null) {
+                    // Actualizar el día existente
+                    existing.setClosed(bhRequest.isClosed());
+                    existing.setOpenTime(bhRequest.getOpenTime());
+                    existing.setCloseTime(bhRequest.getCloseTime());
+                    existing.setAfternoonOpenTime(bhRequest.getAfternoonOpenTime());
+                    existing.setAfternoonCloseTime(bhRequest.getAfternoonCloseTime());
+                } else {
+                    // Agregar nuevo día
+                    commerce.getBusinessHours().add(
+                            BusinessHoursMapper.toBusinessHours(bhRequest, commerce));
+                }
+            }
         }
         if (request.getAddress() != null) {
             commerce.setAddress(request.getAddress());

@@ -1,5 +1,6 @@
 package com.rescuebites.api.commerce.facades.implementations;
 
+import com.rescuebites.api.commerce.controllers.requests.BusinessHoursRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.commerce.data.models.Commerce;
@@ -19,7 +20,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.DayOfWeek;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -36,6 +40,12 @@ public class CommerceFacade implements ICommerceFacade {
     @Override
     public Commerce findCommerceByIdOrThrowException(UUID commerceId) {
         return commerceRepository.findByCommerceIdAndDeletedFalse(commerceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Commerce", "id", commerceId));
+    }
+
+    @Override
+    public Commerce findCommerceWithDetailsOrThrowException(UUID commerceId) {
+        return commerceRepository.findByIdWithDetails(commerceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Commerce", "id", commerceId));
     }
 
@@ -64,7 +74,7 @@ public class CommerceFacade implements ICommerceFacade {
         boolean hasAtLeastOneField = StringUtils.hasText(request.getName()) ||
                 StringUtils.hasText(request.getDescription()) ||
                 (request.getCommerceTypes() != null && !request.getCommerceTypes().isEmpty()) ||
-                StringUtils.hasText(request.getOpeningHours()) ||
+                (request.getBusinessHours() != null && !request.getBusinessHours().isEmpty()) ||
                 StringUtils.hasText(request.getAddress()) ||
                 StringUtils.hasText(request.getLocality()) ||
                 StringUtils.hasText(request.getPhone()) ||
@@ -78,8 +88,24 @@ public class CommerceFacade implements ICommerceFacade {
     }
 
     @Override
+    public void validateBusinessHours(List<BusinessHoursRequest> businessHours, boolean requireAllDays) {
+        if (businessHours == null || businessHours.isEmpty()) {
+            return;
+        }
+
+        validateNoDuplicateDays(businessHours);
+
+        if (requireAllDays) {
+            validateAllDaysPresent(businessHours);
+        }
+
+        businessHours.forEach(this::validateSingleBusinessHours);
+    }
+
+    @Override
     public boolean validateAndProcessUpdate(User user, UpdateCommerceRequest request) {
         validateAtLeastOneFieldToUpdate(request);
+        validateBusinessHours(request.getBusinessHours(), false);
 
         boolean emailChanged = userFacade.validateAndCheckEmailChange(user, request.getEmail());
         userFacade.validatePasswordsIfProvided(request.getPassword(), request.getConfirmPassword());
@@ -110,5 +136,75 @@ public class CommerceFacade implements ICommerceFacade {
                 .name(commerceTypeEnum)
                 .build();
         return commerceTypeRepository.save(newType);
+    }
+
+    private void validateNoDuplicateDays(List<BusinessHoursRequest> businessHours) {
+        Set<DayOfWeek> days = new HashSet<>();
+        for (BusinessHoursRequest bh : businessHours) {
+            if (!days.add(bh.getDayOfWeek())) {
+                throw new ValidationException(
+                        "El día " + bh.getDayOfWeek() + " está duplicado en los horarios de atención");
+            }
+        }
+    }
+
+    private void validateAllDaysPresent(List<BusinessHoursRequest> businessHours) {
+        Set<DayOfWeek> providedDays = businessHours.stream()
+                .map(BusinessHoursRequest::getDayOfWeek)
+                .collect(Collectors.toSet());
+
+        if (providedDays.size() != 7) {
+            Set<DayOfWeek> missingDays = new HashSet<>(Set.of(DayOfWeek.values()));
+            missingDays.removeAll(providedDays);
+
+            throw new ValidationException(
+                    "Debe definir el horario de todos los días de la semana. Faltan: " +
+                            missingDays.stream()
+                                    .map(DayOfWeek::name)
+                                    .collect(Collectors.joining(", ")));
+        }
+    }
+
+    private void validateSingleBusinessHours(BusinessHoursRequest bh) {
+        String day = bh.getDayOfWeek().name();
+
+        if (bh.isClosed()) {
+            return;
+        }
+
+        // Si no está cerrado, openTime y closeTime son obligatorios
+        if (bh.getOpenTime() == null || bh.getCloseTime() == null) {
+            throw new ValidationException(
+                    day + ": la hora de apertura y cierre son obligatorias cuando el comercio está abierto");
+        }
+
+        // openTime debe ser anterior a closeTime
+        if (!bh.getOpenTime().isBefore(bh.getCloseTime())) {
+            throw new ValidationException(
+                    day + ": la hora de apertura debe ser anterior a la hora de cierre");
+        }
+
+        // Validaciones del turno tarde
+        boolean hasAfternoonOpen = bh.getAfternoonOpenTime() != null;
+        boolean hasAfternoonClose = bh.getAfternoonCloseTime() != null;
+
+        if (hasAfternoonOpen != hasAfternoonClose) {
+            throw new ValidationException(
+                    day + ": debe definir ambos horarios del turno tarde (apertura y cierre) o ninguno");
+        }
+
+        if (hasAfternoonOpen) {
+            // afternoonOpenTime debe ser posterior a closeTime
+            if (!bh.getAfternoonOpenTime().isAfter(bh.getCloseTime())) {
+                throw new ValidationException(
+                        day + ": la apertura del turno tarde debe ser posterior al cierre del turno mañana");
+            }
+
+            // afternoonOpenTime debe ser anterior a afternoonCloseTime
+            if (!bh.getAfternoonOpenTime().isBefore(bh.getAfternoonCloseTime())) {
+                throw new ValidationException(
+                        day + ": la apertura del turno tarde debe ser anterior al cierre del turno tarde");
+            }
+        }
     }
 }

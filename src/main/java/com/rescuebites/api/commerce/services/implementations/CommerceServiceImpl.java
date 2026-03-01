@@ -19,8 +19,8 @@ import com.rescuebites.api.users.services.interfaces.ITokenService;
 import com.rescuebites.api.users.services.interfaces.IUserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,6 +46,7 @@ public class CommerceServiceImpl implements ICommerceService {
         User user = userService.findByIdOrThrowException(createCommerceRequest.getUserId());
 
         commerceFacade.ifCommerceNameAlreadyExistsThrowException(createCommerceRequest.getName());
+        commerceFacade.validateBusinessHours(createCommerceRequest.getBusinessHours(), true);
 
         imageFacade.validateImages(images);
         List<Image> storedProduct = imageFacade.uploadAndSaveImages(images);
@@ -57,8 +58,9 @@ public class CommerceServiceImpl implements ICommerceService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "commerceById", key = "#commerceId")
     public void updateCommerce(UUID commerceId, UpdateCommerceRequest updateCommerceRequest, MultipartFile[] images) {
-        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
+        Commerce commerce = commerceFacade.findCommerceWithDetailsOrThrowException(commerceId);
         User user = commerce.getUser();
         SecurityUtils.validateOwnership(user.getEmail());
 
@@ -66,7 +68,8 @@ public class CommerceServiceImpl implements ICommerceService {
 
         List<Image> newImages = imageFacade.processImagesIfProvided(commerce.getImages(), images);
 
-        List<CommerceType> commerceTypes = updateCommerceRequest.getCommerceTypes() != null && !updateCommerceRequest.getCommerceTypes().isEmpty()
+        List<CommerceType> commerceTypes = updateCommerceRequest.getCommerceTypes() != null
+                && !updateCommerceRequest.getCommerceTypes().isEmpty()
                 ? commerceFacade.getOrCreateCommerceTypes(updateCommerceRequest.getCommerceTypes())
                 : null;
 
@@ -83,8 +86,9 @@ public class CommerceServiceImpl implements ICommerceService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "commerceById", key = "#commerceId")
     public void deleteCommerce(UUID commerceId) {
-        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
+        Commerce commerce = commerceFacade.findCommerceWithDetailsOrThrowException(commerceId);
         User user = commerce.getUser();
         SecurityUtils.validateOwnership(user.getEmail());
         List<Image> currentImages = commerce.getImages();
@@ -111,6 +115,7 @@ public class CommerceServiceImpl implements ICommerceService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "commerceById", key = "#commerceId")
     public void updateCommerceCredentials(UUID commerceId, UpdateCommerceCredentialsRequest request) {
         Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
         SecurityUtils.validateOwnership(commerce.getUser().getEmail());
