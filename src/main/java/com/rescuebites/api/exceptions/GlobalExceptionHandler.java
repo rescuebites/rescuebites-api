@@ -155,7 +155,7 @@ public class GlobalExceptionHandler {
         ApiError error = new ApiError(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
-                ""
+                "Payment processing failed"
         );
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }

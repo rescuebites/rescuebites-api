@@ -36,7 +36,9 @@ public interface IPaymentController {
             description = "Endpoint para recibir notificaciones de cambios de estado de pagos desde Mercado Pago"
     )
     void handleMercadoPagoWebhook(
-            @RequestBody String notification
+            @RequestBody String notification,
+            @RequestHeader(value = "x-signature", required = false) String xSignature,
+            @RequestHeader(value = "x-request-id", required = false) String xRequestId
     );
 
     @GetMapping("/success")
