@@ -71,7 +71,7 @@ public class WebhookProcessor {
     private String extractDataId(JsonNode notification) {
         JsonNode dataNode = notification.get("data");
         if (dataNode == null || dataNode.get("id") == null || dataNode.get("id").isNull()) {
-            throw new IllegalArgumentException("El webhook no contiene ID de pago válido");
+            throw new IgnorableWebhookException("El webhook no contiene ID de pago válido");
         }
 
         String dataId = dataNode.get("id").asText();
@@ -93,15 +93,11 @@ public class WebhookProcessor {
 
     private Optional<PaymentWebhookData> processPaymentNotification(Long paymentId) {
         Payment payment;
-
-        // Minimizar sección crítica: solo configurar token y obtener pago
-        synchronized (MercadoPagoConfigUtil.class) {
-            try {
-                payment = new PaymentClient().get(paymentId);
-            } catch (Exception e) {
-                throw new IllegalArgumentException(
-                        "Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
-            }
+        try {
+            payment = new PaymentClient().get(paymentId);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    "Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
         }
 
         String externalReference = payment.getExternalReference();
@@ -112,7 +108,7 @@ public class WebhookProcessor {
 
         UUID orderId = UUID.fromString(externalReference);
 
-        // Configurar token del comercio ANTES de cualquier operación posterior
+        // Configurar token del comercio para operaciones posteriores
         synchronized (MercadoPagoConfigUtil.class) {
             configureCommerceTokenForOrder(orderId);
         }
