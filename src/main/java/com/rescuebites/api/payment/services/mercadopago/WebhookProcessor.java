@@ -36,7 +36,7 @@ public class WebhookProcessor {
         // Validar firma HMAC antes de procesar
         signatureValidator.validateSignature(xSignature, xRequestId, dataId);
 
-        Long paymentId = Long.valueOf(dataId);
+        Long paymentId = parsePaymentId(dataId);
         return processPaymentNotification(paymentId);
     }
 
@@ -70,39 +70,55 @@ public class WebhookProcessor {
 
     private String extractDataId(JsonNode notification) {
         JsonNode dataNode = notification.get("data");
-        if (dataNode == null || dataNode.get("id") == null) {
+        if (dataNode == null || dataNode.get("id") == null || dataNode.get("id").isNull()) {
             throw new IllegalArgumentException("El webhook no contiene ID de pago válido");
         }
-        return dataNode.get("id").asText();
+
+        String dataId = dataNode.get("id").asText();
+        if (dataId.isBlank()) {
+            throw new IgnorableWebhookException("El ID de pago del webhook está vacío");
+        }
+
+        return dataId;
+    }
+
+    private Long parsePaymentId(String dataId) {
+        try {
+            return Long.valueOf(dataId);
+        } catch (NumberFormatException e) {
+            throw new IgnorableWebhookException(
+                    "El ID de pago del webhook no es un número válido: " + dataId);
+        }
     }
 
     private Optional<PaymentWebhookData> processPaymentNotification(Long paymentId) {
+        Payment payment;
+
+        // Minimizar sección crítica: solo configurar token y obtener pago
         synchronized (MercadoPagoConfigUtil.class) {
             try {
-                // Primero obtener el pago con el token global configurado
-                Payment payment = new PaymentClient().get(paymentId);
-                String externalReference = payment.getExternalReference();
-
-                if (externalReference == null) {
-                    throw new IllegalArgumentException(
-                            "El pago " + paymentId + " no tiene external reference");
-                }
-
-                UUID orderId = UUID.fromString(externalReference);
-
-                // Configurar token del comercio ANTES de cualquier operación posterior
-                configureCommerceTokenForOrder(orderId);
-
-                return Optional.of(new PaymentWebhookData(
-                        orderId, String.valueOf(paymentId), payment.getStatus()));
-
-            } catch (IllegalArgumentException e) {
-                throw e;
+                payment = new PaymentClient().get(paymentId);
             } catch (Exception e) {
                 throw new IllegalArgumentException(
                         "Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
             }
         }
+
+        String externalReference = payment.getExternalReference();
+        if (externalReference == null) {
+            throw new IllegalArgumentException(
+                    "El pago " + paymentId + " no tiene external reference");
+        }
+
+        UUID orderId = UUID.fromString(externalReference);
+
+        // Configurar token del comercio ANTES de cualquier operación posterior
+        synchronized (MercadoPagoConfigUtil.class) {
+            configureCommerceTokenForOrder(orderId);
+        }
+
+        return Optional.of(new PaymentWebhookData(
+                orderId, String.valueOf(paymentId), payment.getStatus()));
     }
 
     private void configureCommerceTokenForOrder(UUID orderId) {
