@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,14 +86,10 @@ public class WebhookSignatureValidator {
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);
             SecretKeySpec secretKeySpec = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM);
             mac.init(secretKeySpec);
-            byte[] hash = mac.doFinal(manifest.getBytes(StandardCharsets.UTF_8));
-            String computedSignature = HexFormat.of().formatHex(hash);
+            byte[] computedHash = mac.doFinal(manifest.getBytes(StandardCharsets.UTF_8));
+            byte[] expectedBytes = HexFormat.of().parseHex(expectedSignature.toLowerCase(Locale.ROOT));
 
-            // Comparación en tiempo constante para evitar timing attacks
-            return MessageDigest.isEqual(
-                    computedSignature.toLowerCase().getBytes(StandardCharsets.UTF_8),
-                    expectedSignature.toLowerCase().getBytes(StandardCharsets.UTF_8)
-            );
+            return MessageDigest.isEqual(computedHash, expectedBytes);
         } catch (Exception e) {
             log.error("Error al calcular HMAC: {}", e.getMessage());
             return false;
