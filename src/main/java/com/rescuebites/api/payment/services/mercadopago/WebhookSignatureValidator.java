@@ -32,7 +32,7 @@ public class WebhookSignatureValidator {
 
     private final ICommerceRepository commerceRepository;
 
-    @Value("${mercadopago.sandbox:true}")
+    @Value("${mercadopago.sandbox}")
     private boolean sandbox;
 
     /**
