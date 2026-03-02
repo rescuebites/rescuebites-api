@@ -2,6 +2,7 @@ package com.rescuebites.api.commerce.repositories;
 
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.commerce.data.models.Commerce;
+import com.rescuebites.api.commerce.data.projections.CommerceWebhookSecretProjection;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,8 +49,10 @@ public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
             Pageable pageable
     );
 
-    @Query("SELECT c FROM commerces c WHERE c.deleted = false " +
+
+    @Query("SELECT c.commerceId AS commerceId, c.mercadoPagoWebhookSecret AS mercadoPagoWebhookSecret " +
+            "FROM commerces c WHERE c.deleted = false " +
             "AND c.mercadoPagoWebhookSecret IS NOT NULL " +
             "AND c.mercadoPagoWebhookSecret <> ''")
-    List<Commerce> findAllWithWebhookSecret();
+    List<CommerceWebhookSecretProjection> findAllWithWebhookSecret();
 }
