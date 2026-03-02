@@ -14,12 +14,6 @@ import java.util.UUID;
 public interface IProductValidationFacade {
 
     /**
-     * Busca y retorna un comercio activo por su ID
-     * @throws ResourceNotFoundException si el comercio no existe o está inactivo
-     */
-    Commerce findCommerceById(UUID commerceId);
-
-    /**
      * Busca y retorna un producto por su ID y el ID del comercio
      * @throws ResourceNotFoundException si no hay un producto y un comercio
      */

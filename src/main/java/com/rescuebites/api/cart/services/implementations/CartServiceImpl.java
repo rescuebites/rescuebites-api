@@ -64,6 +64,8 @@ public class CartServiceImpl implements ICartService {
 
         Product product = cartValidationFacade.findActiveProductById(request.productId());
         cartValidationFacade.validateStockAvailability(product, request.quantity());
+        cartValidationFacade.validateCommerceNotClosedForDay(product.getCommerce());
+
         Cart cart = cartValidationFacade.findOrCreateCartByClient(client);
 
         cartItemRepository

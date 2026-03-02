@@ -14,7 +14,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity(name = "commerces")
@@ -49,9 +51,9 @@ public class Commerce {
     @Builder.Default
     private List<CommerceType> commerceTypes = new ArrayList<>();
 
-    @NotBlank(message = "El horario es obligatorio")
-    @Column(name = "opening_hours", nullable = false)
-    private String openingHours;
+    @OneToMany(mappedBy = "commerce", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Builder.Default
+    private Set<BusinessHours> businessHours = new HashSet<>();
 
     @NotBlank(message = "La dirección es obligatoria")
     @Column(nullable = false)

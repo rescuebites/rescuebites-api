@@ -2,6 +2,7 @@ package com.rescuebites.api.shared.controllers.responses;
 
 import com.rescuebites.api.client.controllers.responses.ImageResponse;
 import com.rescuebites.api.client.data.enums.PreferenceType;
+import com.rescuebites.api.commerce.controllers.responses.BusinessHoursResponse;
 import com.rescuebites.api.product.data.enums.ProductCategory;
 import com.rescuebites.api.product.data.enums.ProductCondition;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,8 +24,8 @@ public record SearchProductResponse(
         @Schema(description = "Nombre del comercio")
         String commerceName,
 
-        @Schema(description = "Horario de apertura del comercio")
-        String commerceOpeningHours,
+        @Schema(description = "Horarios de atención del comercio")
+        List<BusinessHoursResponse> commerceBusinessHours,
 
         @Schema(description = "Nombre del producto")
         String name,

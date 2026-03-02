@@ -3,6 +3,7 @@ package com.rescuebites.api.exceptions;
 import com.rescuebites.api.exceptions.custom_exceptions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -13,6 +14,17 @@ import org.springframework.web.context.request.WebRequest;
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex) {
+        logger.error("Data integrity error: {}", ex.getMessage());
+        ApiError error = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Data integrity error",
+                "No se pudo completar la operación debido a un conflicto con los datos existentes"
+        );
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
 
     // Manejo de excepciones para errores inesperados
     @ExceptionHandler({RuntimeException.class, Exception.class})
@@ -146,5 +158,17 @@ public class GlobalExceptionHandler {
                 ""
         );
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CommerceClosedReopensException.class)
+    public ResponseEntity<CommerceClosedError> handleCommerceClosedReopens(CommerceClosedReopensException ex) {
+        CommerceClosedError error = new CommerceClosedError(
+                HttpStatus.CONFLICT.value(),
+                "Commerce closed",
+                ex.getMessage(),
+                ex.getNextOpenTime(),
+                ex.getNextCloseTime()
+        );
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 }

@@ -1,5 +1,6 @@
 package com.rescuebites.api.commerce.facades.interfaces;
 
+import com.rescuebites.api.commerce.controllers.requests.BusinessHoursRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.commerce.data.models.Commerce;
@@ -13,11 +14,15 @@ public interface ICommerceFacade {
 
     Commerce findCommerceByIdOrThrowException(UUID commerceId);
 
+    Commerce findCommerceWithDetailsOrThrowException(UUID commerceId);
+
     void validateCommerceOwnership(UUID commerceId);
 
     void ifCommerceNameAlreadyExistsThrowException(String name);
 
     List<CommerceType> getOrCreateCommerceTypes(List<CommerceTypeEnum> commerceTypeEnums);
+
+    void validateBusinessHours(List<BusinessHoursRequest> businessHours, boolean requireAllDays);
 
     void validateAtLeastOneFieldToUpdate(UpdateCommerceRequest request);
 

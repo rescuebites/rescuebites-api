@@ -2,6 +2,7 @@ package com.rescuebites.api.product.data.mappers;
 
 import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.client.data.mappers.ImageMapper;
+import com.rescuebites.api.commerce.data.mappers.BusinessHoursMapper;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
 import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
@@ -46,7 +47,7 @@ public class ProductMapper {
                 product.getCommerce().getImages().stream()
                         .map(ImageMapper::toImageResponse)
                         .collect(Collectors.toList()),
-                product.getCommerce().getOpeningHours(),
+                BusinessHoursMapper.toBusinessHoursResponseList(product.getCommerce().getBusinessHours()),
                 product.getName(),
                 product.getDescription(),
                 product.getStock(),
@@ -70,7 +71,7 @@ public class ProductMapper {
                 product.getProductId(),
                 product.getCommerce().getCommerceId(),
                 product.getCommerce().getName(),
-                product.getCommerce().getOpeningHours(),
+                BusinessHoursMapper.toBusinessHoursResponseList(product.getCommerce().getBusinessHours()),
                 product.getName(),
                 product.getDescription(),
                 product.getStock(),

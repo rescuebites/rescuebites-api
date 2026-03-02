@@ -62,9 +62,17 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         validateCartForOrder(cart, request.commerceId());
 
+        // Validar disponibilidad horaria del comercio
+        orderValidationFacade.validateCommerceAvailability(commerce, request.scheduledPickupTime());
+
         PaymentMethod paymentMethod = cart.getSelectedPaymentMethod();
         String orderNumber = orderValidationFacade.generateOrderNumber();
         Order order = OrderMapper.toOrder(client, commerce, orderNumber, request, paymentMethod);
+
+        // Guardar horario programado de retiro si fue proporcionado
+        if (request.scheduledPickupTime() != null) {
+            order.setScheduledPickupTime(request.scheduledPickupTime());
+        }
 
         createOrderItemsAndUpdateStock(order, cart);
         calculateOrderTotals(order);

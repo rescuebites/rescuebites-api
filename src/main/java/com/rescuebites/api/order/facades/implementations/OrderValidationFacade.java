@@ -3,6 +3,10 @@ package com.rescuebites.api.order.facades.implementations;
 import com.rescuebites.api.cart.data.models.Cart;
 import com.rescuebites.api.cart.data.models.CartItem;
 import com.rescuebites.api.cart.repositories.ICartRepository;
+import com.rescuebites.api.commerce.data.enums.CommerceScheduleStatus;
+import com.rescuebites.api.commerce.data.models.Commerce;
+import com.rescuebites.api.commerce.utils.BusinessHoursUtils;
+import com.rescuebites.api.exceptions.custom_exceptions.CommerceClosedReopensException;
 import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.order.data.models.Order;
@@ -12,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -77,12 +82,46 @@ public class OrderValidationFacade implements IOrderValidationFacade {
 
     @Override
     public String generateOrderNumber() {
-        // Formato: ORD-YYYYMMDD-HHMMSS-RANDOM
         LocalDateTime now = LocalDateTime.now();
         String datePart = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String timePart = now.format(DateTimeFormatter.ofPattern("HHmmss"));
         int randomPart = ThreadLocalRandom.current().nextInt(1000, 9999);
 
         return String.format("ORD-%s-%s-%d", datePart, timePart, randomPart);
+    }
+
+    @Override
+    public void validateCommerceAvailability(Commerce commerce, LocalTime scheduledPickupTime) {
+        CommerceScheduleStatus status = BusinessHoursUtils.getCommerceStatus(
+                commerce, LocalDateTime.now());
+
+        if (status.isOpen()) return;
+
+        if (status.isClosedForDay()) {
+            throwClosedForDayException(commerce);
+        }
+
+        validateScheduledPickupTime(commerce, status, scheduledPickupTime);
+    }
+
+    private void throwClosedForDayException(Commerce commerce) {
+        throw new ValidationException(
+                "El comercio '" + commerce.getName() + "' está cerrado por hoy. " +
+                        "No es posible crear el pedido en este momento");
+    }
+
+    private void validateScheduledPickupTime(Commerce commerce, CommerceScheduleStatus status,
+                                             LocalTime scheduledPickupTime) {
+        if (scheduledPickupTime == null) {
+            throw new CommerceClosedReopensException(
+                    commerce.getName(), status.nextOpenTime(), status.nextCloseTime());
+        }
+
+        if (scheduledPickupTime.isBefore(status.nextOpenTime())
+                || scheduledPickupTime.isAfter(status.nextCloseTime())) {
+            throw new ValidationException(
+                    "El horario programado debe estar entre "
+                            + status.nextOpenTime() + " y " + status.nextCloseTime());
+        }
     }
 }

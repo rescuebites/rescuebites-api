@@ -1,6 +1,7 @@
 package com.rescuebites.api.commerce.controllers.requests;
 
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -30,8 +31,9 @@ public class CreateCommerceRequest {
     @NotEmpty(message = "Debe seleccionar al menos un tipo de comercio")
     private List<CommerceTypeEnum> commerceTypes;
 
-    @NotBlank(message = "El horario es obligatorio")
-    private String openingHours;
+    @NotEmpty(message = "Debe definir al menos un horario de atención")
+    @Valid
+    private List<BusinessHoursRequest> businessHours;
 
     @NotBlank(message = "La dirección es obligatoria")
     private String address;
