@@ -1,15 +1,17 @@
 package com.rescuebites.api.payment.services.mercadopago;
 
-import com.rescuebites.api.commerce.data.models.Commerce;
+import com.rescuebites.api.commerce.data.projections.CommerceWebhookSecretProjection;
 import com.rescuebites.api.commerce.repositories.ICommerceRepository;
 import com.rescuebites.api.exceptions.custom_exceptions.IgnorableWebhookException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -30,13 +32,20 @@ public class WebhookSignatureValidator {
 
     private final ICommerceRepository commerceRepository;
 
+    @Value("${mercadopago.sandbox:true}")
+    private boolean sandbox;
+
     /**
-     * Valida la firma del webhook. Si los headers no están presentes, se ignora la validación
-     * (para compatibilidad con webhooks de prueba/sandbox).
+     * Valida la firma del webhook. En modo sandbox, si los headers no están presentes
+     * se ignora la validación. En producción, se rechaza si faltan los headers.
      */
     public void validateSignature(String xSignature, String xRequestId, String dataId) {
         if (xSignature == null || xSignature.isBlank()) {
-            return;
+            if (sandbox) {
+                log.debug("Modo sandbox: se omite validación de firma (header x-signature ausente)");
+                return;
+            }
+            throw new IgnorableWebhookException("Header x-signature requerido para validar webhook");
         }
 
         String ts = extractValue(xSignature, TS_PATTERN);
@@ -50,12 +59,16 @@ public class WebhookSignatureValidator {
         String manifest = buildManifest(dataId, xRequestId, ts);
 
         // Buscar todos los comercios con webhook secret configurado y validar contra cada uno
-        List<Commerce> commerces = commerceRepository.findAllWithWebhookSecret();
+        List<CommerceWebhookSecretProjection> commerceSecrets = commerceRepository.findAllWithWebhookSecret();
 
-        boolean signatureValid = commerces.stream()
-                .anyMatch(commerce -> verifyHmac(manifest, commerce.getMercadoPagoWebhookSecret(), v1));
+        boolean signatureValid = commerceSecrets.stream()
+                .anyMatch(projection -> verifyHmac(manifest, projection.getMercadoPagoWebhookSecret(), v1));
 
         if (!signatureValid) {
+            if (sandbox) {
+                log.warn("Modo sandbox: firma de webhook inválida, se permite igualmente. dataId={}", dataId);
+                return;
+            }
             log.warn("Firma de webhook inválida. dataId={}, xRequestId={}", dataId, xRequestId);
             throw new IgnorableWebhookException("Firma de webhook inválida");
         }
@@ -74,7 +87,12 @@ public class WebhookSignatureValidator {
             mac.init(secretKeySpec);
             byte[] hash = mac.doFinal(manifest.getBytes(StandardCharsets.UTF_8));
             String computedSignature = HexFormat.of().formatHex(hash);
-            return computedSignature.equals(expectedSignature);
+
+            // Comparación en tiempo constante para evitar timing attacks
+            return MessageDigest.isEqual(
+                    computedSignature.toLowerCase().getBytes(StandardCharsets.UTF_8),
+                    expectedSignature.toLowerCase().getBytes(StandardCharsets.UTF_8)
+            );
         } catch (Exception e) {
             log.error("Error al calcular HMAC: {}", e.getMessage());
             return false;
