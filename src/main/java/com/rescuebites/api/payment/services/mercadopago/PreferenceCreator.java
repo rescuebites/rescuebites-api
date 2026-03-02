@@ -20,31 +20,31 @@ public class PreferenceCreator {
     private final PreferenceBuilder preferenceBuilder;
 
     public PaymentLinkResponse createPaymentPreference(Order order) {
-        // Minimizar sección crítica: solo configurar token
+        // Construir request fuera del lock (no depende del token global)
+        PreferenceRequest preferenceRequest = preferenceBuilder.buildPreferenceRequest(order);
+        
         synchronized (MercadoPagoConfigUtil.class) {
-            MercadoPagoConfigUtil.configureCommerceToken(
-                    order.getCommerce().getMercadoPagoAccessToken()
-            );
-        }
+            try {
+                MercadoPagoConfigUtil.configureCommerceToken(
+                        order.getCommerce().getMercadoPagoAccessToken()
+                );
 
-        try {
-            PreferenceRequest preferenceRequest = preferenceBuilder.buildPreferenceRequest(order);
+                PreferenceClient client = new PreferenceClient();
+                Preference preference = client.create(preferenceRequest);
 
-            PreferenceClient client = new PreferenceClient();
-            Preference preference = client.create(preferenceRequest);
+                return new PaymentLinkResponse(
+                        preference.getId(),
+                        preference.getInitPoint(),
+                        preference.getSandboxInitPoint()
+                );
 
-            return new PaymentLinkResponse(
-                    preference.getId(),
-                    preference.getInitPoint(),
-                    preference.getSandboxInitPoint()
-            );
-
-        } catch (MPApiException e) {
-            String errorMessage = e.getApiResponse() != null ?
-                    e.getApiResponse().getContent() : e.getMessage();
-            throw new PaymentException("Error al crear preferencia de pago: " + errorMessage);
-        } catch (MPException e) {
-            throw new PaymentException("Error al crear preferencia de pago: " + e.getMessage());
+            } catch (MPApiException e) {
+                String errorMessage = e.getApiResponse() != null ?
+                        e.getApiResponse().getContent() : e.getMessage();
+                throw new PaymentException("Error al crear preferencia de pago: " + errorMessage);
+            } catch (MPException e) {
+                throw new PaymentException("Error al crear preferencia de pago: " + e.getMessage());
+            }
         }
     }
 }
