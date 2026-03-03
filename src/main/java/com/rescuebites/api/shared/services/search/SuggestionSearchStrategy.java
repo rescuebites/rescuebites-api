@@ -26,7 +26,7 @@ public class SuggestionSearchStrategy {
     private final IProductRepository productRepository;
     private final ICommerceRepository commerceRepository;
 
-    public List<SearchSuggestion> getSuggestionsWithPreferences(String query, List<PreferenceType> clientPreferences) {
+    public List<SearchSuggestion> getSuggestionsFilteredByClientPreferences(String query, List<PreferenceType> clientPreferences) {
         String normalizedQuery = SearchUtils.normalizeQuery(query);
 
         // Los comercios no se filtran por preferencia

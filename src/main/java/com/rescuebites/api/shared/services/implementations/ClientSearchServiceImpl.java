@@ -49,7 +49,7 @@ public class ClientSearchServiceImpl implements IClientSearchService {
             return publicSearchService.getSuggestions(query);
         }
 
-        return suggestionSearchStrategy.getSuggestionsWithPreferences(query, clientPreferences);
+        return suggestionSearchStrategy.getSuggestionsFilteredByClientPreferences(query, clientPreferences);
     }
 
     @Override
