@@ -1,6 +1,10 @@
 package com.rescuebites.api.shared.utils;
 
+import com.rescuebites.api.client.data.enums.PreferenceType;
+import com.rescuebites.api.product.data.models.Product;
+
 import java.text.Normalizer;
+import java.util.List;
 
 public class SearchUtils {
 
@@ -28,5 +32,23 @@ public class SearchUtils {
         normalized = normalized.trim().replaceAll("\\s+", " ");
 
         return normalized;
+    }
+
+    /**
+     * Verifica si un producto es compatible con las preferencias del cliente.
+     * Productos sin preferencias definidas se consideran aptos para todos.
+     */
+    public static boolean matchesPreferences(Product product, List<PreferenceType> clientPreferences) {
+        if (clientPreferences == null || clientPreferences.isEmpty()) {
+            return true;
+        }
+
+        var productPreferences = product.getPreferenceType();
+        if (productPreferences == null || productPreferences.isEmpty()) {
+            return true;
+        }
+
+        return productPreferences.stream()
+                .anyMatch(clientPreferences::contains);
     }
 }
