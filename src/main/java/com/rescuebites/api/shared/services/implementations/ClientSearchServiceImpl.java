@@ -3,20 +3,14 @@ package com.rescuebites.api.shared.services.implementations;
 import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.client.facades.interfaces.IClientFacade;
-import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.shared.controllers.responses.SearchProductResponse;
-import com.rescuebites.api.product.data.mappers.ProductMapper;
-import com.rescuebites.api.product.data.models.Product;
-import com.rescuebites.api.product.repositories.IProductRepository;
-import com.rescuebites.api.commerce.repositories.ICommerceRepository;
-import com.rescuebites.api.security.utils.SecurityUtils;
 import com.rescuebites.api.shared.controllers.responses.SearchSuggestion;
 import com.rescuebites.api.shared.services.interfaces.IClientSearchService;
 import com.rescuebites.api.shared.services.interfaces.IPublicSearchService;
-import com.rescuebites.api.shared.services.search.ProductSearchStrategy;
-import com.rescuebites.api.shared.services.search.SuggestionSearchStrategy;
-import com.rescuebites.api.shared.utils.PaginationUtils;
+import com.rescuebites.api.shared.services.strategy.ProductSearchStrategy;
+import com.rescuebites.api.shared.services.strategy.SuggestionSearchStrategy;
 import com.rescuebites.api.shared.utils.SearchUtils;
+import com.rescuebites.api.security.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,14 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-import static com.rescuebites.api.shared.utils.Constants.PRE_FILTER_PAGE_FOR_SEARCH;
-
 @Service
 @RequiredArgsConstructor
 public class ClientSearchServiceImpl implements IClientSearchService {
 
-    private final IProductRepository productRepository;
-    private final ICommerceRepository commerceRepository;
     private final IPublicSearchService publicSearchService;
     private final SuggestionSearchStrategy suggestionSearchStrategy;
     private final ProductSearchStrategy productSearchStrategy;
@@ -61,13 +51,7 @@ public class ClientSearchServiceImpl implements IClientSearchService {
         }
 
         String normalizedQuery = SearchUtils.normalizeQuery(query);
-        List<Product> combined = productSearchStrategy.combineWithHierarchy(
-                getProductsByCommerce(normalizedQuery, clientPreferences),
-                getProductsByName(normalizedQuery, clientPreferences),
-                getProductsByDescription(normalizedQuery, clientPreferences)
-        );
-
-        return PaginationUtils.paginate(ProductMapper.toProductResponseList(combined), pageable);
+        return productSearchStrategy.searchAndPaginateWithPreferences(normalizedQuery, clientPreferences, pageable);
     }
 
     private List<PreferenceType> getClientPreferences(UUID clientId) {
@@ -77,32 +61,5 @@ public class ClientSearchServiceImpl implements IClientSearchService {
         return client.getPreferences() != null
                 ? client.getPreferences()
                 : List.of();
-    }
-
-    private List<Product> getProductsByCommerce(String normalizedQuery, List<PreferenceType> clientPreferences) {
-        List<UUID> commerceIds = commerceRepository.findActiveByNameContaining(normalizedQuery, PRE_FILTER_PAGE_FOR_SEARCH)
-                .getContent().stream()
-                .map(Commerce::getCommerceId)
-                .toList();
-
-        if (commerceIds.isEmpty()) {
-            return List.of();
-        }
-
-        return productRepository.findActiveByCommerceIdsWithPreferences(commerceIds, clientPreferences);
-    }
-
-    private List<Product> getProductsByName(String normalizedQuery, List<PreferenceType> clientPreferences) {
-        return productRepository.findActiveByNameContaining(normalizedQuery, PRE_FILTER_PAGE_FOR_SEARCH)
-                .getContent().stream()
-                .filter(p -> SearchUtils.matchesPreferences(p, clientPreferences))
-                .toList();
-    }
-
-    private List<Product> getProductsByDescription(String normalizedQuery, List<PreferenceType> clientPreferences) {
-        return productRepository.findActiveByDescriptionContainingExcludingName(normalizedQuery, PRE_FILTER_PAGE_FOR_SEARCH)
-                .getContent().stream()
-                .filter(p -> SearchUtils.matchesPreferences(p, clientPreferences))
-                .toList();
     }
 }

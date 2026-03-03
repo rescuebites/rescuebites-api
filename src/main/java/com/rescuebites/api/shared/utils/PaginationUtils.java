@@ -2,6 +2,7 @@ package com.rescuebites.api.shared.utils;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.ArrayList;
@@ -10,6 +11,17 @@ import java.util.List;
 public class PaginationUtils {
 
     private PaginationUtils() {
+    }
+
+    /**
+     * Construye un Pageable para pre-fetch que trae suficientes resultados
+     * desde la DB para cubrir la página solicitada por el usuario.
+     *
+     * @param pageable Pageable original del usuario
+     * @return PageRequest que trae (offset + pageSize) resultados desde la página 0
+     */
+    public static PageRequest buildPrefetchPageable(Pageable pageable) {
+        return PageRequest.of(0, (int) pageable.getOffset() + pageable.getPageSize());
     }
 
     /**

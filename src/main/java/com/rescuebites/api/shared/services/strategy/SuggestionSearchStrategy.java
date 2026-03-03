@@ -1,4 +1,4 @@
-package com.rescuebites.api.shared.services.search;
+package com.rescuebites.api.shared.services.strategy;
 
 import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.commerce.repositories.ICommerceRepository;
