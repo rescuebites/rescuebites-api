@@ -16,12 +16,15 @@ public class PaginationUtils {
     /**
      * Construye un Pageable para pre-fetch que trae suficientes resultados
      * desde la DB para cubrir la página solicitada por el usuario.
+     * Protege contra overflow y preserva el Sort original.
      *
      * @param pageable Pageable original del usuario
      * @return PageRequest que trae (offset + pageSize) resultados desde la página 0
      */
     public static PageRequest buildPrefetchPageable(Pageable pageable) {
-        return PageRequest.of(0, (int) pageable.getOffset() + pageable.getPageSize());
+        long requiredSize = pageable.getOffset() + pageable.getPageSize();
+        int safeSize = (int) Math.min(requiredSize, Integer.MAX_VALUE);
+        return PageRequest.of(0, Math.max(safeSize, 1), pageable.getSort());
     }
 
     /**
