@@ -67,9 +67,9 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
      */
 
     @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
-    @Query("SELECT DISTINCT p FROM products p JOIN p.preferenceType pref " +
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
             "WHERE p.active = true " +
-            "AND pref IN :preferences " +
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences) " +
             "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
     Page<Product> findActiveProductsWithPreferences(
             @Param("preferences") List<PreferenceType> preferences,
@@ -117,20 +117,20 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
      */
 
     @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
-    @Query("SELECT DISTINCT p FROM products p JOIN p.preferenceType pref " +
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
             "WHERE p.active = true " +
             "AND p.commerce.commerceId IN :commerceIds " +
-            "AND pref IN :preferences")
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences)")
     List<Product> findActiveByCommerceIdsWithPreferences(
             @Param("commerceIds") List<UUID> commerceIds,
             @Param("preferences") List<PreferenceType> preferences
     );
 
     @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
-    @Query("SELECT DISTINCT p FROM products p JOIN p.preferenceType pref " +
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
             "WHERE p.active = true " +
             "AND p.commerce.commerceId = :commerceId " +
-            "AND pref IN :preferences")
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences)")
     Page<Product> findActiveByCommerceIdWithPreferences(
             @Param("commerceId") UUID commerceId,
             @Param("preferences") List<PreferenceType> preferences,
@@ -138,9 +138,9 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
     );
 
     @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
-    @Query("SELECT DISTINCT p FROM products p JOIN p.preferenceType pref " +
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
             "WHERE p.active = true " +
-            "AND pref IN :preferences " +
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences) " +
             "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
     Page<Product> findActiveProductsWithPreferencesOrderByPrice(
             @Param("preferences") List<PreferenceType> preferences,
@@ -148,10 +148,10 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
     );
 
     @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
-    @Query("SELECT DISTINCT p FROM products p JOIN p.preferenceType pref " +
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
             "WHERE p.active = true " +
             "AND p.commerceType = :commerceType " +
-            "AND pref IN :preferences " +
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences) " +
             "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
     Page<Product> findActiveByCommerceTypeWithPreferencesOrderByPrice(
             @Param("commerceType") CommerceTypeEnum commerceType,
