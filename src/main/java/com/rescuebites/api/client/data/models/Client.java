@@ -65,8 +65,4 @@ public class Client {
     private LocalDateTime updatedAt;
 
     private LocalDateTime deletedAt;
-
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
 }

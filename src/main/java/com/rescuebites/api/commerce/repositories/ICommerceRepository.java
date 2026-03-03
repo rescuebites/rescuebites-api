@@ -3,7 +3,6 @@ package com.rescuebites.api.commerce.repositories;
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.data.projections.CommerceWebhookSecretProjection;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
