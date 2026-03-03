@@ -66,9 +66,10 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
     Queries para filtrar productos según las preferencias del cliente
      */
 
-    @Query("SELECT DISTINCT p FROM products p " +
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @Query("SELECT DISTINCT p FROM products p JOIN p.preferenceType pref " +
             "WHERE p.active = true " +
-            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0 " +
+            "AND pref IN :preferences " +
             "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
     Page<Product> findActiveProductsWithPreferences(
             @Param("preferences") List<PreferenceType> preferences,
