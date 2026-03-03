@@ -14,7 +14,6 @@ import com.rescuebites.api.users.data.models.User;
 import com.rescuebites.api.users.events.EmailUpdatedEvent;
 import com.rescuebites.api.users.services.interfaces.ITokenService;
 import com.rescuebites.api.users.services.interfaces.IUserService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,6 +49,7 @@ public class ClientServiceImpl implements IClientService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ClientResponse getClientById(UUID clientId) {
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());

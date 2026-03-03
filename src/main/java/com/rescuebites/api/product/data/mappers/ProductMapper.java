@@ -13,6 +13,7 @@ import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.shared.Image;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ProductMapper {
@@ -21,7 +22,7 @@ public class ProductMapper {
             CreateProductRequest request,
             Commerce commerce,
             List<Image> images,
-            List<PreferenceType> preferences) {
+            Set<PreferenceType> preferences) {
         Product product = Product.builder()
                 .commerce(commerce)
                 .name(request.getName())
@@ -117,7 +118,7 @@ public class ProductMapper {
     public static void updateProductFromRequest(
             Product product,
             UpdateProductRequest request,
-            List<PreferenceType> preferences,
+            Set<PreferenceType> preferences,
             List<Image> newImages
             ) {
         if (request.getName() != null) {

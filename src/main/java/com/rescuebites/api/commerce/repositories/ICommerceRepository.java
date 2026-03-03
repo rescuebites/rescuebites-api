@@ -18,7 +18,6 @@ import java.util.UUID;
 @Repository
 public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
 
-    @Cacheable(value = "commerceById", key = "#commerceId")
     Optional<Commerce> findByCommerceIdAndDeletedFalse(UUID commerceId);
 
     @Query("SELECT c FROM commerces c " +

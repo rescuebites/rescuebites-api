@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Schema(description = "Respuesta con información del producto")
@@ -67,6 +68,6 @@ public record ProductResponse(
         Boolean active,
 
         @Schema(description = "Preferencias alimenticias de un cliente")
-        List<PreferenceType> preferences
+        Set<PreferenceType> preferences
 ) {
 }

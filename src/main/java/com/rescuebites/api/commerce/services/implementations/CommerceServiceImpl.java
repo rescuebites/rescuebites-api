@@ -3,7 +3,6 @@ package com.rescuebites.api.commerce.services.implementations;
 import com.rescuebites.api.commerce.controllers.requests.CreateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceCredentialsRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
-import com.rescuebites.api.commerce.controllers.responses.CommerceResponse;
 import com.rescuebites.api.commerce.data.mappers.CommerceMapper;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.data.models.CommerceType;
@@ -19,7 +18,6 @@ import com.rescuebites.api.users.services.interfaces.ITokenService;
 import com.rescuebites.api.users.services.interfaces.IUserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -58,7 +56,6 @@ public class CommerceServiceImpl implements ICommerceService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "commerceById", key = "#commerceId")
     public void updateCommerce(UUID commerceId, UpdateCommerceRequest updateCommerceRequest, MultipartFile[] images) {
         Commerce commerce = commerceFacade.findCommerceWithDetailsOrThrowException(commerceId);
         User user = commerce.getUser();
@@ -86,7 +83,6 @@ public class CommerceServiceImpl implements ICommerceService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "commerceById", key = "#commerceId")
     public void deleteCommerce(UUID commerceId) {
         Commerce commerce = commerceFacade.findCommerceWithDetailsOrThrowException(commerceId);
         User user = commerce.getUser();
@@ -115,7 +111,6 @@ public class CommerceServiceImpl implements ICommerceService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "commerceById", key = "#commerceId")
     public void updateCommerceCredentials(UUID commerceId, UpdateCommerceCredentialsRequest request) {
         Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
         SecurityUtils.validateOwnership(commerce.getUser().getEmail());

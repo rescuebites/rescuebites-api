@@ -55,7 +55,7 @@ public class Client {
     @JoinColumn(name = "userId", nullable = false)
     private User user;
 
-    @ElementCollection(targetClass = PreferenceType.class, fetch = FetchType.EAGER)
+    @ElementCollection(targetClass = PreferenceType.class, fetch = FetchType.LAZY)
     @Enumerated(EnumType.STRING)
     private List<PreferenceType> preferences;
 

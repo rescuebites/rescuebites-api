@@ -9,12 +9,12 @@ import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.product.facades.interfaces.IProductValidationFacade;
 import com.rescuebites.api.product.repositories.IProductRepository;
 import com.rescuebites.api.product.services.interfaces.IPublicProductService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -30,7 +30,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
             value = "activeProducts",
             key = "'all-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<ProductResponse> getAllActiveProducts(Pageable pageable) {
         Page<Product> products = productRepository.findAllActive(pageable);
         return products.map(ProductMapper::toProductResponse);
@@ -38,7 +38,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
 
     @Override
     @Cacheable(value = "productById", key = "#productId")
-    @Transactional
+    @Transactional(readOnly = true)
     public ProductResponse getProductById(UUID productId) {
         Product product = productRepository.findByIdAndActive(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
@@ -51,7 +51,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
             value = "productsByCommerce",
             key = "#commerceId + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<ProductResponse> getActiveProductsByCommerce(UUID commerceId, Pageable pageable) {
         validationFacade.validateCommerceExists(commerceId);
         Page<Product> products = productRepository.findActiveByCommerceId(commerceId, pageable);
@@ -63,7 +63,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
             value = "activeProductsSortedByPrice",
             key = "'all-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<ProductResponse> getAllActiveProductsOrderedByPrice(Pageable pageable) {
         Page<Product> products = productRepository.findAllActiveOrderByDiscountedPriceAsc(pageable);
         return products.map(ProductMapper::toProductResponse);
@@ -74,7 +74,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
             value = "activeProductsByCommerceTypeSortedByPrice",
             key = "#commerceType + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<ProductPublicResponse> getActiveProductsByCommerceTypeOrderedByPrice(
             CommerceTypeEnum commerceType,
             Pageable pageable

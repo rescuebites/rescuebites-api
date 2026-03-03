@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -62,5 +62,5 @@ public class CreateProductRequest{
 
         @NotNull(message = "Las preferencias son obligatorias")
         @Schema(description = "Preferencias alimenticias")
-        private List<PreferenceType> preferences = Collections.emptyList();
+        private Set<PreferenceType> preferences = new HashSet<>();
 }

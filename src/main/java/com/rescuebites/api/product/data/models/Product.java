@@ -18,7 +18,9 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity(name = "products")
@@ -70,11 +72,11 @@ public class Product {
     @Column(name = "product_condition", nullable = false)
     private ProductCondition condition;
 
-    @ElementCollection(targetClass = PreferenceType.class, fetch = FetchType.EAGER)
+    @ElementCollection(targetClass = PreferenceType.class, fetch = FetchType.LAZY)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "product_preferences", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "preference_type")
-    private List<PreferenceType> preferenceType = new ArrayList<>();
+    private Set<PreferenceType> preferenceType = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     private CommerceTypeEnum commerceType;

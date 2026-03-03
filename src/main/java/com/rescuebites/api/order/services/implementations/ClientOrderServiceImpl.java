@@ -25,6 +25,7 @@ import com.rescuebites.api.security.utils.SecurityUtils;
 import com.rescuebites.api.shared.services.interfaces.IWhatsAppService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,11 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {"activeProducts", "productsByCommerce", "productById",
+                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
+            allEntries = true
+    )
     public OrderResponse createOrder(UUID clientId, CreateOrderRequest request) {
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
@@ -164,6 +170,11 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
     @Override
     @Transactional
+    @CacheEvict(
+            value = {"activeProducts", "productsByCommerce", "productById",
+                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
+            allEntries = true
+    )
     public void cancelOrder(UUID clientId, UUID orderId, String reason) {
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
