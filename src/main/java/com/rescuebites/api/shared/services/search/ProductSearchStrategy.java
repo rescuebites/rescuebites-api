@@ -15,6 +15,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.rescuebites.api.shared.utils.Constants.PRE_FILTER_PAGE_FOR_SEARCH;
+
 /**
  * Estrategia para obtener, combinar y paginar productos de búsqueda
  * Jerarquía: productos del comercio > por nombre > por descripción
@@ -26,9 +28,9 @@ public class ProductSearchStrategy {
     private final IProductRepository productRepository;
 
     public Page<SearchProductResponse> searchAndPaginate(String normalizedQuery, Pageable pageable) {
-        var productsByCommerce = productRepository.findActiveByCommerceName(normalizedQuery, pageable).getContent();
-        var productsByName = productRepository.findActiveByNameContaining(normalizedQuery, pageable).getContent();
-        var productsByDesc = productRepository.findActiveByDescriptionContainingExcludingName(normalizedQuery, pageable).getContent();
+        var productsByCommerce = productRepository.findActiveByCommerceName(normalizedQuery, PRE_FILTER_PAGE_FOR_SEARCH).getContent();
+        var productsByName = productRepository.findActiveByNameContaining(normalizedQuery, PRE_FILTER_PAGE_FOR_SEARCH).getContent();
+        var productsByDesc = productRepository.findActiveByDescriptionContainingExcludingName(normalizedQuery, PRE_FILTER_PAGE_FOR_SEARCH).getContent();
 
         List<Product> combined = combineWithHierarchy(productsByCommerce, productsByName, productsByDesc);
         return PaginationUtils.paginate(ProductMapper.toProductResponseList(combined), pageable);
