@@ -4,6 +4,9 @@ import java.text.Normalizer;
 
 public class SearchUtils {
 
+    private SearchUtils() {
+    }
+
     /**
      * Normaliza un string para búsqueda:
      * - Convierte a minúsculas
@@ -18,7 +21,7 @@ public class SearchUtils {
         String normalized = query.toLowerCase();
 
         normalized = Normalizer.normalize(normalized, Normalizer.Form.NFD);
-        normalized = normalized.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        normalized = normalized.replaceAll("\\p{M}", "");
 
         normalized = normalized.replaceAll("[^a-z0-9\\s]", "");
 
