@@ -25,11 +25,13 @@ public class PaginationUtils {
         }
 
         int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), items.size());
-        // Math.max(start, end) maneja el caso donde el offset supera el tamaño de la lista,
-        // retornando una sublista vacía en vez de lanzar una excepción
-        List<T> paginatedItems = items.subList(start, Math.max(start, end));
-
-        return new PageImpl<>(paginatedItems, pageable, items.size());
+        int totalSize = items.size();
+        // Si el offset supera el tamaño de la lista, retornamos una página vacía
+        if (start >= totalSize) {
+            return new PageImpl<>(new ArrayList<>(), pageable, totalSize);
+        }
+        int end = Math.min(start + pageable.getPageSize(), totalSize);
+        List<T> paginatedItems = items.subList(start, end);
+        return new PageImpl<>(paginatedItems, pageable, totalSize);
     }
 }
