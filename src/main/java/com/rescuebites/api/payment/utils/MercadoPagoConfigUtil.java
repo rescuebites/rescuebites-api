@@ -7,9 +7,19 @@ public class MercadoPagoConfigUtil {
     private MercadoPagoConfigUtil() {
     }
 
-    public static synchronized void configureCommerceToken(String commerceAccessToken) {
+    /**
+     * Configura el token de acceso de MercadoPago para el comercio.
+     *
+     * @return true si el token fue cambiado, false si era el mismo o era inválido
+     */
+    public static synchronized boolean configureCommerceToken(String commerceAccessToken) {
         if (commerceAccessToken != null && !commerceAccessToken.isBlank()) {
-            MercadoPagoConfig.setAccessToken(commerceAccessToken);
+            String currentToken = MercadoPagoConfig.getAccessToken();
+            if (!commerceAccessToken.equals(currentToken)) {
+                MercadoPagoConfig.setAccessToken(commerceAccessToken);
+                return true;
+            }
         }
+        return false;
     }
 }

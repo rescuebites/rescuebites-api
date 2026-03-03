@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.resources.payment.Payment;
-import com.rescuebites.api.order.data.models.Order;
 import com.rescuebites.api.order.repositories.IOrderRepository;
 import com.rescuebites.api.payment.controllers.responses.PaymentWebhookData;
 import com.rescuebites.api.exceptions.custom_exceptions.IgnorableWebhookException;
@@ -93,11 +92,32 @@ public class WebhookProcessor {
 
     private Optional<PaymentWebhookData> processPaymentNotification(Long paymentId) {
         Payment payment;
-        try {
-            payment = new PaymentClient().get(paymentId);
-        } catch (Exception e) {
-            throw new IllegalArgumentException(
-                    "Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
+
+        // Sincronizar configuración del token + llamada al SDK para evitar race conditions
+        // MercadoPagoConfig.setAccessToken es estado global, otro hilo podría cambiarlo
+        synchronized (MercadoPagoConfigUtil.class) {
+            try {
+                payment = new PaymentClient().get(paymentId);
+            } catch (Exception e) {
+                throw new IllegalArgumentException(
+                        "Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
+            }
+
+            // Si el pago tiene external reference, configurar el token del comercio
+            // y reintentar la llamada con el token correcto si es necesario
+            if (payment.getExternalReference() != null) {
+                UUID orderId = UUID.fromString(payment.getExternalReference());
+                boolean tokenChanged = configureCommerceTokenFromOrder(orderId);
+
+                if (tokenChanged) {
+                    try {
+                        payment = new PaymentClient().get(paymentId);
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException(
+                                "Error al obtener datos del pago con token del comercio " + paymentId + ": " + e.getMessage(), e);
+                    }
+                }
+            }
         }
 
         String externalReference = payment.getExternalReference();
@@ -108,20 +128,22 @@ public class WebhookProcessor {
 
         UUID orderId = UUID.fromString(externalReference);
 
-        // Configurar token del comercio para operaciones posteriores
-        synchronized (MercadoPagoConfigUtil.class) {
-            configureCommerceTokenForOrder(orderId);
-        }
-
         return Optional.of(new PaymentWebhookData(
                 orderId, String.valueOf(paymentId), payment.getStatus()));
     }
 
-    private void configureCommerceTokenForOrder(UUID orderId) {
-        Optional<Order> orderOpt = orderRepository.findById(orderId);
-        orderOpt.ifPresent(order -> {
-            String token = order.getCommerce().getMercadoPagoAccessToken();
-            MercadoPagoConfigUtil.configureCommerceToken(token);
-        });
+    /**
+     * Configura el token de MercadoPago del comercio asociado a la orden.
+     * Debe llamarse dentro de un bloque synchronized sobre MercadoPagoConfigUtil.class.
+     *
+     * @return true si el token fue cambiado, false si ya era el correcto o no se encontró la orden
+     */
+    private boolean configureCommerceTokenFromOrder(UUID orderId) {
+        return orderRepository.findById(orderId)
+                .map(order -> {
+                    String token = order.getCommerce().getMercadoPagoAccessToken();
+                    return MercadoPagoConfigUtil.configureCommerceToken(token);
+                })
+                .orElse(false);
     }
 }
