@@ -3,7 +3,7 @@ package com.rescuebites.api.shared.services.implementations;
 import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.client.facades.interfaces.IClientFacade;
-import com.rescuebites.api.client.repositories.IClientRepository;
+import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.shared.controllers.responses.SearchProductResponse;
 import com.rescuebites.api.product.data.mappers.ProductMapper;
 import com.rescuebites.api.product.data.models.Product;
@@ -23,7 +23,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -81,12 +80,16 @@ public class ClientSearchServiceImpl implements IClientSearchService {
     }
 
     private List<Product> getProductsByCommerce(String normalizedQuery, List<PreferenceType> clientPreferences) {
-        List<Product> products = new ArrayList<>();
-        commerceRepository.findActiveByNameContaining(normalizedQuery, PRE_FILTER_PAGE_FOR_SEARCH)
-                .forEach(commerce -> products.addAll(
-                        productRepository.findActiveByCommerceWithPreferences(commerce.getCommerceId(), clientPreferences)
-                ));
-        return products;
+        List<UUID> commerceIds = commerceRepository.findActiveByNameContaining(normalizedQuery, PRE_FILTER_PAGE_FOR_SEARCH)
+                .getContent().stream()
+                .map(Commerce::getCommerceId)
+                .toList();
+
+        if (commerceIds.isEmpty()) {
+            return List.of();
+        }
+
+        return productRepository.findActiveByCommerceIdsWithPreferences(commerceIds, clientPreferences);
     }
 
     private List<Product> getProductsByName(String normalizedQuery, List<PreferenceType> clientPreferences) {
