@@ -22,6 +22,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity(name = "products")
+@Table(indexes = {
+        @Index(name = "idx_product_active_commerce", columnList = "active, commerce_id"),
+        @Index(name = "idx_product_active_name", columnList = "active, name"),
+        @Index(name = "idx_product_active_commerce_type", columnList = "active, commerce_type")
+})
 @Data
 @Builder
 @NoArgsConstructor
