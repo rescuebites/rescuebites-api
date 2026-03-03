@@ -7,7 +7,6 @@ import com.rescuebites.api.product.repositories.IProductRepository;
 import com.rescuebites.api.shared.controllers.responses.SearchSuggestion;
 import com.rescuebites.api.shared.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -34,15 +33,15 @@ public class SuggestionSearchStrategy {
 
         // Productos filtrados por preferencias del cliente
         var productByNameSuggestions = mapProductsToSuggestions(
-                productRepository.findActiveByNameContaining(normalizedQuery, PageRequest.of(0, 5))
+                productRepository.findActiveByNameContaining(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
                         .getContent().stream()
-                        .filter(p -> matchesPreferences(p, clientPreferences))
+                        .filter(p -> SearchUtils.matchesPreferences(p, clientPreferences))
                         .toList());
 
         var productByDescSuggestions = mapProductsToSuggestions(
-                productRepository.findActiveByDescriptionContainingExcludingName(normalizedQuery, PageRequest.of(0, 5))
+                productRepository.findActiveByDescriptionContainingExcludingName(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
                         .getContent().stream()
-                        .filter(p -> matchesPreferences(p, clientPreferences))
+                        .filter(p -> SearchUtils.matchesPreferences(p, clientPreferences))
                         .toList());
 
         return combineSuggestions(commerceSuggestions, productByNameSuggestions, productByDescSuggestions);
@@ -80,13 +79,5 @@ public class SuggestionSearchStrategy {
         suggestions.addAll(productByNameSuggestions);
         suggestions.addAll(productByDescSuggestions);
         return suggestions;
-    }
-
-    public boolean matchesPreferences(Product product, List<PreferenceType> clientPreferences) {
-        if (product.getPreferenceType() == null || product.getPreferenceType().isEmpty()) {
-            return false;
-        }
-        return product.getPreferenceType().stream()
-                .anyMatch(clientPreferences::contains);
     }
 }

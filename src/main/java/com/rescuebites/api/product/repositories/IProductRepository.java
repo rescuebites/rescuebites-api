@@ -115,12 +115,13 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
         Queries para productos filtrados por preferencias del cliente (registrado o logueado)
      */
 
-    @Query("SELECT p FROM products p WHERE p.active = true " +
-            "AND p.commerce.commerceId = :commerceId " +
-            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0")
-    List<Product> findActiveByCommerceWithPreferences(
-            @Param("commerceId") UUID commerceId,
     @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @Query("SELECT DISTINCT p FROM products p JOIN p.preferenceType pref " +
+            "WHERE p.active = true " +
+            "AND p.commerce.commerceId IN :commerceIds " +
+            "AND pref IN :preferences")
+    List<Product> findActiveByCommerceIdsWithPreferences(
+            @Param("commerceIds") List<UUID> commerceIds,
             @Param("preferences") List<PreferenceType> preferences
     );
 
