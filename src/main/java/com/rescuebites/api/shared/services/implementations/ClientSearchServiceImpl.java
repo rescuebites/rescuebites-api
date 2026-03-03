@@ -92,23 +92,14 @@ public class ClientSearchServiceImpl implements IClientSearchService {
     private List<Product> getProductsByName(String normalizedQuery, List<PreferenceType> clientPreferences) {
         return productRepository.findActiveByNameContaining(normalizedQuery, PRE_FILTER_PAGE_FOR_SEARCH)
                 .getContent().stream()
-                .filter(p -> matchesClientPreferences(p, clientPreferences))
+                .filter(p -> SearchUtils.matchesPreferences(p, clientPreferences))
                 .toList();
     }
 
     private List<Product> getProductsByDescription(String normalizedQuery, List<PreferenceType> clientPreferences) {
         return productRepository.findActiveByDescriptionContainingExcludingName(normalizedQuery, PRE_FILTER_PAGE_FOR_SEARCH)
                 .getContent().stream()
-                .filter(p -> matchesClientPreferences(p, clientPreferences))
+                .filter(p -> SearchUtils.matchesPreferences(p, clientPreferences))
                 .toList();
-    }
-
-    private boolean matchesClientPreferences(Product product, List<PreferenceType> clientPreferences) {
-        if (product.getPreferenceType() == null || product.getPreferenceType().isEmpty()) {
-            return false;
-        }
-
-        return product.getPreferenceType().stream()
-                .anyMatch(clientPreferences::contains);
     }
 }
