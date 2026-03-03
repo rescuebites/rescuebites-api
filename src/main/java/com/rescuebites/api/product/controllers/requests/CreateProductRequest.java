@@ -60,7 +60,6 @@ public class CreateProductRequest{
         @Schema(description = "Fecha de vencimiento", example = "2025-12-31")
         private LocalDate expirationDate;
 
-        @NotNull(message = "Las preferencias son obligatorias")
-        @Schema(description = "Preferencias alimenticias")
+        @Schema(description = "Preferencias alimenticias (opcional, sin preferencias = apto para todos)")
         private Set<PreferenceType> preferences = new HashSet<>();
 }

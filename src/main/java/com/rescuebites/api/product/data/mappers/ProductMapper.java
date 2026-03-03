@@ -145,7 +145,7 @@ public class ProductMapper {
         if (request.getExpirationDate() != null) {
             product.setExpirationDate(request.getExpirationDate());
         }
-        if (preferences != null && !preferences.isEmpty()) {
+        if (preferences != null) {
             product.setPreferenceType(preferences);
         }
         if (newImages != null && !newImages.isEmpty()) {

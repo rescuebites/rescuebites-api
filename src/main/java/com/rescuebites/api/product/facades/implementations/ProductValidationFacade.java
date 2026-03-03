@@ -95,7 +95,7 @@ public class ProductValidationFacade implements IProductValidationFacade {
                 request.getCategory() != null ||
                 request.getCondition() != null ||
                 request.getExpirationDate() != null ||
-                (request.getPreferences() != null && !request.getPreferences().isEmpty());
+                (request.getPreferences() != null);
 
         if (!hasAtLeastOneField) {
             throw new ValidationException("Debe modificar al menos un campo del producto");

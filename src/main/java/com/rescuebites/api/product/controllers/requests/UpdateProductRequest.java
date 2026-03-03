@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -53,5 +52,5 @@ public class UpdateProductRequest{
         private LocalDate expirationDate;
 
         @Schema(description = "Preferencias alimenticias de un cliente")
-        private Set<PreferenceType> preferences = new HashSet<>();
+        private Set<PreferenceType> preferences;
 }
