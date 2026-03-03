@@ -93,11 +93,9 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
     );
 
     @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
-    @Query("SELECT p FROM products p LEFT JOIN products p2 " +
-            "ON p.productId = p2.productId AND LOWER(p2.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
-            "WHERE p.active = true " +
+    @Query("SELECT p FROM products p WHERE p.active = true " +
             "AND LOWER(p.description) LIKE LOWER(CONCAT('%', :query, '%')) " +
-            "AND p2.productId IS NULL")
+            "AND LOWER(p.name) NOT LIKE LOWER(CONCAT('%', :query, '%'))")
     Page<Product> findActiveByDescriptionContainingExcludingName(
             @Param("query") String query,
             Pageable pageable
