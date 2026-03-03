@@ -96,27 +96,32 @@ public class WebhookProcessor {
         // Sincronizar configuración del token + llamada al SDK para evitar race conditions
         // MercadoPagoConfig.setAccessToken es estado global, otro hilo podría cambiarlo
         synchronized (MercadoPagoConfigUtil.class) {
+            String previousToken = com.mercadopago.MercadoPagoConfig.getAccessToken();
             try {
-                payment = new PaymentClient().get(paymentId);
-            } catch (Exception e) {
-                throw new IllegalArgumentException(
-                        "Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
-            }
+                try {
+                    payment = new PaymentClient().get(paymentId);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                            "Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
+                }
 
-            // Si el pago tiene external reference, configurar el token del comercio
-            // y reintentar la llamada con el token correcto si es necesario
-            if (payment.getExternalReference() != null) {
-                UUID orderId = UUID.fromString(payment.getExternalReference());
-                boolean tokenChanged = configureCommerceTokenFromOrder(orderId);
+                // Si el pago tiene external reference, configurar el token del comercio
+                // y reintentar la llamada con el token correcto si es necesario
+                if (payment.getExternalReference() != null) {
+                    UUID orderId = UUID.fromString(payment.getExternalReference());
+                    boolean tokenChanged = configureCommerceTokenFromOrder(orderId);
 
-                if (tokenChanged) {
-                    try {
-                        payment = new PaymentClient().get(paymentId);
-                    } catch (Exception e) {
-                        throw new IllegalArgumentException(
-                                "Error al obtener datos del pago con token del comercio " + paymentId + ": " + e.getMessage(), e);
+                    if (tokenChanged) {
+                        try {
+                            payment = new PaymentClient().get(paymentId);
+                        } catch (Exception e) {
+                            throw new IllegalArgumentException(
+                                    "Error al obtener datos del pago con token del comercio " + paymentId + ": " + e.getMessage(), e);
+                        }
                     }
                 }
+            } finally {
+                com.mercadopago.MercadoPagoConfig.setAccessToken(previousToken);
             }
         }
 
