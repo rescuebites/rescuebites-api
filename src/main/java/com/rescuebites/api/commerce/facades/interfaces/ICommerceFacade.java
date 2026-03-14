@@ -8,6 +8,7 @@ import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.users.data.models.User;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ICommerceFacade {
@@ -18,7 +19,9 @@ public interface ICommerceFacade {
 
     void validateCommerceOwnership(UUID commerceId);
 
-    void ifCommerceNameAlreadyExistsThrowException(String name);
+    void ifCommerceIdentityAlreadyExistsThrowException(String name, String address, String locality);
+
+    void ifCommerceIdentityAlreadyExistsThrowExceptionExcludingId(UUID commerceId, String name, String address, String locality);
 
     List<CommerceType> getOrCreateCommerceTypes(List<CommerceTypeEnum> commerceTypeEnums);
 
@@ -29,5 +32,7 @@ public interface ICommerceFacade {
     boolean validateAndProcessUpdate(User user, UpdateCommerceRequest request);
 
     void applyUserChanges(User user, UpdateCommerceRequest request, boolean emailChanged);
+
+    Optional<Commerce> findCommerceByExactName(String name);
 
 }

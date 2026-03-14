@@ -12,7 +12,6 @@ import java.util.UUID;
 @Repository
 public interface ICommerceTypeRepository extends JpaRepository<CommerceType, UUID> {
 
-    @Cacheable(value = "commerceTypes", key = "#name")
+    @Cacheable(value = "commerceTypes", key = "#name", unless = "#result == null")
     Optional<CommerceType> findByName(CommerceTypeEnum name);
 }
-

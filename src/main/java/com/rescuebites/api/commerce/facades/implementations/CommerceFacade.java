@@ -8,23 +8,20 @@ import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.commerce.repositories.ICommerceRepository;
 import com.rescuebites.api.commerce.repositories.ICommerceTypeRepository;
-import com.rescuebites.api.exceptions.custom_exceptions.DuplicateResourceException;
 import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.security.utils.SecurityUtils;
 import com.rescuebites.api.users.data.models.User;
 import com.rescuebites.api.users.facades.interfaces.IUserFacade;
 import com.rescuebites.api.users.services.interfaces.ITokenService;
+import com.rescuebites.api.shared.utils.NormalizationUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.DayOfWeek;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,9 +53,45 @@ public class CommerceFacade implements ICommerceFacade {
     }
 
     @Override
-    public void ifCommerceNameAlreadyExistsThrowException(String name) {
-        if (commerceRepository.existsByNameAndDeletedFalse(name)) {
-            throw new DuplicateResourceException("Commerce", "name");
+    public void ifCommerceIdentityAlreadyExistsThrowException(String name, String address, String locality) {
+        String normName = NormalizationUtils.normalizeIdentity(name);
+        String normAddress = NormalizationUtils.normalizeIdentity(address);
+        String normLocality = NormalizationUtils.normalizeIdentity(locality);
+
+        if (normName == null || normName.isBlank()) {
+            return;
+        }
+
+        if (normAddress == null || normAddress.isBlank() || normLocality == null || normLocality.isBlank()) {
+            if (commerceRepository.findActiveByExactNormalizedName(normName).isPresent()) {
+                throw new ValidationException(
+                        "Ya existe un comercio registrado con ese nombre. Para registrar otro comercio con el mismo nombre debés indicar dirección y localidad."
+                );
+            }
+            return;
+        }
+
+        if (commerceRepository.existsActiveByNormalizedIdentity(normName, normAddress, normLocality)) {
+            throw new ValidationException("No puede existir un comercio con el mismo nombre, dirección y localidad");
+        }
+    }
+
+    @Override
+    public void ifCommerceIdentityAlreadyExistsThrowExceptionExcludingId(UUID commerceId, String name, String address, String locality) {
+        String normName = NormalizationUtils.normalizeIdentity(name);
+        String normAddress = NormalizationUtils.normalizeIdentity(address);
+        String normLocality = NormalizationUtils.normalizeIdentity(locality);
+
+        if (normName == null || normName.isBlank()) {
+            return;
+        }
+
+        if (normAddress == null || normAddress.isBlank() || normLocality == null || normLocality.isBlank()) {
+            return;
+        }
+
+        if (commerceRepository.existsActiveByNormalizedIdentityExcludingId(commerceId, normName, normAddress, normLocality)) {
+            throw new ValidationException("No puede existir un comercio con el mismo nombre, dirección y localidad");
         }
     }
 
@@ -76,7 +109,7 @@ public class CommerceFacade implements ICommerceFacade {
                 (request.getCommerceTypes() != null && !request.getCommerceTypes().isEmpty()) ||
                 (request.getBusinessHours() != null && !request.getBusinessHours().isEmpty()) ||
                 StringUtils.hasText(request.getAddress()) ||
-                StringUtils.hasText(request.getLocality()) ||
+                (request.getLocality() != null) ||
                 StringUtils.hasText(request.getPhone()) ||
                 StringUtils.hasText(request.getEmail()) ||
                 StringUtils.hasText(request.getPassword()) ||
@@ -207,4 +240,14 @@ public class CommerceFacade implements ICommerceFacade {
             }
         }
     }
+
+    @Override
+    public Optional<Commerce> findCommerceByExactName(String name) {
+        String normName = NormalizationUtils.normalizeIdentity(name);
+        if (normName == null || normName.isBlank()) {
+            return Optional.empty();
+        }
+        return commerceRepository.findActiveByExactNormalizedName(normName);
+    }
 }
+

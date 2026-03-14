@@ -25,10 +25,10 @@ public class PublicCommerceServiceImpl implements IPublicCommerceService {
     private final ICommerceRepository commerceRepository;
     private final ICommerceFacade commerceFacade;
 
-    @Override
+@Override
     @Transactional
-    public Page<CommercePublicResponse> getAllCommerces(Pageable pageable) {
-        Page<Commerce> commerces = commerceRepository.findByDeletedFalse(pageable);
+    public Page<CommercePublicResponse> getAllCommerces(String locality, Pageable pageable) {
+        Page<Commerce> commerces = commerceRepository.findByDeletedFalseAndLocalityIgnoreCase(locality.trim(), pageable);
         return commerces.map(CommerceMapper::toCommercePublicResponse);
     }
 
@@ -42,8 +42,8 @@ public class PublicCommerceServiceImpl implements IPublicCommerceService {
 
     @Override
     @Transactional
-    public Page<CommercePublicResponse> getCommercesByType(CommerceTypeEnum commerceType, Pageable pageable) {
-        Page<Commerce> commerces = commerceRepository.findActiveByCommerceType(commerceType, pageable);
+    public Page<CommercePublicResponse> getCommercesByType(CommerceTypeEnum commerceType, String locality, Pageable pageable) {
+        Page<Commerce> commerces = commerceRepository.findActiveByCommerceTypeAndLocality(commerceType, locality.trim(), pageable);
         return commerces.map(CommerceMapper::toCommercePublicResponse);
     }
 }

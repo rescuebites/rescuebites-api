@@ -9,6 +9,8 @@ import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.commerce.repositories.ICommerceRepository;
 import com.rescuebites.api.commerce.services.interfaces.ICommerceService;
+import com.rescuebites.api.location.data.models.Locality;
+import com.rescuebites.api.location.services.implementations.LocalityService;
 import com.rescuebites.api.security.utils.SecurityUtils;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
@@ -37,20 +39,33 @@ public class CommerceServiceImpl implements ICommerceService {
     private final IImageFacade imageFacade;
     private final ITokenService tokenService;
     private final ApplicationEventPublisher eventPublisher;
+    private final LocalityService localityService;
 
     @Override
     @Transactional
     public void createCommerce(CreateCommerceRequest createCommerceRequest, MultipartFile[] images) {
         User user = userService.findByIdOrThrowException(createCommerceRequest.getUserId());
 
-        commerceFacade.ifCommerceNameAlreadyExistsThrowException(createCommerceRequest.getName());
+        Locality locality = localityService.resolveOrCreateByName(createCommerceRequest.getLocality());
+
+        commerceFacade.ifCommerceIdentityAlreadyExistsThrowException(
+                createCommerceRequest.getName(),
+                createCommerceRequest.getAddress(),
+                locality.getName()
+        );
         commerceFacade.validateBusinessHours(createCommerceRequest.getBusinessHours(), true);
 
         imageFacade.validateImages(images);
         List<Image> storedProduct = imageFacade.uploadAndSaveImages(images);
         List<CommerceType> commerceTypes = commerceFacade.getOrCreateCommerceTypes(createCommerceRequest.getCommerceTypes());
 
-        Commerce commerce = CommerceMapper.toCommerce(createCommerceRequest, user, commerceTypes, storedProduct);
+        Commerce commerce = CommerceMapper.toCommerce(
+                createCommerceRequest,
+                user,
+                commerceTypes,
+                storedProduct,
+                locality
+        );
         commerceRepository.save(commerce);
     }
 
@@ -61,7 +76,33 @@ public class CommerceServiceImpl implements ICommerceService {
         User user = commerce.getUser();
         SecurityUtils.validateOwnership(user.getEmail());
 
-        boolean emailChanged = commerceFacade.validateAndProcessUpdate(user, updateCommerceRequest);
+        boolean emailChanged = commerceFacade.validateAndProcessUpdate(
+                user,
+                updateCommerceRequest
+        );
+
+        Locality locality = resolveLocalityIfNeeded(updateCommerceRequest);
+
+        String effectiveName = updateCommerceRequest.getName() != null
+                ? updateCommerceRequest.getName()
+                : commerce.getName();
+
+        String effectiveAddress = updateCommerceRequest.getAddress() != null
+                ? updateCommerceRequest.getAddress()
+                : commerce.getAddress();
+
+        String effectiveLocalityName = locality != null
+                ? locality.getName()
+                : commerce.getLocality() != null
+                ? commerce.getLocality().getName()
+                : null;
+
+        commerceFacade.ifCommerceIdentityAlreadyExistsThrowExceptionExcludingId(
+                commerceId,
+                effectiveName,
+                effectiveAddress,
+                effectiveLocalityName
+        );
 
         List<Image> newImages = imageFacade.processImagesIfProvided(commerce.getImages(), images);
 
@@ -70,8 +111,18 @@ public class CommerceServiceImpl implements ICommerceService {
                 ? commerceFacade.getOrCreateCommerceTypes(updateCommerceRequest.getCommerceTypes())
                 : null;
 
-        CommerceMapper.updateCommerceFromRequest(commerce, updateCommerceRequest, commerceTypes, newImages);
-        commerceFacade.applyUserChanges(user, updateCommerceRequest, emailChanged);
+        CommerceMapper.updateCommerceFromRequest(
+                commerce,
+                updateCommerceRequest,
+                commerceTypes,
+                newImages,
+                locality
+        );
+        commerceFacade.applyUserChanges(
+                user,
+                updateCommerceRequest,
+                emailChanged
+        );
 
         commerce.setUpdatedAt(LocalDateTime.now());
         commerceRepository.save(commerce);
@@ -125,5 +176,13 @@ public class CommerceServiceImpl implements ICommerceService {
     private void sendEmailChangeConfirmation(User user) {
         UUID tokenId = tokenService.findLatestTokenByUser(user).getTokenId();
         eventPublisher.publishEvent(new EmailUpdatedEvent(user, tokenId));
+    }
+
+    private Locality resolveLocalityIfNeeded(UpdateCommerceRequest request) {
+        if (!StringUtils.hasText(request.getLocality())) {
+            return null;
+        }
+
+        return localityService.resolveOrCreateByName(request.getLocality());
     }
 }

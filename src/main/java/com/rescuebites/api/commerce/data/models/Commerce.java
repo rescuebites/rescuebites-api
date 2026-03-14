@@ -1,16 +1,21 @@
 package com.rescuebites.api.commerce.data.models;
 
+import com.rescuebites.api.location.data.models.Locality;
 import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.users.data.models.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,15 +25,24 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity(name = "commerces")
-@Data
+@Table(indexes = {
+        @Index(name = "idx_commerce_deleted_normalized_name", columnList = "deleted, normalized_name"),
+        @Index(name = "idx_commerce_normalized_identity", columnList = "normalized_name, normalized_address, normalized_locality")
+})
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class Commerce {
 
     @Id
     @Column(name = "commerce_id")
     @Builder.Default
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private UUID commerceId = UUID.randomUUID();
 
     @OneToOne(optional = false)
@@ -59,9 +73,10 @@ public class Commerce {
     @Column(nullable = false)
     private String address;
 
-    @NotBlank(message = "La localidad es obligatoria")
-    @Column(nullable = false)
-    private String locality;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "locality_id", referencedColumnName = "locality_id")
+    @NotNull(message = "La localidad es obligatoria")
+    private Locality locality;
 
     @NotBlank(message = "El teléfono es obligatorio")
     @Pattern(
@@ -90,4 +105,14 @@ public class Commerce {
     @OneToMany(mappedBy = "commerce", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Product> products = new ArrayList<>();
+
+    @Column(name = "normalized_name", nullable = false, length = 255)
+    private String normalizedName;
+
+    @Column(name = "normalized_address", nullable = false, length = 255)
+    private String normalizedAddress;
+
+    // Mantener columna para compatibilidad; ahora se puede usar para almacenar normalized locality name
+    @Column(name = "normalized_locality", nullable = false, length = 255)
+    private String normalizedLocality;
 }

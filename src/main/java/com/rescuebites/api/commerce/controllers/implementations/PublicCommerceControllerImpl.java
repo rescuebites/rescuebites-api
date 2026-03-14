@@ -19,8 +19,8 @@ public class PublicCommerceControllerImpl implements IPublicCommerceController {
     private final IPublicCommerceService publicCommerceService;
 
     @Override
-    public Page<CommercePublicResponse> getAllCommerces(Pageable pageable) {
-        return publicCommerceService.getAllCommerces(pageable);
+    public Page<CommercePublicResponse> getAllCommerces(String locality, Pageable pageable) {
+        return publicCommerceService.getAllCommerces(locality, pageable);
     }
 
     @Override
@@ -31,8 +31,9 @@ public class PublicCommerceControllerImpl implements IPublicCommerceController {
     @Override
     public Page<CommercePublicResponse> getCommercesByType(
             CommerceTypeEnum commerceType,
+            String locality,
             Pageable pageable
     ) {
-        return publicCommerceService.getCommercesByType(commerceType, pageable);
+        return publicCommerceService.getCommercesByType(commerceType, locality, pageable);
     }
 }
