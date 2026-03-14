@@ -13,19 +13,6 @@ public class PaginationUtils {
     private PaginationUtils() {
     }
 
-    /**
-     * Construye un Pageable para pre-fetch que trae suficientes resultados
-     * desde la DB para cubrir la página solicitada por el usuario.
-     * Protege contra overflow y preserva el Sort original.
-     *
-     * @param pageable Pageable original del usuario
-     * @return PageRequest que trae (offset + pageSize) resultados desde la página 0
-     */
-    public static PageRequest buildPrefetchPageable(Pageable pageable) {
-        long requiredSize = pageable.getOffset() + pageable.getPageSize();
-        int safeSize = (int) Math.min(requiredSize, Integer.MAX_VALUE);
-        return PageRequest.of(0, Math.max(safeSize, 1), pageable.getSort());
-    }
 
     /**
      * Aplica paginación manual a una lista y retorna un Page
@@ -48,5 +35,31 @@ public class PaginationUtils {
         int end = Math.min(start + pageable.getPageSize(), totalSize);
         List<T> paginatedItems = items.subList(start, end);
         return new PageImpl<>(paginatedItems, pageable, totalSize);
+    }
+
+    /**
+     * Construye un Pageable para pre-fetch que trae suficientes resultados
+     * desde la DB para cubrir la página solicitada por el usuario.
+     * Protege contra overflow y acota el tamaño por `maxPrefetch`. Preserva el Sort.
+     *
+     * @param pageable    Pageable original del usuario
+     * @param maxPrefetch tope máximo de elementos a prefetch
+     * @return PageRequest que trae (offset + pageSize) resultados desde la página 0, acotado por maxPrefetch
+     */
+    public static PageRequest buildPrefetchPageable(Pageable pageable, int maxPrefetch) {
+        if (maxPrefetch <= 0) {
+            maxPrefetch = 100; // fallback razonable
+        }
+
+        long requiredSize = 0L;
+        if (pageable != null) {
+            requiredSize = pageable.getOffset() + pageable.getPageSize();
+        }
+
+        long capped = Math.min(requiredSize, maxPrefetch);
+        int safeSize = (int) Math.max(1, capped);
+
+        // preservar sort si existe
+        return PageRequest.of(0, safeSize, (pageable != null) ? pageable.getSort() : Pageable.unpaged().getSort());
     }
 }
