@@ -38,4 +38,6 @@ public class UpdateClientRequest {
         private String confirmPassword;
 
         private List<PreferenceType> preferences = Collections.emptyList();
+
+        private String locality;
 }

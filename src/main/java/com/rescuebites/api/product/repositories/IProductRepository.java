@@ -5,6 +5,7 @@ import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.product.data.models.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,122 +22,271 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
     Queries para el dueño del comercio (ve todos los productos, activos e inactivos)
      */
 
-    @Query("SELECT p FROM products p WHERE p.commerce.commerceId = :commerceId")
-    Page<Product> findByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
-
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
     @Query("SELECT p FROM products p WHERE p.productId = :productId AND p.commerce.commerceId = :commerceId")
     Optional<Product> findByIdAndCommerceId(
             @Param("productId") UUID productId,
             @Param("commerceId") UUID commerceId
     );
 
-    /*
-     Queries para el home (solo productos activos)
-     */
-
-    @Query("SELECT p FROM products p WHERE p.active = true")
-    Page<Product> findAllActive(Pageable pageable);
-
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
     @Query("SELECT p FROM products p WHERE p.productId = :productId AND p.active = true")
     Optional<Product> findByIdAndActive(@Param("productId") UUID productId);
 
-    @Query("SELECT p FROM products p WHERE p.commerce.commerceId = :commerceId AND p.active = true")
-    Page<Product> findActiveByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
+    /*
+        Queries para productos filtrados por preferencias del cliente (registrado o autenticado)
+     */
 
-    @Query("SELECT p FROM products p WHERE p.active = true ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
-    Page<Product> findAllActiveOrderByDiscountedPriceAsc(Pageable pageable);
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
+            "WHERE p.active = true " +
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences) " +
+            "AND p.commerce.normalizedLocality = :normalizedLocality " +
+            "ORDER BY p.calculatedDiscountedPrice ASC")
+    Page<Product> findActiveProductsWithPreferencesOrderByPriceAndLocality(
+            @Param("preferences") List<PreferenceType> preferences,
+            @Param("normalizedLocality") String normalizedLocality,
+            Pageable pageable
+    );
 
+    /*
+     Queries para sugerencias (autocomplete)
+     */
+
+    @EntityGraph(attributePaths = {"commerce"})
     @Query("SELECT p FROM products p " +
-            "WHERE p.active = true AND p.commerceType = :commerceType " +
-            "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
-    Page<Product> findActiveByCommerceTypeOrderByDiscountedPriceAsc(
-            @Param("commerceType") CommerceTypeEnum commerceType,
-            Pageable pageable
-    );
-
-    /*
-    Queries para filtrar productos según las preferencias del cliente
-     */
-
-    @Query("SELECT DISTINCT p FROM products p " +
             "WHERE p.active = true " +
-            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0 " +
-            "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
-    Page<Product> findActiveProductsWithPreferences(
-            @Param("preferences") List<PreferenceType> preferences,
-            Pageable pageable
-    );
-
-    /*
-     Queries para búsqueda optimizada (barra de búsqueda)
-     */
-
-    @Query("SELECT p FROM products p WHERE p.active = true " +
-            "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+            "AND (" +
+            "   p.normalizedName LIKE CONCAT('%', :query, '%') " +
+            "   OR p.normalizedDescription LIKE CONCAT('%', :query, '%')" +
+            ") " +
             "ORDER BY CASE " +
-            "  WHEN LOWER(p.name) LIKE LOWER(CONCAT(:query, '%')) THEN 0 " +
-            "  ELSE 1 " +
+            "   WHEN p.normalizedName LIKE CONCAT(:query, '%') THEN 0 " +
+            "   ELSE 1 " +
             "END, p.name ASC")
-    Page<Product> findActiveByNameContaining(
+    Page<Product> suggestProductsHierarchy(
             @Param("query") String query,
             Pageable pageable
     );
 
-    @Query("SELECT p FROM products p WHERE p.active = true " +
-            "AND (LOWER(p.description) LIKE LOWER(CONCAT('%', :query, '%'))) " +
-            "AND p.productId NOT IN (SELECT p2.productId FROM products p2 WHERE LOWER(p2.name) LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<Product> findActiveByDescriptionContainingExcludingName(
+    @EntityGraph(attributePaths = {"commerce"})
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
+            "WHERE p.active = true " +
+            "AND (" +
+            "   p.normalizedName LIKE CONCAT('%', :query, '%') " +
+            "   OR p.normalizedDescription LIKE CONCAT('%', :query, '%')" +
+            ") " +
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences) " +
+            "ORDER BY CASE " +
+            "   WHEN p.normalizedName LIKE CONCAT(:query, '%') THEN 0 " +
+            "   ELSE 1 " +
+            "END, p.name ASC")
+    Page<Product> suggestProductsHierarchyWithPreferences(
             @Param("query") String query,
+            @Param("preferences") List<PreferenceType> preferences,
             Pageable pageable
     );
 
-    @Query("SELECT p FROM products p WHERE p.active = true " +
-            "AND p.commerce.commerceId IN (SELECT c.commerceId FROM commerces c " +
-            "WHERE c.deleted = false AND LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<Product> findActiveByCommerceName(
+    @EntityGraph(attributePaths = {"commerce"})
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
+            "WHERE p.active = true " +
+            "AND (" +
+            "   p.normalizedName LIKE CONCAT('%', :query, '%') " +
+            "   OR p.normalizedDescription LIKE CONCAT('%', :query, '%')" +
+            ") " +
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences) " +
+            "AND p.commerce.normalizedLocality = :normalizedLocality " +
+            "ORDER BY CASE " +
+            "   WHEN p.normalizedName LIKE CONCAT(:query, '%') THEN 0 " +
+            "   ELSE 1 " +
+            "END, p.name ASC")
+    Page<Product> suggestProductsHierarchyWithPreferencesAndLocality(
             @Param("query") String query,
+            @Param("preferences") List<PreferenceType> preferences,
+            @Param("normalizedLocality") String normalizedLocality,
             Pageable pageable
+    );
+
+    @Query("SELECT (COUNT(p) > 0) FROM products p " +
+            "WHERE p.commerce.commerceId = :commerceId " +
+            "AND LOWER(p.name) = LOWER(:name) " +
+            "AND p.category = :category " +
+            "AND ((:expirationDate IS NULL AND p.expirationDate IS NULL) OR p.expirationDate = :expirationDate) " +
+            "AND p.originalPrice = :originalPrice " +
+            "AND p.discountPercentage = :discountPercentage " +
+            "AND (" +
+            "   (SIZE(p.preferenceType) = 0 AND :preferencesEmpty = true) " +
+            "   OR (SIZE(p.preferenceType) = :preferencesSize AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) = :preferencesSize)" +
+            ")")
+    boolean existsIdenticalProductInCommerce(
+            @Param("commerceId") UUID commerceId,
+            @Param("name") String name,
+            @Param("category") com.rescuebites.api.product.data.enums.ProductCategory category,
+            @Param("expirationDate") java.time.LocalDate expirationDate,
+            @Param("originalPrice") java.math.BigDecimal originalPrice,
+            @Param("discountPercentage") java.math.BigDecimal discountPercentage,
+            @Param("preferences") List<PreferenceType> preferences,
+            @Param("preferencesSize") long preferencesSize,
+            @Param("preferencesEmpty") boolean preferencesEmpty
+    );
+
+    @Query("SELECT (COUNT(p) > 0) FROM products p " +
+            "WHERE p.commerce.commerceId = :commerceId " +
+            "AND p.productId <> :productId " +
+            "AND LOWER(p.name) = LOWER(:name) " +
+            "AND p.category = :category " +
+            "AND ((:expirationDate IS NULL AND p.expirationDate IS NULL) OR p.expirationDate = :expirationDate) " +
+            "AND p.originalPrice = :originalPrice " +
+            "AND p.discountPercentage = :discountPercentage " +
+            "AND (" +
+            "   (SIZE(p.preferenceType) = 0 AND :preferencesEmpty = true) " +
+            "   OR (SIZE(p.preferenceType) = :preferencesSize AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) = :preferencesSize)" +
+            ")")
+    boolean existsIdenticalProductInCommerceExcludingId(
+            @Param("commerceId") UUID commerceId,
+            @Param("productId") UUID productId,
+            @Param("name") String name,
+            @Param("category") com.rescuebites.api.product.data.enums.ProductCategory category,
+            @Param("expirationDate") java.time.LocalDate expirationDate,
+            @Param("originalPrice") java.math.BigDecimal originalPrice,
+            @Param("discountPercentage") java.math.BigDecimal discountPercentage,
+            @Param("preferences") List<PreferenceType> preferences,
+            @Param("preferencesSize") long preferencesSize,
+            @Param("preferencesEmpty") boolean preferencesEmpty
     );
 
     /*
-        Queries para productos filtrados por preferencias del cliente (registrado o logueado)
+     * Paginación segura: primero traer IDs (sin fetch de colecciones), luego cargar detalles por IN (:ids).
      */
 
-    @Query("SELECT p FROM products p WHERE p.active = true " +
-            "AND p.commerce.commerceId = :commerceId " +
-            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0")
-    List<Product> findActiveByCommerceWithPreferences(
-            @Param("commerceId") UUID commerceId,
-            @Param("preferences") List<PreferenceType> preferences
+    @Query("SELECT p.productId FROM products p WHERE p.active = true AND p.commerce.normalizedLocality = :normalizedLocality")
+    Page<UUID> findAllActiveIdsByLocality(@Param("normalizedLocality") String normalizedLocality, Pageable pageable);
+
+    @Query("SELECT p.productId FROM products p WHERE p.active = true AND p.commerce.commerceId = :commerceId")
+    Page<UUID> findActiveIdsByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
+
+    @Query("SELECT p.productId FROM products p WHERE p.active = true AND p.commerce.normalizedLocality = :normalizedLocality ORDER BY p.calculatedDiscountedPrice ASC")
+    Page<UUID> findAllActiveIdsOrderByDiscountedPriceAscAndLocality(@Param("normalizedLocality") String normalizedLocality, Pageable pageable);
+
+    @Query("SELECT p.productId FROM products p WHERE p.active = true AND p.commerceType = :commerceType AND p.commerce.normalizedLocality = :normalizedLocality ORDER BY p.calculatedDiscountedPrice ASC")
+    Page<UUID> findActiveIdsByCommerceTypeAndLocalityOrderByDiscountedPriceAsc(
+            @Param("commerceType") CommerceTypeEnum commerceType,
+            @Param("normalizedLocality") String normalizedLocality,
+            Pageable pageable
     );
 
-    @Query("SELECT DISTINCT p FROM products p " +
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce", "commerce.businessHours"})
+    @Query("SELECT DISTINCT p FROM products p WHERE p.productId IN :ids")
+    List<Product> findProductsWithDetailsByIds(@Param("ids") List<UUID> ids);
+
+    @Query("SELECT p.productId FROM products p WHERE p.commerce.commerceId = :commerceId")
+    Page<UUID> findIdsByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
+
+    /*
+     Queries para búsqueda de productos (sin prioridad por comercio)
+     - Coincidencia NO exacta: contiene en nombre o descripción
+     - Jerarquía: nombre > descripción
+     */
+
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @Query("SELECT p FROM products p " +
             "WHERE p.active = true " +
-            "AND p.commerce.commerceId = :commerceId " +
-            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0")
-    Page<Product> findActiveByCommerceIdWithPreferences(
-            @Param("commerceId") UUID commerceId,
+            "AND (" +
+            "   p.normalizedName LIKE CONCAT('%', :query, '%') " +
+            "   OR p.normalizedDescription LIKE CONCAT('%', :query, '%')" +
+            ") " +
+            "ORDER BY CASE " +
+            "   WHEN p.normalizedName LIKE CONCAT(:query, '%') THEN 0 " +
+            "   WHEN p.normalizedName LIKE CONCAT('%', :query, '%') THEN 1 " +
+            "   ELSE 2 " +
+            "END, p.name ASC")
+    Page<Product> searchProductsByQueryOrdered(
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
+            "WHERE p.active = true " +
+            "AND (" +
+            "   p.normalizedName LIKE CONCAT('%', :query, '%') " +
+            "   OR p.normalizedDescription LIKE CONCAT('%', :query, '%')" +
+            ") " +
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences) " +
+            "ORDER BY CASE " +
+            "   WHEN p.normalizedName LIKE CONCAT(:query, '%') THEN 0 " +
+            "   WHEN p.normalizedName LIKE CONCAT('%', :query, '%') THEN 1 " +
+            "   ELSE 2 " +
+            "END, p.name ASC")
+    Page<Product> searchProductsByQueryOrderedWithPreferences(
+            @Param("query") String query,
             @Param("preferences") List<PreferenceType> preferences,
             Pageable pageable
     );
 
-    @Query("SELECT DISTINCT p FROM products p " +
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
             "WHERE p.active = true " +
-            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0 " +
-            "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
-    Page<Product> findActiveProductsWithPreferencesOrderByPrice(
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences) " +
+            "AND p.commerce.normalizedLocality = :normalizedLocality " +
+            "ORDER BY p.calculatedDiscountedPrice ASC")
+    Page<Product> findActiveProductsWithPreferencesAndLocality(
             @Param("preferences") List<PreferenceType> preferences,
+            @Param("normalizedLocality") String normalizedLocality,
             Pageable pageable
     );
 
-    @Query("SELECT DISTINCT p FROM products p " +
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
             "WHERE p.active = true " +
             "AND p.commerceType = :commerceType " +
-            "AND (SELECT COUNT(pref) FROM p.preferenceType pref WHERE pref IN :preferences) > 0 " +
-            "ORDER BY (p.originalPrice - (p.originalPrice * p.discountPercentage / 100)) ASC")
-    Page<Product> findActiveByCommerceTypeWithPreferencesOrderByPrice(
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences) " +
+            "AND p.commerce.normalizedLocality = :normalizedLocality " +
+            "ORDER BY p.calculatedDiscountedPrice ASC")
+    Page<Product> findActiveByCommerceTypeWithPreferencesOrderByPriceAndLocality(
             @Param("commerceType") CommerceTypeEnum commerceType,
             @Param("preferences") List<PreferenceType> preferences,
+            @Param("normalizedLocality") String normalizedLocality,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
+            "WHERE p.active = true " +
+            "AND p.commerce.commerceId = :commerceId " +
+            "AND p.commerce.normalizedLocality = :normalizedLocality " +
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences)")
+    Page<Product> findActiveByCommerceIdWithPreferencesAndLocality(
+            @Param("commerceId") UUID commerceId,
+            @Param("preferences") List<PreferenceType> preferences,
+            @Param("normalizedLocality") String normalizedLocality,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @Query("SELECT p FROM products p WHERE p.active = true AND p.commerce.commerceId = :commerceId " +
+            "AND p.commerce.normalizedLocality = :normalizedLocality")
+    Page<Product> findActiveByCommerceIdAndLocality(
+            @Param("commerceId") UUID commerceId,
+            @Param("normalizedLocality") String normalizedLocality,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"commerce"})
+    @Query("SELECT p FROM products p " +
+            "WHERE p.active = true " +
+            "AND (" +
+            "   p.normalizedName LIKE CONCAT('%', :query, '%') " +
+            "   OR p.normalizedDescription LIKE CONCAT('%', :query, '%')" +
+            ") " +
+            "AND p.commerce.normalizedLocality = :normalizedLocality " +
+            "ORDER BY CASE " +
+            "   WHEN p.normalizedName LIKE CONCAT(:query, '%') THEN 0 " +
+            "   ELSE 1 " +
+            "END, p.name ASC")
+    Page<Product> suggestProductsHierarchyAndLocality(
+            @Param("query") String query,
+            @Param("normalizedLocality") String normalizedLocality,
             Pageable pageable
     );
 }

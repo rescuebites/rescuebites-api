@@ -1,5 +1,6 @@
 package com.rescuebites.api.cart.facades.implementations;
 
+import com.rescuebites.api.cart.data.mappers.CartMapper;
 import com.rescuebites.api.cart.data.models.Cart;
 import com.rescuebites.api.cart.facades.interfaces.ICartValidationFacade;
 import com.rescuebites.api.cart.repositories.ICartRepository;
@@ -42,12 +43,7 @@ public class CartValidationFacade implements ICartValidationFacade {
     @Override
     public Cart findOrCreateCartByClient(Client client) {
         return cartRepository.findByClientId(client.getClientId())
-                .orElseGet(() -> {
-                    Cart newCart = Cart.builder()
-                            .client(client)
-                            .build();
-                    return cartRepository.save(newCart);
-                });
+                .orElseGet(() -> cartRepository.save(CartMapper.toNewCart(client)));
     }
 
     @Override

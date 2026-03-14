@@ -24,7 +24,8 @@ public interface IClientProductController {
     @Operation(
             summary = "Listar productos que coinciden con las preferencias dietéticas del cliente",
             description = "Retorna una lista paginada de productos activos que cumplen con las preferencias dietéticas " +
-                    "(celíaco, vegano, sin gluten, etc) del cliente autenticado."
+                    "(celíaco, vegano, sin gluten, etc) del cliente autenticado. La localidad utilizada para filtrar " +
+                    "es la localidad registrada en el perfil del cliente (no se acepta sobreescritura por query param)."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
@@ -42,7 +43,8 @@ public interface IClientProductController {
     @GetMapping("/commerce/{commerceId}")
     @Operation(
             summary = "Listar productos activos de un comercio filtrados por preferencias del cliente",
-            description = "Retorna una lista paginada de productos activos de un comercio específico que coinciden con las preferencias del cliente."
+            description = "Retorna una lista paginada de productos activos de un comercio específico que coinciden con las preferencias del cliente. " +
+                    "La localidad utilizada para filtrar es la localidad registrada en el perfil del cliente."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
@@ -62,7 +64,8 @@ public interface IClientProductController {
     @GetMapping("/ordered-by-price")
     @Operation(
             summary = "Listar productos activos filtrados por preferencias y ordenados por precio",
-            description = "Retorna una lista paginada de productos activos que coinciden con las preferencias del cliente, ordenados por precio con descuento."
+            description = "Retorna una lista paginada de productos activos que coinciden con las preferencias del cliente, ordenados por precio con descuento. " +
+                    "La localidad utilizada para filtrar es la localidad registrada en el perfil del cliente."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
@@ -79,7 +82,8 @@ public interface IClientProductController {
     @GetMapping("/type/{commerceType}/ordered-by-price")
     @Operation(
             summary = "Listar productos por tipo de comercio filtrados por preferencias y ordenados por precio",
-            description = "Retorna una lista paginada de productos activos filtrados por tipo de comercio y preferencias del cliente, ordenados por precio."
+            description = "Retorna una lista paginada de productos activos filtrados por tipo de comercio y preferencias del cliente, ordenados por precio. " +
+                    "La localidad utilizada para filtrar es la localidad registrada en el perfil del cliente."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),

@@ -14,10 +14,4 @@ public interface IPaymentRepository extends JpaRepository<Payment, UUID> {
 
     @Query("SELECT p FROM payments p WHERE p.order.orderId = :orderId")
     Optional<Payment> findByOrderId(@Param("orderId") UUID orderId);
-
-    @Query("SELECT p FROM payments p WHERE p.mercadoPagoPaymentId = :paymentId")
-    Optional<Payment> findByMercadoPagoPaymentId(@Param("paymentId") String paymentId);
-
-    @Query("SELECT p FROM payments p WHERE p.mercadoPagoPreferenceId = :preferenceId")
-    Optional<Payment> findByMercadoPagoPreferenceId(@Param("preferenceId") String preferenceId);
 }

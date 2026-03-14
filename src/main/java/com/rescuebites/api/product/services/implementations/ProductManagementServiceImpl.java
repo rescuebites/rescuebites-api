@@ -13,12 +13,13 @@ import com.rescuebites.api.product.services.interfaces.IProductManagementService
 import com.rescuebites.api.security.utils.SecurityUtils;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.shared.facades.interfaces.IImageFacade;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -47,11 +48,14 @@ public class ProductManagementServiceImpl implements IProductManagementService {
         SecurityUtils.validateOwnership(commerce.getUser().getEmail());
         productValidationFacade.validateExpirationDate(request.getExpirationDate());
         imageFacade.validateImages(images);
-        productValidationFacade.validateCategoryAndCondition(
+        productValidationFacade.validateCategoryAndConditions(
                 request.getCategory(),
-                request.getCondition(),
+                request.getConditions(),
                 commerce
         );
+
+        // Evitar productos idénticos dentro del mismo comercio
+        productValidationFacade.validateNoIdenticalProductInCommerceForCreate(commerceId, request);
 
         List<Image> storedImages = imageFacade.uploadAndSaveImages(images);
 
@@ -66,20 +70,31 @@ public class ProductManagementServiceImpl implements IProductManagementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<ProductResponse> getProductsByCommerce(UUID commerceId, Pageable pageable) {
         Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
         SecurityUtils.validateOwnership(commerce.getUser().getEmail());
 
-        Page<Product> products = productRepository.findByCommerceId(
-                commerceId,
-                pageable
-        );
-        return products.map(ProductMapper::toProductResponse);
+        Page<UUID> idsPage = productRepository.findIdsByCommerceId(commerceId, pageable);
+
+        List<ProductResponse> content;
+        if (idsPage.isEmpty()) {
+            content = List.of();
+        } else {
+            var products = productRepository.findProductsWithDetailsByIds(idsPage.getContent());
+            var byId = products.stream().collect(java.util.stream.Collectors.toMap(Product::getProductId, p -> p));
+            content = idsPage.getContent().stream()
+                    .map(byId::get)
+                    .filter(java.util.Objects::nonNull)
+                    .map(ProductMapper::toProductResponse)
+                    .toList();
+        }
+
+        return new PageImpl<>(content, pageable, idsPage.getTotalElements());
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ProductResponse getProductByCommerceAndId(UUID commerceId, UUID productId) {
         Product product = productValidationFacade.findProductByIdAndCommerceIdOrThrowException(productId, commerceId);
         SecurityUtils.validateOwnership(product.getCommerce().getUser().getEmail());
@@ -105,6 +120,9 @@ public class ProductManagementServiceImpl implements IProductManagementService {
                 product,
                 request
         );
+
+        // Evitar que la actualización deje un producto idéntico a otro dentro del comercio
+        productValidationFacade.validateNoIdenticalProductInCommerceForUpdate(commerceId, productId, product, request);
 
         List<Image> newImages = imageFacade.processImagesIfProvided(
                 product.getImages(),

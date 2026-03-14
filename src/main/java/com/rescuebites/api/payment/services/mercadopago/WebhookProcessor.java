@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.resources.payment.Payment;
-import com.rescuebites.api.order.data.models.Order;
 import com.rescuebites.api.order.repositories.IOrderRepository;
 import com.rescuebites.api.payment.controllers.responses.PaymentWebhookData;
 import com.rescuebites.api.exceptions.custom_exceptions.IgnorableWebhookException;
@@ -36,7 +35,7 @@ public class WebhookProcessor {
         // Validar firma HMAC antes de procesar
         signatureValidator.validateSignature(xSignature, xRequestId, dataId);
 
-        Long paymentId = Long.valueOf(dataId);
+        Long paymentId = parsePaymentId(dataId);
         return processPaymentNotification(paymentId);
     }
 
@@ -70,46 +69,86 @@ public class WebhookProcessor {
 
     private String extractDataId(JsonNode notification) {
         JsonNode dataNode = notification.get("data");
-        if (dataNode == null || dataNode.get("id") == null) {
-            throw new IllegalArgumentException("El webhook no contiene ID de pago válido");
+        if (dataNode == null || dataNode.get("id") == null || dataNode.get("id").isNull()) {
+            throw new IgnorableWebhookException("El webhook no contiene ID de pago válido");
         }
-        return dataNode.get("id").asText();
+
+        String dataId = dataNode.get("id").asText();
+        if (dataId.isBlank()) {
+            throw new IgnorableWebhookException("El ID de pago del webhook está vacío");
+        }
+
+        return dataId;
+    }
+
+    private Long parsePaymentId(String dataId) {
+        try {
+            return Long.valueOf(dataId);
+        } catch (NumberFormatException e) {
+            throw new IgnorableWebhookException(
+                    "El ID de pago del webhook no es un número válido: " + dataId);
+        }
     }
 
     private Optional<PaymentWebhookData> processPaymentNotification(Long paymentId) {
-        synchronized (MercadoPagoConfigUtil.class) {
-            try {
-                // Primero obtener el pago con el token global configurado
-                Payment payment = new PaymentClient().get(paymentId);
-                String externalReference = payment.getExternalReference();
+        Payment payment;
 
-                if (externalReference == null) {
+        // Sincronizar configuración del token + llamada al SDK para evitar race conditions
+        // MercadoPagoConfig.setAccessToken es estado global, otro hilo podría cambiarlo
+        synchronized (MercadoPagoConfigUtil.class) {
+            String previousToken = com.mercadopago.MercadoPagoConfig.getAccessToken();
+            try {
+                try {
+                    payment = new PaymentClient().get(paymentId);
+                } catch (Exception e) {
                     throw new IllegalArgumentException(
-                            "El pago " + paymentId + " no tiene external reference");
+                            "Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
                 }
 
-                UUID orderId = UUID.fromString(externalReference);
+                // Si el pago tiene external reference, configurar el token del comercio
+                // y reintentar la llamada con el token correcto si es necesario
+                if (payment.getExternalReference() != null) {
+                    UUID orderId = UUID.fromString(payment.getExternalReference());
+                    boolean tokenChanged = configureCommerceTokenFromOrder(orderId);
 
-                // Configurar token del comercio ANTES de cualquier operación posterior
-                configureCommerceTokenForOrder(orderId);
-
-                return Optional.of(new PaymentWebhookData(
-                        orderId, String.valueOf(paymentId), payment.getStatus()));
-
-            } catch (IllegalArgumentException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new IllegalArgumentException(
-                        "Error al obtener datos del pago " + paymentId + ": " + e.getMessage(), e);
+                    if (tokenChanged) {
+                        try {
+                            payment = new PaymentClient().get(paymentId);
+                        } catch (Exception e) {
+                            throw new IllegalArgumentException(
+                                    "Error al obtener datos del pago con token del comercio " + paymentId + ": " + e.getMessage(), e);
+                        }
+                    }
+                }
+            } finally {
+                com.mercadopago.MercadoPagoConfig.setAccessToken(previousToken);
             }
         }
+
+        String externalReference = payment.getExternalReference();
+        if (externalReference == null) {
+            throw new IllegalArgumentException(
+                    "El pago " + paymentId + " no tiene external reference");
+        }
+
+        UUID orderId = UUID.fromString(externalReference);
+
+        return Optional.of(new PaymentWebhookData(
+                orderId, String.valueOf(paymentId), payment.getStatus()));
     }
 
-    private void configureCommerceTokenForOrder(UUID orderId) {
-        Optional<Order> orderOpt = orderRepository.findById(orderId);
-        orderOpt.ifPresent(order -> {
-            String token = order.getCommerce().getMercadoPagoAccessToken();
-            MercadoPagoConfigUtil.configureCommerceToken(token);
-        });
+    /**
+     * Configura el token de MercadoPago del comercio asociado a la orden.
+     * Debe llamarse dentro de un bloque synchronized sobre MercadoPagoConfigUtil.class.
+     *
+     * @return true si el token fue cambiado, false si ya era el correcto o no se encontró la orden
+     */
+    private boolean configureCommerceTokenFromOrder(UUID orderId) {
+        return orderRepository.findById(orderId)
+                .map(order -> {
+                    String token = order.getCommerce().getMercadoPagoAccessToken();
+                    return MercadoPagoConfigUtil.configureCommerceToken(token);
+                })
+                .orElse(false);
     }
 }

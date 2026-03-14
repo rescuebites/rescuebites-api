@@ -1,6 +1,6 @@
 package com.rescuebites.api.shared.controllers.interfaces;
 
-import com.rescuebites.api.shared.controllers.responses.SearchProductResponse;
+import com.rescuebites.api.shared.controllers.responses.SearchResultResponse;
 import com.rescuebites.api.shared.controllers.responses.SearchSuggestion;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,9 +47,15 @@ public interface IClientSearchController {
     @GetMapping
     @ResponseStatus(OK)
     @Operation(
-            summary = "Buscar productos según preferencias del cliente",
-            description = "Retorna productos que coincidan con el término de búsqueda y las preferencias " +
-                    "dietéticas registradas del cliente autenticado (celíaco, vegano, sin gluten, etc)"
+            summary = "Buscar (resultado compuesto) según preferencias del cliente",
+            description = "Jerarquía de los resultados cuando el término coincide con un comercio registrado:" +
+                    " 1) Devuelve primero los comercios que matchean por nombre " +
+                    " 2) Completa con comercios del mismo tipo que los matcheados." +
+                    "Jerarquía de resultados cuando el término coincide con un producto registrado: " +
+                    " 1) Match exacto de la frase completa en nombre " +
+                    " 2) Match exacto de la frase completa en descripción " +
+                    " 3) Match de alguna palabra en nombre " +
+                    " 4) Match de alguna palabra en descripción"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Resultados obtenidos exitosamente"),
@@ -58,7 +63,7 @@ public interface IClientSearchController {
             @ApiResponse(responseCode = "401", description = "Cliente no autenticado"),
             @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
     })
-    Page<SearchProductResponse> searchWithPreferences(
+    SearchResultResponse searchWithPreferences(
             @Parameter(description = "ID del cliente", required = true)
             @PathVariable UUID clientId,
 
@@ -68,4 +73,3 @@ public interface IClientSearchController {
             Pageable pageable
     );
 }
-

@@ -3,22 +3,30 @@ package com.rescuebites.api.users.data.models;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity(name = "tokens")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class Token {
 
     @Id
     @Column(name = "tokenId")
-    private UUID tokenId = UUID.randomUUID();;
+    @EqualsAndHashCode.Include
+    @ToString.Include
+    private UUID tokenId = UUID.randomUUID();
 
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

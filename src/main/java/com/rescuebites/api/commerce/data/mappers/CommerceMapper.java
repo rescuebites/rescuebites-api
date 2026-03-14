@@ -6,11 +6,14 @@ import com.rescuebites.api.commerce.controllers.requests.CreateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.responses.CommercePublicResponse;
 import com.rescuebites.api.commerce.controllers.responses.CommerceResponse;
+import com.rescuebites.api.shared.controllers.responses.SearchCommerceResponse;
 import com.rescuebites.api.commerce.data.models.BusinessHours;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.shared.Image;
+import com.rescuebites.api.shared.utils.NormalizationUtils;
 import com.rescuebites.api.users.data.models.User;
+import com.rescuebites.api.location.data.models.Locality;
 import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
@@ -26,7 +29,8 @@ public class CommerceMapper {
             CreateCommerceRequest request,
             User user,
             List<CommerceType> commerceTypes,
-            List<Image> images
+            List<Image> images,
+            Locality locality
     ) {
         Commerce commerce = Commerce.builder()
                 .commerceId(UUID.randomUUID())
@@ -35,9 +39,13 @@ public class CommerceMapper {
                 .description(request.getDescription())
                 .commerceTypes(commerceTypes)
                 .address(request.getAddress())
-                .locality(request.getLocality())
+                .locality(locality)
                 .phone(request.getPhone())
                 .build();
+
+        commerce.setNormalizedName(NormalizationUtils.normalizeIdentity(request.getName()));
+        commerce.setNormalizedAddress(NormalizationUtils.normalizeIdentity(request.getAddress()));
+        commerce.setNormalizedLocality(locality != null ? NormalizationUtils.normalizeIdentity(locality.getName()) : null);
 
         // Asociar horarios al comercio
         List<BusinessHours> businessHours = BusinessHoursMapper.toBusinessHoursList(
@@ -60,7 +68,7 @@ public class CommerceMapper {
                         .collect(Collectors.toList()),
                 BusinessHoursMapper.toBusinessHoursResponseList(commerce.getBusinessHours()),
                 commerce.getAddress(),
-                commerce.getLocality(),
+                commerce.getLocality() != null ? commerce.getLocality().getName() : null,
                 commerce.getPhone(),
                 commerce.getImages().stream()
                         .map(ImageMapper::toImageResponse)
@@ -78,14 +86,30 @@ public class CommerceMapper {
         );
     }
 
+    public static SearchCommerceResponse toSearchCommerceResponse(Commerce commerce) {
+        return new SearchCommerceResponse(
+                commerce.getCommerceId(),
+                commerce.getName(),
+                commerce.getAddress(),
+                commerce.getLocality() != null ? commerce.getLocality().getName() : null,
+                commerce.getCommerceTypes().isEmpty() ? null
+                        : commerce.getCommerceTypes().get(0).getName(),
+                commerce.getImages().stream()
+                        .map(ImageMapper::toImageResponse)
+                        .collect(Collectors.toList())
+        );
+    }
+
     public static void updateCommerceFromRequest(
             Commerce commerce,
             UpdateCommerceRequest request,
             List<CommerceType> commerceTypes,
-            List<Image> newImages
+            List<Image> newImages,
+            Locality locality
     ) {
         if (request.getName() != null) {
             commerce.setName(request.getName());
+            commerce.setNormalizedName(NormalizationUtils.normalizeIdentity(request.getName()));
         }
         if (request.getDescription() != null) {
             commerce.setDescription(request.getDescription());
@@ -115,9 +139,11 @@ public class CommerceMapper {
         }
         if (request.getAddress() != null) {
             commerce.setAddress(request.getAddress());
+            commerce.setNormalizedAddress(NormalizationUtils.normalizeIdentity(request.getAddress()));
         }
-        if (request.getLocality() != null) {
-            commerce.setLocality(request.getLocality());
+        if (locality != null) {
+            commerce.setLocality(locality);
+            commerce.setNormalizedLocality(NormalizationUtils.normalizeIdentity(locality.getName()));
         }
         if (request.getPhone() != null) {
             commerce.setPhone(request.getPhone());

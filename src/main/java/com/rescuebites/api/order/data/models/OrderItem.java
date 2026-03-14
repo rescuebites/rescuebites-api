@@ -6,22 +6,30 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity(name = "order_items")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class OrderItem {
 
     @Id
     @Column(name = "order_item_id")
     @Builder.Default
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private UUID orderItemId = UUID.randomUUID();
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)

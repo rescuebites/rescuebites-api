@@ -11,8 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -45,13 +44,13 @@ public class UpdateProductRequest{
         @Schema(description = "Categoría del producto", example = "FRUIT")
         private ProductCategory category;
 
-        @Schema(description = "Estado/condición del producto", example = "RIPE")
-        private ProductCondition condition;
+        @Schema(description = "Condiciones del producto", example = "[\"RIPE\", \"NEAR_EXPIRATION\"]")
+        private Set<ProductCondition> conditions;
 
         @Future(message = "La fecha de vencimiento debe ser futura")
         @Schema(description = "Fecha de vencimiento (opcional)")
         private LocalDate expirationDate;
 
         @Schema(description = "Preferencias alimenticias de un cliente")
-        private List<PreferenceType> preferences = Collections.emptyList();
+        private Set<PreferenceType> preferences;
 }

@@ -102,7 +102,8 @@ public class ClientFacade implements IClientFacade {
                 StringUtils.hasText(request.getEmail()) ||
                 StringUtils.hasText(request.getPassword()) ||
                 (request.getPreferences() != null && !request.getPreferences().isEmpty()) ||
-                (profilePicture != null && !profilePicture.isEmpty());
+                (profilePicture != null && !profilePicture.isEmpty()) ||
+                StringUtils.hasText(request.getLocality());
 
         if (!hasChanges) {
             throw new ValidationException("Debe modificar al menos un campo");

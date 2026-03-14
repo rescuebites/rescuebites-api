@@ -1,6 +1,7 @@
 package com.rescuebites.api.client.data.models;
 
 import com.rescuebites.api.client.data.enums.PreferenceType;
+import com.rescuebites.api.location.data.models.Locality;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.users.data.models.User;
 import jakarta.persistence.*;
@@ -9,23 +10,32 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Entity(name = "clients")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class Client {
 
     @Id
     @Column(name = "clientId")
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private UUID clientId = UUID.randomUUID();
 
     @NotBlank(message = "El nombre es obligatorio")
@@ -55,9 +65,15 @@ public class Client {
     @JoinColumn(name = "userId", nullable = false)
     private User user;
 
-    @ElementCollection(targetClass = PreferenceType.class, fetch = FetchType.EAGER)
+    @ElementCollection(targetClass = PreferenceType.class, fetch = FetchType.LAZY)
     @Enumerated(EnumType.STRING)
-    private List<PreferenceType> preferences;
+    @Builder.Default
+    private List<PreferenceType> preferences = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "locality_id", referencedColumnName = "locality_id")
+    @NotNull(message = "La localidad es obligatoria")
+    private Locality locality;
 
     @Builder.Default
     private boolean deleted = false;
@@ -65,8 +81,4 @@ public class Client {
     private LocalDateTime updatedAt;
 
     private LocalDateTime deletedAt;
-
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
 }

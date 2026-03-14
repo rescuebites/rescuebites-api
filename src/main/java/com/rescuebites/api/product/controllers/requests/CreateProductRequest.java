@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -51,16 +51,15 @@ public class CreateProductRequest{
         @Schema(description = "Categoría del producto", example = "FRUIT")
         private ProductCategory category;
 
-        @NotNull(message = "La condición del producto es requerida")
-        @Schema(description = "Estado/condición del producto", example = "RIPE")
-        private ProductCondition condition;
+        @NotEmpty(message = "Debe especificar al menos una condición del producto")
+        @Schema(description = "Condiciones del producto", example = "[\"RIPE\", \"NEAR_EXPIRATION\"]")
+        private Set<ProductCondition> conditions = new HashSet<>();
 
         @NotNull(message = "La fecha de vencimiento es obligatoria")
         @Future(message = "La fecha de vencimiento debe ser futura")
         @Schema(description = "Fecha de vencimiento", example = "2025-12-31")
         private LocalDate expirationDate;
 
-        @NotNull(message = "Las preferencias son obligatorias")
-        @Schema(description = "Preferencias alimenticias")
-        private List<PreferenceType> preferences = Collections.emptyList();
+        @Schema(description = "Preferencias alimenticias (opcional, sin preferencias = apto para todos)")
+        private Set<PreferenceType> preferences = new HashSet<>();
 }

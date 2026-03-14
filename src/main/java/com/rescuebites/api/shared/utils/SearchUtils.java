@@ -1,29 +1,18 @@
 package com.rescuebites.api.shared.utils;
 
-import java.text.Normalizer;
-
 public class SearchUtils {
 
+    private SearchUtils() {
+    }
+
     /**
-     * Normaliza un string para búsqueda:
-     * - Convierte a minúsculas
-     * - Elimina acentos y caracteres especiales
-     * - Elimina espacios extra
+     * Normaliza un string para búsqueda.
+     *
+     * Nota: delega en {@link NormalizationUtils#normalizeIdentity(String)} para mantener
+     * consistencia entre sugerencias/búsqueda y validaciones de identidad.
      */
     public static String normalizeQuery(String query) {
-        if (query == null || query.isBlank()) {
-            return "";
-        }
-
-        String normalized = query.toLowerCase();
-
-        normalized = Normalizer.normalize(normalized, Normalizer.Form.NFD);
-        normalized = normalized.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
-
-        normalized = normalized.replaceAll("[^a-z0-9\\s]", "");
-
-        normalized = normalized.trim().replaceAll("\\s+", " ");
-
-        return normalized;
+        String normalized = NormalizationUtils.normalizeIdentity(query);
+        return normalized == null ? "" : normalized;
     }
 }

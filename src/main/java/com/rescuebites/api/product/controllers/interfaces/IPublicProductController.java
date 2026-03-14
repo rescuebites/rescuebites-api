@@ -21,12 +21,16 @@ public interface IPublicProductController {
     @GetMapping
     @Operation(
             summary = "Listar todos los productos activos",
-            description = "Retorna una lista paginada de todos los productos activos disponibles"
+            description = "Retorna una lista paginada de todos los productos activos de comercios de la localidad especificada."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente")
+            @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Localidad no especificada")
     })
     Page<ProductResponse> getAllActiveProducts(
+            @Parameter(description = "Localidad para filtrar productos", required = true)
+            @RequestParam String locality,
+
             @Parameter(description = "Parámetros de paginación")
             Pageable pageable
     );
@@ -65,12 +69,16 @@ public interface IPublicProductController {
     @GetMapping("/ordered-by-price")
     @Operation(
             summary = "Listar productos activos ordenados por precio al inicio del home",
-            description = "Retorna una lista paginada al inicio del home de productos activos ordenados por precio con descuento de mayor a menor"
+            description = "Retorna una lista paginada de productos activos ordenados por precio de comercios de la localidad especificada."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente")
+            @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Localidad no especificada")
     })
     Page<ProductResponse> getAllActiveProductsOrderedByPrice(
+            @Parameter(description = "Localidad para filtrar productos", required = true)
+            @RequestParam String locality,
+
             @Parameter(description = "Parámetros de paginación")
             Pageable pageable
     );
@@ -78,15 +86,18 @@ public interface IPublicProductController {
     @GetMapping("/type/{commerceType}/ordered-by-price")
     @Operation(
             summary = "Listar productos por tipo de comercio ordenados por precio",
-            description = "Retorna una lista paginada de productos activos filtrados por tipo de comercio y ordenados por precio con descuento de mayor a menor"
+            description = "Retorna una lista paginada de productos activos filtrados por tipo de comercio, localidad y ordenados por precio."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
-            @ApiResponse(responseCode = "400", description = "Tipo de comercio inválido")
+            @ApiResponse(responseCode = "400", description = "Tipo de comercio o localidad inválidos")
     })
     Page<ProductPublicResponse> getActiveProductsByCommerceTypeOrderedByPrice(
             @Parameter(description = "Tipo de comercio", required = true)
             @PathVariable CommerceTypeEnum commerceType,
+
+            @Parameter(description = "Localidad para filtrar productos", required = true)
+            @RequestParam String locality,
 
             @Parameter(description = "Parámetros de paginación")
             Pageable pageable

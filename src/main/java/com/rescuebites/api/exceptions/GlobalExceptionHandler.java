@@ -160,6 +160,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(InvalidWebhookSignatureException.class)
+    public ResponseEntity<ApiError> handleInvalidWebhookSignature(InvalidWebhookSignatureException ex) {
+        logger.warn("Invalid webhook signature: {}", ex.getMessage());
+        ApiError error = new ApiError(
+                HttpStatus.UNAUTHORIZED.value(),
+                ex.getMessage(),
+                "Webhook signature validation failed"
+        );
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(CommerceClosedReopensException.class)
     public ResponseEntity<CommerceClosedError> handleCommerceClosedReopens(CommerceClosedReopensException ex) {
         CommerceClosedError error = new CommerceClosedError(

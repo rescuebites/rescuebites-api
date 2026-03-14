@@ -22,6 +22,7 @@ mercadopago:
   access-token: ${MERCADO_PAGO_ACCESS_TOKEN}
   webhook-secret: ${MERCADO_PAGO_WEBHOOK_SECRET}
   webhook-url: ${MERCADO_PAGO_WEBHOOK_URL}
+  sandbox: true
   # URL pública (ngrok) para redirecciones - Mercado Pago las requiere accesibles desde internet
   success-url: ${MERCADO_PAGO_PUBLIC_URL}/api/v1/payments/success
   failure-url: ${MERCADO_PAGO_PUBLIC_URL}/api/v1/payments/failure
@@ -38,3 +39,7 @@ twilio:
   account-sid: ${TWILIO_ACCOUNT_SID}
   auth-token: ${TWILIO_AUTH_TOKEN}
   whatsapp-from: ${TWILIO_WHATSAPP_FROM}
+
+spring:
+  cache:
+    type: none

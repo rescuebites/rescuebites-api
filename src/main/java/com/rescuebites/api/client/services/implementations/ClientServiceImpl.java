@@ -8,17 +8,19 @@ import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.facades.interfaces.IClientFacade;
 import com.rescuebites.api.client.repositories.IClientRepository;
 import com.rescuebites.api.client.services.interfaces.IClientService;
+import com.rescuebites.api.location.data.models.Locality;
+import com.rescuebites.api.location.services.implementations.LocalityService;
 import com.rescuebites.api.security.utils.SecurityUtils;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.users.data.models.User;
 import com.rescuebites.api.users.events.EmailUpdatedEvent;
 import com.rescuebites.api.users.services.interfaces.ITokenService;
 import com.rescuebites.api.users.services.interfaces.IUserService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -34,6 +36,7 @@ public class ClientServiceImpl implements IClientService {
     private final IUserService userService;
     private final ITokenService tokenService;
     private final ApplicationEventPublisher eventPublisher;
+    private final LocalityService localityService;
 
     @Value("${app.default-profile-picture}")
     private String defaultProfilePictureUrl;
@@ -43,12 +46,24 @@ public class ClientServiceImpl implements IClientService {
     public void createClient(CreateClientRequest createClientRequest, MultipartFile profilePicture) {
         User user = userService.findByIdOrThrowException(createClientRequest.getUserId());
 
-        Image image = clientFacade.processProfilePictureForCreation(profilePicture, defaultProfilePictureUrl);
-        Client client = ClientMapper.toClient(createClientRequest, user, createClientRequest.getPreferences(), image);
+        Image image = clientFacade.processProfilePictureForCreation(
+                profilePicture,
+                defaultProfilePictureUrl
+        );
+        Locality locality = localityService.resolveOrCreateByName(createClientRequest.getLocality());
+
+        Client client = ClientMapper.toClient(
+                createClientRequest,
+                user,
+                createClientRequest.getPreferences(),
+                image,
+                locality
+        );
         clientRepository.save(client);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ClientResponse getClientById(UUID clientId) {
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
@@ -63,12 +78,30 @@ public class ClientServiceImpl implements IClientService {
         User user = client.getUser();
         SecurityUtils.validateOwnership(user.getEmail());
 
-        boolean emailChanged = clientFacade.validateAndProcessUpdate(user, updateClientRequest, profilePicture);
-        Image newImage = clientFacade.processProfilePictureForUpdate(client.getImage(), profilePicture);
+        boolean emailChanged = clientFacade.validateAndProcessUpdate(
+                user,
+                updateClientRequest,
+                profilePicture
+        );
+        Image newImage = clientFacade.processProfilePictureForUpdate(
+                client.getImage(),
+                profilePicture
+        );
+        Locality locality = localityService.resolveOrCreateByName(updateClientRequest.getLocality());
 
         // Aplicar cambios
-        ClientMapper.updateClientFromRequest(client, updateClientRequest, newImage, updateClientRequest.getPreferences());
-        clientFacade.applyUserChanges(user, updateClientRequest, emailChanged);
+        ClientMapper.updateClientFromRequest(
+                client,
+                updateClientRequest,
+                newImage,
+                updateClientRequest.getPreferences(),
+                locality
+        );
+        clientFacade.applyUserChanges(
+                user,
+                updateClientRequest,
+                emailChanged
+        );
 
         client.setUpdatedAt(LocalDateTime.now());
         clientRepository.save(client);

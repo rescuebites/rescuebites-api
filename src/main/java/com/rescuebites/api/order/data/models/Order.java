@@ -8,8 +8,11 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,15 +22,20 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity(name = "orders")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class Order {
 
     @Id
     @Column(name = "order_id")
     @Builder.Default
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private UUID orderId = UUID.randomUUID();
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)

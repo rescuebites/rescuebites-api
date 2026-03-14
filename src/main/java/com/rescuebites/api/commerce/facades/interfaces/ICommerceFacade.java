@@ -18,7 +18,9 @@ public interface ICommerceFacade {
 
     void validateCommerceOwnership(UUID commerceId);
 
-    void ifCommerceNameAlreadyExistsThrowException(String name);
+    void ifCommerceIdentityAlreadyExistsThrowException(String name, String address, String locality);
+
+    void ifCommerceIdentityAlreadyExistsThrowExceptionExcludingId(UUID commerceId, String name, String address, String locality);
 
     List<CommerceType> getOrCreateCommerceTypes(List<CommerceTypeEnum> commerceTypeEnums);
 
@@ -29,5 +31,4 @@ public interface ICommerceFacade {
     boolean validateAndProcessUpdate(User user, UpdateCommerceRequest request);
 
     void applyUserChanges(User user, UpdateCommerceRequest request, boolean emailChanged);
-
 }

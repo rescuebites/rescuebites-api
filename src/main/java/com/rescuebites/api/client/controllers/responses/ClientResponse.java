@@ -16,5 +16,6 @@ public record ClientResponse(
         String address,
         String phone,
         UserResponse user,
-        List<PreferenceType> preferences
+        List<PreferenceType> preferences,
+        String locality
 ) {}

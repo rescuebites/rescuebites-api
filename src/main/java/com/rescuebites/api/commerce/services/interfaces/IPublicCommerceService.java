@@ -10,9 +10,9 @@ import java.util.UUID;
 
 public interface IPublicCommerceService {
 
-    Page<CommercePublicResponse> getAllCommerces(Pageable pageable);
+    Page<CommercePublicResponse> getAllCommerces(String locality, Pageable pageable);
 
     CommerceResponse getCommerceById(UUID commerceId);
 
-    Page<CommercePublicResponse> getCommercesByType(CommerceTypeEnum commerceType, Pageable pageable);
+    Page<CommercePublicResponse> getCommercesByType(CommerceTypeEnum commerceType, String locality, Pageable pageable);
 }
