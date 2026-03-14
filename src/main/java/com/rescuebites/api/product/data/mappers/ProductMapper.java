@@ -8,9 +8,11 @@ import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
 import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.controllers.responses.ProductPublicResponse;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
+import com.rescuebites.api.product.data.enums.ProductCondition;
 import com.rescuebites.api.shared.controllers.responses.SearchProductResponse;
 import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.shared.Image;
+import com.rescuebites.api.shared.utils.NormalizationUtils;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +33,7 @@ public class ProductMapper {
                 .originalPrice(request.getOriginalPrice())
                 .discountPercentage(request.getDiscountPercentage())
                 .category(request.getCategory())
-                .condition(request.getCondition())
+                .conditions(request.getConditions())
                 .commerceType(commerce.getCommerceTypes().get(0).getName())
                 .expirationDate(request.getExpirationDate())
                 .preferenceType(preferences)
@@ -39,11 +41,18 @@ public class ProductMapper {
                 .active(true)
                 .build();
 
+        product.setNormalizedName(NormalizationUtils.normalizeIdentity(request.getName()));
+        product.setNormalizedDescription(NormalizationUtils.normalizeIdentity(request.getDescription()));
+
         images.forEach(image -> image.setProduct(product));
         return product;
     }
 
     public static ProductResponse toProductResponse(Product product) {
+        List<String> conditionDisplayNames = product.getConditions().stream()
+                .map(ProductCondition::getDisplayName)
+                .toList();
+
         return new ProductResponse(
                 product.getProductId(),
                 product.getCommerce().getCommerceId(),
@@ -59,8 +68,8 @@ public class ProductMapper {
                 product.getDiscountPercentage(),
                 product.getDiscountedPrice(),
                 product.getCategory(),
-                product.getCondition(),
-                product.getCondition().getDisplayName(),
+                product.getConditions(),
+                conditionDisplayNames,
                 product.getExpirationDate(),
                 product.getImages().stream()
                         .map(ImageMapper::toImageResponse)
@@ -71,6 +80,10 @@ public class ProductMapper {
     }
 
     public static SearchProductResponse toSearchProductResponse(Product product) {
+        List<String> conditionDisplayNames = product.getConditions().stream()
+                .map(ProductCondition::getDisplayName)
+                .toList();
+
         return new SearchProductResponse(
                 product.getProductId(),
                 product.getCommerce().getCommerceId(),
@@ -83,8 +96,8 @@ public class ProductMapper {
                 product.getDiscountPercentage(),
                 product.getDiscountedPrice(),
                 product.getCategory(),
-                product.getCondition(),
-                product.getCondition().getDisplayName(),
+                product.getConditions(),
+                conditionDisplayNames,
                 product.getExpirationDate(),
                 product.getImages().stream()
                         .map(ImageMapper::toImageResponse)
@@ -123,9 +136,11 @@ public class ProductMapper {
             ) {
         if (request.getName() != null) {
             product.setName(request.getName());
+            product.setNormalizedName(NormalizationUtils.normalizeIdentity(request.getName()));
         }
         if (request.getDescription() != null) {
             product.setDescription(request.getDescription());
+            product.setNormalizedDescription(NormalizationUtils.normalizeIdentity(request.getDescription()));
         }
         if (request.getStock() != null) {
             product.setStock(request.getStock());
@@ -139,8 +154,8 @@ public class ProductMapper {
         if (request.getCategory() != null) {
             product.setCategory(request.getCategory());
         }
-        if (request.getCondition() != null) {
-            product.setCondition(request.getCondition());
+        if (request.getConditions() != null && !request.getConditions().isEmpty()) {
+            product.setConditions(request.getConditions());
         }
         if (request.getExpirationDate() != null) {
             product.setExpirationDate(request.getExpirationDate());

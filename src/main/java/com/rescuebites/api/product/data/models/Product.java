@@ -10,8 +10,13 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Formula;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -29,15 +34,20 @@ import java.util.UUID;
         @Index(name = "idx_product_active_name", columnList = "active, name"),
         @Index(name = "idx_product_active_commerce_type", columnList = "active, commerce_type")
 })
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class Product {
 
     @Id
     @Column(name = "productId")
     @Builder.Default
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private UUID productId = UUID.randomUUID();
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -68,14 +78,18 @@ public class Product {
     @Enumerated(EnumType.STRING)
     private ProductCategory category;
 
+    @ElementCollection(targetClass = ProductCondition.class, fetch = FetchType.LAZY)
     @Enumerated(EnumType.STRING)
-    @Column(name = "product_condition", nullable = false)
-    private ProductCondition condition;
+    @CollectionTable(name = "product_conditions", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "condition_value")
+    @BatchSize(size = 20)
+    private Set<ProductCondition> conditions = new HashSet<>();
 
     @ElementCollection(targetClass = PreferenceType.class, fetch = FetchType.LAZY)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "product_preferences", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "preference_type")
+    @BatchSize(size = 20)
     private Set<PreferenceType> preferenceType = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
@@ -83,13 +97,23 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @BatchSize(size = 20)
     private List<Image> images = new ArrayList<>();
 
     @Builder.Default
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Formula("(original_price - (original_price * discount_percentage / 100))")
+    private BigDecimal calculatedDiscountedPrice;
+
     private LocalDateTime updateAt;
+
+    @Column(name = "normalized_name", nullable = false, length = 255)
+    private String normalizedName;
+
+    @Column(name = "normalized_description", nullable = false, length = 255)
+    private String normalizedDescription;
 
     public BigDecimal getDiscountedPrice() {
         if (originalPrice == null || discountPercentage == null) {
@@ -101,4 +125,3 @@ public class Product {
         return discountedPrice.setScale(2, RoundingMode.HALF_UP);
     }
 }
-
