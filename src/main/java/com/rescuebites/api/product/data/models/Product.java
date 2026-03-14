@@ -109,10 +109,10 @@ public class Product {
 
     private LocalDateTime updateAt;
 
-    @Column(name = "normalized_name", nullable = false, length = 255)
+    @Column(name = "normalized_name", nullable = false)
     private String normalizedName;
 
-    @Column(name = "normalized_description", nullable = false, length = 255)
+    @Column(name = "normalized_description", nullable = false)
     private String normalizedDescription;
 
     public BigDecimal getDiscountedPrice() {

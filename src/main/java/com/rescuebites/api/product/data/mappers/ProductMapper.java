@@ -107,12 +107,6 @@ public class ProductMapper {
         );
     }
 
-    public static List<SearchProductResponse> toProductResponseList(List<Product> products) {
-        return products.stream()
-                .map(ProductMapper::toSearchProductResponse)
-                .toList();
-    }
-
     public static ProductPublicResponse toProductPublicResponse(Product product) {
         return new ProductPublicResponse(
                 product.getProductId(),
