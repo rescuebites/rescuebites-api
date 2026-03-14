@@ -9,6 +9,7 @@ import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.product.facades.interfaces.IProductValidationFacade;
 import com.rescuebites.api.product.repositories.IProductRepository;
 import com.rescuebites.api.product.services.interfaces.IPublicProductService;
+import com.rescuebites.api.shared.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -29,14 +30,15 @@ public class PublicProductServiceImpl implements IPublicProductService {
     private final IProductRepository productRepository;
     private final IProductValidationFacade validationFacade;
 
-@Override
+    @Override
     @Cacheable(
             value = "activeProducts",
-            key = "#locality + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
+            key = "T(com.rescuebites.api.shared.utils.SearchUtils).normalizeQuery(#locality) + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
     @Transactional(readOnly = true)
     public Page<ProductResponse> getAllActiveProducts(String locality, Pageable pageable) {
-        Page<UUID> idsPage = productRepository.findAllActiveIdsByLocality(locality.trim(), pageable);
+        String normalizedLocality = SearchUtils.normalizeQuery(locality);
+        Page<UUID> idsPage = productRepository.findAllActiveIdsByLocality(normalizedLocality, pageable);
         return fetchAndMapByIds(idsPage, pageable);
     }
 
@@ -55,18 +57,19 @@ public class PublicProductServiceImpl implements IPublicProductService {
     @Override
     @Cacheable(
             value = "activeProductsSortedByPrice",
-            key = "#locality + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
+            key = "T(com.rescuebites.api.shared.utils.SearchUtils).normalizeQuery(#locality) + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
     @Transactional(readOnly = true)
     public Page<ProductResponse> getAllActiveProductsOrderedByPrice(String locality, Pageable pageable) {
-        Page<UUID> idsPage = productRepository.findAllActiveIdsOrderByDiscountedPriceAscAndLocality(locality.trim(), pageable);
+        String normalizedLocality = SearchUtils.normalizeQuery(locality);
+        Page<UUID> idsPage = productRepository.findAllActiveIdsOrderByDiscountedPriceAscAndLocality(normalizedLocality, pageable);
         return fetchAndMapByIds(idsPage, pageable);
     }
 
     @Override
     @Cacheable(
             value = "activeProductsByCommerceTypeSortedByPrice",
-            key = "#commerceType + '-' + #locality + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
+            key = "#commerceType + '-' + T(com.rescuebites.api.shared.utils.SearchUtils).normalizeQuery(#locality) + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
     @Transactional(readOnly = true)
     public Page<ProductPublicResponse> getActiveProductsByCommerceTypeOrderedByPrice(
@@ -74,8 +77,9 @@ public class PublicProductServiceImpl implements IPublicProductService {
             String locality,
             Pageable pageable
     ) {
+        String normalizedLocality = SearchUtils.normalizeQuery(locality);
         Page<UUID> idsPage = productRepository.findActiveIdsByCommerceTypeAndLocalityOrderByDiscountedPriceAsc(
-                commerceType, locality.trim(), pageable);
+                commerceType, normalizedLocality, pageable);
 
         List<ProductPublicResponse> content;
         if (idsPage.isEmpty()) {

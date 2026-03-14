@@ -23,8 +23,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.rescuebites.api.shared.utils.Constants.DEFAULT_EXTRA_BY_TYPE_LIMIT;
-
 /**
  * Estrategia para búsqueda de comercios.
  * Reglas:
@@ -44,13 +42,11 @@ public class CommerceSearchStrategy {
             return matched.map(CommerceMapper::toSearchCommerceResponse);
         }
 
-        // Mapear manteniendo el orden de los resultados rankeados
         LinkedHashMap<UUID, Commerce> ordered = new LinkedHashMap<>();
         for (Commerce c : matched.getContent()) {
             ordered.put(c.getCommerceId(), c);
         }
 
-        // Tipos de los comercios matcheados
         Set<CommerceTypeEnum> matchedTypes = matched.getContent().stream()
                 .flatMap(c -> c.getCommerceTypes() == null ? Stream.empty() : c.getCommerceTypes().stream())
                 .map(CommerceType::getName)
