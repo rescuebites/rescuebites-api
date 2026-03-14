@@ -5,10 +5,10 @@ import com.rescuebites.api.shared.controllers.responses.SearchProductResponse;
 import com.rescuebites.api.product.data.mappers.ProductMapper;
 import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.product.repositories.IProductRepository;
+import com.rescuebites.api.shared.utils.PaginationUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +21,6 @@ import static com.rescuebites.api.shared.utils.Constants.PRE_FETCH_SIZE;
 
 /**
  * Estrategia para obtener, combinar y paginar productos de búsqueda.
- *
  * Jerarquía de resultados:
  * 1) Match exacto de la frase completa en nombre
  * 2) Match exacto de la frase completa en descripción
@@ -39,7 +38,7 @@ public class ProductSearchStrategy {
             String normalizedLocality,
             Pageable pageable
     ) {
-        List<Product> combinedResults = searchWithWordMatching(normalizedQuery, null, normalizedLocality);
+        List<Product> combinedResults = searchWithWordMatching(normalizedQuery, null, normalizedLocality, pageable);
         return paginateAndMap(combinedResults, pageable);
     }
 
@@ -49,13 +48,13 @@ public class ProductSearchStrategy {
             String normalizedLocality,
             Pageable pageable
     ) {
-        List<Product> combinedResults = searchWithWordMatching(normalizedQuery, clientPreferences, normalizedLocality);
+        List<Product> combinedResults = searchWithWordMatching(normalizedQuery, clientPreferences, normalizedLocality, pageable);
         return paginateAndMap(combinedResults, pageable);
     }
 
-    private List<Product> searchWithWordMatching(String normalizedQuery, List<PreferenceType> preferences, String normalizedLocality) {
+    private List<Product> searchWithWordMatching(String normalizedQuery, List<PreferenceType> preferences, String normalizedLocality, Pageable pageable) {
         LinkedHashMap<UUID, Product> results = new LinkedHashMap<>();
-        Pageable prefetch = PageRequest.of(0, PRE_FETCH_SIZE);
+        Pageable prefetch = PaginationUtils.buildPrefetchPageable(pageable, PRE_FETCH_SIZE);
 
         // 1) Buscar con la frase completa (prioridad máxima)
         Page<Product> exactMatches = (preferences == null)
@@ -92,17 +91,11 @@ public class ProductSearchStrategy {
     }
 
     private Page<SearchProductResponse> paginateAndMap(List<Product> products, Pageable pageable) {
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), products.size());
-
-        List<Product> pageContent = (start >= products.size())
-                ? List.of()
-                : products.subList(start, end);
-
-        List<SearchProductResponse> mapped = pageContent.stream()
+        Page<Product> paged = PaginationUtils.paginate(products, pageable);
+        List<SearchProductResponse> mapped = paged.getContent().stream()
                 .map(ProductMapper::toSearchProductResponse)
                 .toList();
 
-        return new PageImpl<>(mapped, pageable, products.size());
+        return new PageImpl<>(mapped, pageable, paged.getTotalElements());
     }
 }

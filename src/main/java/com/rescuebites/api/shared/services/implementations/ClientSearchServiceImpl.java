@@ -13,10 +13,10 @@ import com.rescuebites.api.shared.services.interfaces.IPublicSearchService;
 import com.rescuebites.api.shared.services.strategy.CommerceSearchStrategy;
 import com.rescuebites.api.shared.services.strategy.ProductSearchStrategy;
 import com.rescuebites.api.shared.services.strategy.SuggestionSearchStrategy;
+import com.rescuebites.api.shared.utils.PaginationUtils;
 import com.rescuebites.api.shared.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,7 +63,7 @@ public class ClientSearchServiceImpl implements IClientSearchService {
         // 1) Si hay comercios que matchean por nombre, devolvemos comercios (y completamos por tipo).
         var commerces = commerceSearchStrategy.searchCommercesWithTypeFallback(normalizedQuery, pageable);
         if (!commerces.isEmpty()) {
-            Page<SearchProductResponse> emptyProducts = new PageImpl<>(List.of(), pageable, 0);
+            Page<SearchProductResponse> emptyProducts = PaginationUtils.paginate(java.util.Collections.emptyList(), pageable);
             return new SearchResultResponse(commerces, emptyProducts);
         }
 
@@ -75,7 +75,7 @@ public class ClientSearchServiceImpl implements IClientSearchService {
                 pageable
         );
 
-        Page<SearchCommerceResponse> emptyCommerces = new PageImpl<>(List.of(), pageable, 0);
+        Page<SearchCommerceResponse> emptyCommerces = PaginationUtils.paginate(java.util.Collections.emptyList(), pageable);
         return new SearchResultResponse(emptyCommerces, products);
     }
 
