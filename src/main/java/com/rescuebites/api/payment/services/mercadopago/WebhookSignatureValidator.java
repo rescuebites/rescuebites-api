@@ -3,6 +3,7 @@ package com.rescuebites.api.payment.services.mercadopago;
 import com.rescuebites.api.commerce.data.projections.CommerceWebhookSecretProjection;
 import com.rescuebites.api.commerce.repositories.ICommerceRepository;
 import com.rescuebites.api.exceptions.custom_exceptions.IgnorableWebhookException;
+import com.rescuebites.api.exceptions.custom_exceptions.InvalidWebhookSignatureException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,17 +37,13 @@ public class WebhookSignatureValidator {
     @Value("${mercadopago.sandbox:false}")
     private boolean sandbox;
 
-    /**
-     * Valida la firma del webhook. En modo sandbox, si los headers no están presentes
-     * se ignora la validación. En producción, se rechaza si faltan los headers.
-     */
     public void validateSignature(String xSignature, String xRequestId, String dataId) {
         if (xSignature == null || xSignature.isBlank()) {
             if (sandbox) {
                 log.debug("Modo sandbox: se omite validación de firma (header x-signature ausente)");
                 return;
             }
-            throw new IgnorableWebhookException("Header x-signature requerido para validar webhook");
+            throw new InvalidWebhookSignatureException("Header x-signature requerido para validar webhook");
         }
 
         String ts = extractValue(xSignature, TS_PATTERN);
@@ -56,10 +53,7 @@ public class WebhookSignatureValidator {
             throw new IgnorableWebhookException("Header x-signature con formato inválido");
         }
 
-        // Construir el manifest según documentación de MP: "id:{dataId};request-id:{xRequestId};ts:{ts};"
         String manifest = buildManifest(dataId, xRequestId, ts);
-
-        // Buscar todos los comercios con webhook secret configurado y validar contra cada uno
         List<CommerceWebhookSecretProjection> commerceSecrets = commerceRepository.findAllWithWebhookSecret();
 
         boolean signatureValid = commerceSecrets.stream()
@@ -71,7 +65,7 @@ public class WebhookSignatureValidator {
                 return;
             }
             log.warn("Firma de webhook inválida. dataId={}, xRequestId={}", dataId, xRequestId);
-            throw new IgnorableWebhookException("Firma de webhook inválida");
+            throw new InvalidWebhookSignatureException("Firma de webhook inválida");
         }
     }
 
