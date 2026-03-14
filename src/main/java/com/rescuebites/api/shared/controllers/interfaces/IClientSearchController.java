@@ -1,6 +1,6 @@
 package com.rescuebites.api.shared.controllers.interfaces;
 
-import com.rescuebites.api.shared.controllers.responses.SearchProductResponse;
+import com.rescuebites.api.shared.controllers.responses.SearchResultResponse;
 import com.rescuebites.api.shared.controllers.responses.SearchSuggestion;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,9 +47,10 @@ public interface IClientSearchController {
     @GetMapping
     @ResponseStatus(OK)
     @Operation(
-            summary = "Buscar productos según preferencias del cliente",
-            description = "Retorna productos que coincidan con el término de búsqueda y las preferencias " +
-                    "dietéticas registradas del cliente autenticado (celíaco, vegano, sin gluten, etc)"
+            summary = "Buscar (resultado compuesto) según preferencias del cliente",
+            description = "Retorna productos que coincidan con el término de búsqueda y las preferencias dietéticas del cliente. " +
+                    "Si el término coincide exactamente con el nombre de un comercio registrado, incluye el detalle del comercio. " +
+                    "Jerarquía de productos: 1) productos del comercio coincidente (si existe), 2) por nombre, 3) por descripción."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Resultados obtenidos exitosamente"),
@@ -58,7 +58,7 @@ public interface IClientSearchController {
             @ApiResponse(responseCode = "401", description = "Cliente no autenticado"),
             @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
     })
-    Page<SearchProductResponse> searchWithPreferences(
+    SearchResultResponse searchWithPreferences(
             @Parameter(description = "ID del cliente", required = true)
             @PathVariable UUID clientId,
 
@@ -68,4 +68,3 @@ public interface IClientSearchController {
             Pageable pageable
     );
 }
-

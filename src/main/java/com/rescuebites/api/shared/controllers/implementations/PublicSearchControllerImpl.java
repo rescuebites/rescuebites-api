@@ -1,11 +1,11 @@
 package com.rescuebites.api.shared.controllers.implementations;
 
-import com.rescuebites.api.shared.controllers.responses.SearchProductResponse;
 import com.rescuebites.api.shared.controllers.interfaces.IPublicSearchController;
+import com.rescuebites.api.shared.controllers.responses.SearchResultResponse;
 import com.rescuebites.api.shared.controllers.responses.SearchSuggestion;
 import com.rescuebites.api.shared.services.interfaces.IPublicSearchService;
+import com.rescuebites.api.shared.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,12 +18,14 @@ public class PublicSearchControllerImpl implements IPublicSearchController {
     private final IPublicSearchService publicSearchService;
 
     @Override
-    public List<SearchSuggestion> getSuggestions(String query) {
-        return publicSearchService.getSuggestions(query);
+    public List<SearchSuggestion> getSuggestions(String query, String locality) {
+        String normalizedLocality = SearchUtils.normalizeQuery(locality);
+        return publicSearchService.getSuggestions(query, normalizedLocality);
     }
 
     @Override
-    public Page<SearchProductResponse> search(String query, Pageable pageable) {
-        return publicSearchService.search(query, pageable);
+    public SearchResultResponse search(String query, String locality, Pageable pageable) {
+        String normalizedLocality = SearchUtils.normalizeQuery(locality);
+        return publicSearchService.search(query, normalizedLocality, pageable);
     }
 }
