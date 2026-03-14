@@ -19,8 +19,8 @@ public class PublicProductController implements IPublicProductController {
     private final IPublicProductService publicProductService;
 
     @Override
-    public Page<ProductResponse> getAllActiveProducts(Pageable pageable) {
-        return publicProductService.getAllActiveProducts(pageable);
+    public Page<ProductResponse> getAllActiveProducts(String locality, Pageable pageable) {
+        return publicProductService.getAllActiveProducts(locality, pageable);
     }
 
     @Override
@@ -34,15 +34,16 @@ public class PublicProductController implements IPublicProductController {
     }
 
     @Override
-    public Page<ProductResponse> getAllActiveProductsOrderedByPrice(Pageable pageable) {
-        return publicProductService.getAllActiveProductsOrderedByPrice(pageable);
+    public Page<ProductResponse> getAllActiveProductsOrderedByPrice(String locality, Pageable pageable) {
+        return publicProductService.getAllActiveProductsOrderedByPrice(locality, pageable);
     }
 
     @Override
     public Page<ProductPublicResponse> getActiveProductsByCommerceTypeOrderedByPrice(
             CommerceTypeEnum commerceType,
+            String locality,
             Pageable pageable
     ) {
-        return publicProductService.getActiveProductsByCommerceTypeOrderedByPrice(commerceType, pageable);
+        return publicProductService.getActiveProductsByCommerceTypeOrderedByPrice(commerceType, locality, pageable);
     }
 }
