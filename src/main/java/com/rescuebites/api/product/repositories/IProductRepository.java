@@ -87,6 +87,26 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
             Pageable pageable
     );
 
+    @EntityGraph(attributePaths = {"commerce"})
+    @Query("SELECT DISTINCT p FROM products p LEFT JOIN p.preferenceType pref " +
+            "WHERE p.active = true " +
+            "AND (" +
+            "   p.normalizedName LIKE CONCAT('%', :query, '%') " +
+            "   OR p.normalizedDescription LIKE CONCAT('%', :query, '%')" +
+            ") " +
+            "AND (p.preferenceType IS EMPTY OR pref IN :preferences) " +
+            "AND p.commerce.normalizedLocality = :normalizedLocality " +
+            "ORDER BY CASE " +
+            "   WHEN p.normalizedName LIKE CONCAT(:query, '%') THEN 0 " +
+            "   ELSE 1 " +
+            "END, p.name ASC")
+    Page<Product> suggestProductsHierarchyWithPreferencesAndLocality(
+            @Param("query") String query,
+            @Param("preferences") List<PreferenceType> preferences,
+            @Param("normalizedLocality") String normalizedLocality,
+            Pageable pageable
+    );
+
     @Query("SELECT (COUNT(p) > 0) FROM products p " +
             "WHERE p.commerce.commerceId = :commerceId " +
             "AND LOWER(p.name) = LOWER(:name) " +
@@ -248,6 +268,24 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
             "AND p.commerce.normalizedLocality = :normalizedLocality")
     Page<Product> findActiveByCommerceIdAndLocality(
             @Param("commerceId") UUID commerceId,
+            @Param("normalizedLocality") String normalizedLocality,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"commerce"})
+    @Query("SELECT p FROM products p " +
+            "WHERE p.active = true " +
+            "AND (" +
+            "   p.normalizedName LIKE CONCAT('%', :query, '%') " +
+            "   OR p.normalizedDescription LIKE CONCAT('%', :query, '%')" +
+            ") " +
+            "AND p.commerce.normalizedLocality = :normalizedLocality " +
+            "ORDER BY CASE " +
+            "   WHEN p.normalizedName LIKE CONCAT(:query, '%') THEN 0 " +
+            "   ELSE 1 " +
+            "END, p.name ASC")
+    Page<Product> suggestProductsHierarchyAndLocality(
+            @Param("query") String query,
             @Param("normalizedLocality") String normalizedLocality,
             Pageable pageable
     );

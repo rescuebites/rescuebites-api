@@ -27,36 +27,15 @@ public class SuggestionSearchStrategy {
     private final IProductRepository productRepository;
     private final ICommerceRepository commerceRepository;
 
-    public List<SearchSuggestion> getSuggestionsFilteredByClientPreferences(String query, List<PreferenceType> clientPreferences, String normalizedLocality) {
-        String normalizedQuery = SearchUtils.normalizeQuery(query);
-
-        // Comercios (filtrados por localidad si existe)
-        var commerceSuggestions = getCommerceSuggestions(normalizedQuery, normalizedLocality);
-
-        // Productos (filtrados en DB por preferencias y por localidad cuando aplique)
-        var products = productRepository
-                .suggestProductsHierarchyWithPreferences(normalizedQuery, clientPreferences, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
-                .getContent();
-
-        // Filtrar por localidad en memoria (page pequeña)
-        if (normalizedLocality != null && !normalizedLocality.isBlank()) {
-            products = products.stream()
-                    .filter(p -> p.getCommerce() != null && normalizedLocality.equals(p.getCommerce().getNormalizedLocality()))
-                    .toList();
-        }
-
-        var productSuggestions = mapProductsToSuggestions(products);
-
-        return combineSuggestions(commerceSuggestions, productSuggestions);
-    }
-
     public List<SearchSuggestion> getCommerceSuggestions(String normalizedQuery, String normalizedLocality) {
-        var commerces = commerceRepository.findActiveByNameContainingRanked(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
-                .getContent();
-
-        commerces = commerces.stream()
-                .filter(c -> c.getNormalizedLocality() != null && normalizedLocality.equals(c.getNormalizedLocality()))
-                .toList();
+        List<com.rescuebites.api.commerce.data.models.Commerce> commerces;
+        if (normalizedLocality == null || normalizedLocality.isBlank()) {
+            commerces = commerceRepository.findActiveByNameContainingRanked(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
+                    .getContent();
+        } else {
+            commerces = commerceRepository.findActiveByNameContainingRankedAndLocality(normalizedQuery, normalizedLocality, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
+                    .getContent();
+        }
 
         // Detectar nombres duplicados dentro del set acotado de sugerencias
         var duplicatedNames = commerces.stream()
@@ -82,12 +61,23 @@ public class SuggestionSearchStrategy {
     }
 
     public List<SearchSuggestion> getProductSuggestions(String normalizedQuery, String normalizedLocality) {
-        var products = productRepository.suggestProductsHierarchy(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS).getContent();
+        List<Product> products;
+        if (normalizedLocality == null || normalizedLocality.isBlank()) {
+            products = productRepository.suggestProductsHierarchy(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS).getContent();
+        } else {
+            products = productRepository.suggestProductsHierarchyAndLocality(normalizedQuery, normalizedLocality, PRE_FILTER_PAGE_FOR_SUGGESTIONS).getContent();
+        }
 
-        if (normalizedLocality != null && !normalizedLocality.isBlank()) {
-            products = products.stream()
-                    .filter(p -> p.getCommerce() != null && normalizedLocality.equals(p.getCommerce().getNormalizedLocality()))
-                    .toList();
+        return mapProductsToSuggestions(products);
+    }
+
+    // Nuevo: sugerencias de producto filtradas por preferencias (y por localidad cuando aplique)
+    public List<SearchSuggestion> getProductSuggestions(String normalizedQuery, String normalizedLocality, List<PreferenceType> preferences) {
+        List<Product> products;
+        if (normalizedLocality == null || normalizedLocality.isBlank()) {
+            products = productRepository.suggestProductsHierarchyWithPreferences(normalizedQuery, preferences, PRE_FILTER_PAGE_FOR_SUGGESTIONS).getContent();
+        } else {
+            products = productRepository.suggestProductsHierarchyWithPreferencesAndLocality(normalizedQuery, preferences, normalizedLocality, PRE_FILTER_PAGE_FOR_SUGGESTIONS).getContent();
         }
 
         return mapProductsToSuggestions(products);

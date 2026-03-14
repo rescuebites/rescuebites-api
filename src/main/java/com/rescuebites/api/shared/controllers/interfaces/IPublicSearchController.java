@@ -46,9 +46,14 @@ public interface IPublicSearchController {
     @ResponseStatus(OK)
     @Operation(
             summary = "Buscar (resultado compuesto)",
-            description = "Retorna productos que coincidan con el término de búsqueda. " +
-                    "Si el término coincide exactamente con el nombre de un comercio registrado, incluye el detalle del comercio. " +
-                    "Jerarquía de productos: 1) productos del comercio coincidente (si existe), 2) por nombre, 3) por descripción."
+            description = "Jerarquía de los resultados cuando el término coincide con un comercio registrado:" +
+                    " 1) Devuelve primero los comercios que matchean por nombre " +
+                    " 2) Completa con comercios del mismo tipo que los matcheados." +
+                    "Jerarquía de resultados cuando el término coincide con un producto registrado: " +
+                    " 1) Match exacto de la frase completa en nombre " +
+                    " 2) Match exacto de la frase completa en descripción " +
+                    " 3) Match de alguna palabra en nombre " +
+                    " 4) Match de alguna palabra en descripción"
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Resultados obtenidos exitosamente"),

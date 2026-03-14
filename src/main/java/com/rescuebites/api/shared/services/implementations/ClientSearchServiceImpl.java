@@ -45,7 +45,12 @@ public class ClientSearchServiceImpl implements IClientSearchService {
             return publicSearchService.getSuggestions(query, normalizedLocality);
         }
 
-        return suggestionSearchStrategy.getSuggestionsFilteredByClientPreferences(query, clientPreferences, normalizedLocality);
+        String normalizedQuery = SearchUtils.normalizeQuery(query);
+
+        var commerceSuggestions = suggestionSearchStrategy.getCommerceSuggestions(normalizedQuery, normalizedLocality);
+        var productSuggestions = suggestionSearchStrategy.getProductSuggestions(normalizedQuery, normalizedLocality, clientPreferences);
+
+        return suggestionSearchStrategy.combineSuggestions(commerceSuggestions, productSuggestions);
     }
 
     @Override
