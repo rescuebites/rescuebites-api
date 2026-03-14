@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.rescuebites.api.shared.utils.Constants.PRE_FILTER_PAGE_FOR_SUGGESTIONS;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * Estrategia para obtener sugerencias de búsqueda (autocomplete)
@@ -52,16 +54,13 @@ public class SuggestionSearchStrategy {
         var commerces = commerceRepository.findActiveByNameContainingRanked(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
                 .getContent();
 
-        // Filtrar por localidad si se proporcionó
-        if (normalizedLocality != null && !normalizedLocality.isBlank()) {
-            commerces = commerces.stream()
-                    .filter(c -> c.getNormalizedLocality() != null && normalizedLocality.equals(c.getNormalizedLocality()))
-                    .toList();
-        }
+        commerces = commerces.stream()
+                .filter(c -> c.getNormalizedLocality() != null && normalizedLocality.equals(c.getNormalizedLocality()))
+                .toList();
 
         // Detectar nombres duplicados dentro del set acotado de sugerencias
         var duplicatedNames = commerces.stream()
-                .collect(java.util.stream.Collectors.groupingBy(c -> c.getName() == null ? "" : c.getName().trim(), java.util.stream.Collectors.counting()));
+                .collect(groupingBy(c -> c.getName() == null ? "" : c.getName().trim(), counting()));
 
         return commerces.stream()
                 .map(c -> {

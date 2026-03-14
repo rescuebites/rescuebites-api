@@ -61,7 +61,7 @@ public class ClientSearchServiceImpl implements IClientSearchService {
         String normalizedQuery = SearchUtils.normalizeQuery(query);
 
         // 1) Si hay comercios que matchean por nombre, devolvemos comercios (y completamos por tipo).
-        var commerces = commerceSearchStrategy.searchCommercesWithTypeFallback(normalizedQuery, pageable);
+        var commerces = commerceSearchStrategy.searchCommercesWithTypeFallback(normalizedQuery, normalizedLocality, pageable);
         if (!commerces.isEmpty()) {
             Page<SearchProductResponse> emptyProducts = PaginationUtils.paginate(java.util.Collections.emptyList(), pageable);
             return new SearchResultResponse(commerces, emptyProducts);
