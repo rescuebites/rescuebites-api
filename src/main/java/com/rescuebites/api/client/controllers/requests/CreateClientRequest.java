@@ -43,4 +43,7 @@ public class CreateClientRequest {
         private UUID userId;
 
         private List<PreferenceType> preferences = Collections.emptyList();
+
+        @NotBlank(message = "La localidad no puede estar vacía")
+        private String locality;
 }

@@ -5,6 +5,7 @@ import com.rescuebites.api.client.controllers.requests.UpdateClientRequest;
 import com.rescuebites.api.client.controllers.responses.ClientResponse;
 import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.client.data.models.Client;
+import com.rescuebites.api.location.data.models.Locality;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.users.data.models.User;
 import org.springframework.stereotype.Component;
@@ -22,7 +23,8 @@ public class ClientMapper {
             CreateClientRequest request,
             User user,
             List<PreferenceType> preferences,
-            Image image
+            Image image,
+            Locality locality
     ) {
         return Client.builder()
                 .clientId(UUID.randomUUID())
@@ -34,6 +36,7 @@ public class ClientMapper {
                 .user(user)
                 .preferences(preferences)
                 .image(image)
+                .locality(locality)
                 .build();
     }
 
@@ -47,7 +50,8 @@ public class ClientMapper {
                 client.getAddress(),
                 client.getPhone(),
                 toUserResponse(client.getUser()),
-                client.getPreferences()
+                client.getPreferences(),
+                client.getLocality() != null ? client.getLocality().getName() : null
         );
     }
 
@@ -55,7 +59,8 @@ public class ClientMapper {
             Client client,
             UpdateClientRequest request,
             Image newImage,
-            List<PreferenceType> preferences
+            List<PreferenceType> preferences,
+            Locality locality
     ) {
         if (request.getFirstName() != null) {
             client.setFirstName(request.getFirstName());
@@ -77,6 +82,9 @@ public class ClientMapper {
         }
         if (newImage != null) {
             client.setImage(newImage);
+        }
+        if (locality != null) {
+            client.setLocality(locality);
         }
     }
 }
