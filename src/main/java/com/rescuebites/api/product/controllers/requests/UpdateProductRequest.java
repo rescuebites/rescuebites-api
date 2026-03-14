@@ -44,8 +44,8 @@ public class UpdateProductRequest{
         @Schema(description = "Categoría del producto", example = "FRUIT")
         private ProductCategory category;
 
-        @Schema(description = "Estado/condición del producto", example = "RIPE")
-        private ProductCondition condition;
+        @Schema(description = "Condiciones del producto", example = "[\"RIPE\", \"NEAR_EXPIRATION\"]")
+        private Set<ProductCondition> conditions;
 
         @Future(message = "La fecha de vencimiento debe ser futura")
         @Schema(description = "Fecha de vencimiento (opcional)")

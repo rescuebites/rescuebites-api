@@ -51,9 +51,9 @@ public class CreateProductRequest{
         @Schema(description = "Categoría del producto", example = "FRUIT")
         private ProductCategory category;
 
-        @NotNull(message = "La condición del producto es requerida")
-        @Schema(description = "Estado/condición del producto", example = "RIPE")
-        private ProductCondition condition;
+        @NotEmpty(message = "Debe especificar al menos una condición del producto")
+        @Schema(description = "Condiciones del producto", example = "[\"RIPE\", \"NEAR_EXPIRATION\"]")
+        private Set<ProductCondition> conditions = new HashSet<>();
 
         @NotNull(message = "La fecha de vencimiento es obligatoria")
         @Future(message = "La fecha de vencimiento debe ser futura")
