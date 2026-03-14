@@ -23,23 +23,11 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
      */
 
     @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
-    @Query("SELECT p FROM products p WHERE p.commerce.commerceId = :commerceId")
-    Page<Product> findByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
-
-    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
     @Query("SELECT p FROM products p WHERE p.productId = :productId AND p.commerce.commerceId = :commerceId")
     Optional<Product> findByIdAndCommerceId(
             @Param("productId") UUID productId,
             @Param("commerceId") UUID commerceId
     );
-
-    /*
-     Queries para el home (solo productos activos)
-     */
-
-    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
-    @Query("SELECT p FROM products p WHERE p.active = true")
-    Page<Product> findAllActive(Pageable pageable);
 
     @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
     @Query("SELECT p FROM products p WHERE p.productId = :productId AND p.active = true")
