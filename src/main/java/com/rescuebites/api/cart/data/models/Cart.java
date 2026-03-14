@@ -5,8 +5,11 @@ import com.rescuebites.api.order.data.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,15 +19,20 @@ import java.util.UUID;
 import static com.rescuebites.api.order.data.enums.PaymentMethod.CASH;
 
 @Entity(name = "carts")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class Cart {
 
     @Id
     @Column(name = "cart_id")
     @Builder.Default
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private UUID cartId = UUID.randomUUID();
 
     @OneToOne(optional = false)

@@ -5,23 +5,31 @@ import com.rescuebites.api.payment.data.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity(name = "payments")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class Payment {
 
     @Id
     @Column(name = "payment_id")
     @Builder.Default
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private UUID paymentId = UUID.randomUUID();
 
     @OneToOne(optional = false)

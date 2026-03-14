@@ -6,6 +6,7 @@ import com.rescuebites.api.cart.controllers.responses.CommerceCartSummary;
 import com.rescuebites.api.cart.data.models.Cart;
 import com.rescuebites.api.cart.data.models.CartItem;
 import com.rescuebites.api.client.data.mappers.ImageMapper;
+import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.order.data.enums.PaymentMethod;
 import com.rescuebites.api.product.data.models.Product;
 
@@ -18,6 +19,14 @@ import java.util.stream.Collectors;
 import static com.rescuebites.api.cart.utils.CartConstants.SERVICE_FEE;
 
 public class CartMapper {
+
+    private CartMapper() {}
+
+    public static Cart toNewCart(Client client) {
+        return Cart.builder()
+                .client(client)
+                .build();
+    }
 
     public static CartItemResponse toCartItemResponse(CartItem cartItem) {
         Product product = cartItem.getProduct();
