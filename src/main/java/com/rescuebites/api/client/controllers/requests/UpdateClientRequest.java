@@ -40,9 +40,4 @@ public class UpdateClientRequest {
         private List<PreferenceType> preferences = Collections.emptyList();
 
         private String locality;
-
-//        // Getter explícito para satisfacer herramientas estáticas que no procesan Lombok
-//        public String getLocality() {
-//            return this.locality;
-//        }
 }
