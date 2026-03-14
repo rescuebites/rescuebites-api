@@ -25,43 +25,73 @@ public class SuggestionSearchStrategy {
     private final IProductRepository productRepository;
     private final ICommerceRepository commerceRepository;
 
-    public List<SearchSuggestion> getSuggestionsFilteredByClientPreferences(String query, List<PreferenceType> clientPreferences) {
+    public List<SearchSuggestion> getSuggestionsFilteredByClientPreferences(String query, List<PreferenceType> clientPreferences, String normalizedLocality) {
         String normalizedQuery = SearchUtils.normalizeQuery(query);
 
-        // Los comercios no se filtran por preferencia
-        var commerceSuggestions = getCommerceSuggestions(normalizedQuery);
+        // Comercios (filtrados por localidad si existe)
+        var commerceSuggestions = getCommerceSuggestions(normalizedQuery, normalizedLocality);
 
-        // Productos filtrados por preferencias del cliente
-        var productByNameSuggestions = mapProductsToSuggestions(
-                productRepository.findActiveByNameContaining(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
-                        .getContent().stream()
-                        .filter(p -> SearchUtils.matchesPreferences(p, clientPreferences))
-                        .toList());
+        // Productos (filtrados en DB por preferencias y por localidad cuando aplique)
+        var products = productRepository
+                .suggestProductsHierarchyWithPreferences(normalizedQuery, clientPreferences, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
+                .getContent();
 
-        var productByDescSuggestions = mapProductsToSuggestions(
-                productRepository.findActiveByDescriptionContainingExcludingName(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
-                        .getContent().stream()
-                        .filter(p -> SearchUtils.matchesPreferences(p, clientPreferences))
-                        .toList());
+        // Filtrar por localidad en memoria (page pequeña)
+        if (normalizedLocality != null && !normalizedLocality.isBlank()) {
+            products = products.stream()
+                    .filter(p -> p.getCommerce() != null && normalizedLocality.equals(p.getCommerce().getNormalizedLocality()))
+                    .toList();
+        }
 
-        return combineSuggestions(commerceSuggestions, productByNameSuggestions, productByDescSuggestions);
+        var productSuggestions = mapProductsToSuggestions(products);
+
+        return combineSuggestions(commerceSuggestions, productSuggestions);
     }
 
-    public List<SearchSuggestion> getCommerceSuggestions(String normalizedQuery) {
-        return commerceRepository.findActiveByNameContaining(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
-                .getContent().stream()
-                .map(c -> new SearchSuggestion(c.getCommerceId(), c.getName(), "COMMERCE"))
+    public List<SearchSuggestion> getCommerceSuggestions(String normalizedQuery, String normalizedLocality) {
+        var commerces = commerceRepository.findActiveByNameContainingRanked(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS)
+                .getContent();
+
+        // Filtrar por localidad si se proporcionó
+        if (normalizedLocality != null && !normalizedLocality.isBlank()) {
+            commerces = commerces.stream()
+                    .filter(c -> c.getNormalizedLocality() != null && normalizedLocality.equals(c.getNormalizedLocality()))
+                    .toList();
+        }
+
+        // Detectar nombres duplicados dentro del set acotado de sugerencias
+        var duplicatedNames = commerces.stream()
+                .collect(java.util.stream.Collectors.groupingBy(c -> c.getName() == null ? "" : c.getName().trim(), java.util.stream.Collectors.counting()));
+
+        return commerces.stream()
+                .map(c -> {
+                    String name = c.getName();
+                    boolean isDuplicated = duplicatedNames.getOrDefault(name == null ? "" : name.trim(), 0L) > 1;
+
+                    String label = name;
+                    if (isDuplicated) {
+                        String addressPart = (c.getAddress() != null && !c.getAddress().isBlank()) ? c.getAddress().trim() : "";
+                        String localityPart = (c.getLocality() != null && c.getLocality().getName() != null && !c.getLocality().getName().isBlank()) ? c.getLocality().getName().trim() : "";
+                        String suffix = (addressPart + (localityPart.isBlank() ? "" : ", " + localityPart)).trim();
+                        if (!suffix.isBlank()) {
+                            label = name + " — " + suffix;
+                        }
+                    }
+                    return new SearchSuggestion(c.getCommerceId(), label, "COMMERCE");
+                })
                 .toList();
     }
 
-    public List<SearchSuggestion> getProductByNameSuggestions(String normalizedQuery) {
-        return mapProductsToSuggestions(
-                productRepository.findActiveByNameContaining(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS).getContent());
-    }
+    public List<SearchSuggestion> getProductSuggestions(String normalizedQuery, String normalizedLocality) {
+        var products = productRepository.suggestProductsHierarchy(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS).getContent();
 
-    public List<SearchSuggestion> getProductByDescSuggestions(String normalizedQuery) {
-        return mapProductsToSuggestions(
-                productRepository.findActiveByDescriptionContainingExcludingName(normalizedQuery, PRE_FILTER_PAGE_FOR_SUGGESTIONS).getContent());
+        if (normalizedLocality != null && !normalizedLocality.isBlank()) {
+            products = products.stream()
+                    .filter(p -> p.getCommerce() != null && normalizedLocality.equals(p.getCommerce().getNormalizedLocality()))
+                    .toList();
+        }
+
+        return mapProductsToSuggestions(products);
     }
 
     public List<SearchSuggestion> mapProductsToSuggestions(List<Product> products) {
@@ -72,12 +102,10 @@ public class SuggestionSearchStrategy {
 
     public List<SearchSuggestion> combineSuggestions(
             List<SearchSuggestion> commerceSuggestions,
-            List<SearchSuggestion> productByNameSuggestions,
-            List<SearchSuggestion> productByDescSuggestions) {
+            List<SearchSuggestion> productSuggestions) {
 
         List<SearchSuggestion> suggestions = new ArrayList<>(commerceSuggestions);
-        suggestions.addAll(productByNameSuggestions);
-        suggestions.addAll(productByDescSuggestions);
+        suggestions.addAll(productSuggestions);
         return suggestions;
     }
 }
