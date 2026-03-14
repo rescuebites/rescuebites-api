@@ -72,7 +72,7 @@ public class Client {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "locality_id", referencedColumnName = "locality_id")
-    @NotBlank(message = "La localidad es obligatoria")
+    @NotNull(message = "La localidad es obligatoria")
     private Locality locality;
 
     @Builder.Default
