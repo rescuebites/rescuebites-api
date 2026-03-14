@@ -9,6 +9,7 @@ import com.rescuebites.api.product.data.enums.ProductCondition;
 import com.rescuebites.api.product.data.models.Product;
 
 import java.time.LocalDate;
+import java.util.Set;
 import java.util.UUID;
 
 public interface IProductValidationFacade {
@@ -20,10 +21,10 @@ public interface IProductValidationFacade {
     Product findProductByIdAndCommerceIdOrThrowException(UUID productId, UUID commerceId);
 
     /**
-     * Valida que la categoría y condición sean compatibles con el tipo de comercio
-     * @throws ValidationException si la categoría o condición no son válidas
+     * Valida que la categoría y condiciones sean compatibles con el tipo de comercio
+     * @throws ValidationException si la categoría o alguna condición no son válidas
      */
-    void validateCategoryAndCondition(ProductCategory category, ProductCondition condition, Commerce commerce);
+    void validateCategoryAndConditions(ProductCategory category, Set<ProductCondition> conditions, Commerce commerce);
 
     /**
      * Valida que la fecha de vencimiento sea futura
@@ -50,4 +51,14 @@ public interface IProductValidationFacade {
             Product product,
             UpdateProductRequest request
     );
+
+    /**
+     * Valida que no exista otro producto idéntico dentro del mismo comercio.
+     */
+    void validateNoIdenticalProductInCommerceForCreate(UUID commerceId, com.rescuebites.api.product.controllers.requests.CreateProductRequest request);
+
+    /**
+     * Valida que no exista otro producto idéntico dentro del mismo comercio excluyendo el producto actual.
+     */
+    void validateNoIdenticalProductInCommerceForUpdate(UUID commerceId, UUID productId, Product current, com.rescuebites.api.product.controllers.requests.UpdateProductRequest request);
 }

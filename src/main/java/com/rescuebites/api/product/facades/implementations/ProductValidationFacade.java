@@ -1,11 +1,13 @@
 package com.rescuebites.api.product.facades.implementations;
 
+import com.rescuebites.api.client.data.enums.PreferenceType;
 import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.commerce.repositories.ICommerceRepository;
 import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
+import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
 import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.data.enums.ProductCategory;
 import com.rescuebites.api.product.data.enums.ProductCondition;
@@ -17,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -37,9 +41,9 @@ public class ProductValidationFacade implements IProductValidationFacade {
     }
 
     @Override
-    public void validateCategoryAndCondition(
+    public void validateCategoryAndConditions(
             ProductCategory category,
-            ProductCondition condition,
+            Set<ProductCondition> conditions,
             Commerce commerce
     ) {
 
@@ -57,11 +61,14 @@ public class ProductValidationFacade implements IProductValidationFacade {
             );
         }
 
-        if (!ProductCondition.getAllowedFor(commerceType).contains(condition)) {
-            throw new ValidationException(
-                    String.format("La condición '%s' no es válida para este tipo de comercio",
-                            condition.getDisplayName())
-            );
+        EnumSet<ProductCondition> allowedConditions = ProductCondition.getAllowedFor(commerceType);
+        for (ProductCondition condition : conditions) {
+            if (!allowedConditions.contains(condition)) {
+                throw new ValidationException(
+                        String.format("La condición '%s' no es válida para este tipo de comercio",
+                                condition.getDisplayName())
+                );
+            }
         }
     }
 
@@ -93,7 +100,7 @@ public class ProductValidationFacade implements IProductValidationFacade {
                 request.getOriginalPrice() != null ||
                 request.getDiscountPercentage() != null ||
                 request.getCategory() != null ||
-                request.getCondition() != null ||
+                (request.getConditions() != null && !request.getConditions().isEmpty()) ||
                 request.getExpirationDate() != null ||
                 (request.getPreferences() != null);
 
@@ -104,7 +111,7 @@ public class ProductValidationFacade implements IProductValidationFacade {
 
     @Override
     public void validateAndProcessCategoryConditionUpdate(Product product, UpdateProductRequest request) {
-        if (request.getCategory() == null && request.getCondition() == null) {
+        if (request.getCategory() == null && (request.getConditions() == null || request.getConditions().isEmpty())) {
             return;
         }
 
@@ -112,13 +119,87 @@ public class ProductValidationFacade implements IProductValidationFacade {
         ProductCategory categoryToValidate = request.getCategory() != null ?
                 request.getCategory() : product.getCategory();
 
-        ProductCondition conditionToValidate = request.getCondition() != null ?
-                request.getCondition() : product.getCondition();
+        Set<ProductCondition> conditionsToValidate = (request.getConditions() != null && !request.getConditions().isEmpty()) ?
+                request.getConditions() : product.getConditions();
 
-        validateCategoryAndCondition(
+        validateCategoryAndConditions(
                 categoryToValidate,
-                conditionToValidate,
+                conditionsToValidate,
                 product.getCommerce()
         );
+    }
+
+    @Override
+    public void validateNoIdenticalProductInCommerceForCreate(UUID commerceId, CreateProductRequest request) {
+        if (request == null) {
+            return;
+        }
+
+        var preferences = request.getPreferences() != null ? request.getPreferences().stream().distinct().toList() : java.util.List.<PreferenceType>of();
+        long size = preferences.size();
+        boolean empty = size == 0;
+
+        boolean exists = productRepository.existsIdenticalProductInCommerce(
+                commerceId,
+                request.getName() == null ? null : request.getName().trim(),
+                request.getCategory(),
+                request.getExpirationDate(),
+                request.getOriginalPrice(),
+                request.getDiscountPercentage(),
+                preferences,
+                size,
+                empty
+        );
+
+        if (exists) {
+            throw new ValidationException(
+                    "Ya existe un producto idéntico registrado en este comercio (mismo nombre, categoría, preferencias, vencimiento y precio)."
+            );
+        }
+    }
+
+    @Override
+    public void validateNoIdenticalProductInCommerceForUpdate(UUID commerceId, UUID productId, Product current, UpdateProductRequest request) {
+        if (current == null || request == null) {
+            return;
+        }
+
+        // Usar request si viene presente, sino el valor actual
+        String name = request.getName() != null ? request.getName().trim() : current.getName();
+        var category = request.getCategory() != null ? request.getCategory() : current.getCategory();
+        var expiration = request.getExpirationDate() != null ? request.getExpirationDate() : current.getExpirationDate();
+        var originalPrice = request.getOriginalPrice() != null ? request.getOriginalPrice() : current.getOriginalPrice();
+        var discount = request.getDiscountPercentage() != null ? request.getDiscountPercentage() : current.getDiscountPercentage();
+
+        java.util.List<PreferenceType> preferences;
+        if (request.getPreferences() != null) {
+            preferences = request.getPreferences().stream().distinct().toList();
+        } else {
+            preferences = current.getPreferenceType() != null
+                    ? current.getPreferenceType().stream().distinct().toList()
+                    : java.util.List.of();
+        }
+
+        long size = preferences.size();
+        boolean empty = size == 0;
+
+        boolean exists = productRepository.existsIdenticalProductInCommerceExcludingId(
+                commerceId,
+                productId,
+                name,
+                category,
+                expiration,
+                originalPrice,
+                discount,
+                preferences,
+                size,
+                empty
+        );
+
+        if (exists) {
+            throw new ValidationException(
+                    "Ya existe otro producto idéntico registrado en este comercio (mismo nombre, categoría, preferencias, vencimiento y precio)."
+            );
+        }
     }
 }
