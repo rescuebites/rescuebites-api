@@ -12,11 +12,15 @@ import com.rescuebites.api.product.services.interfaces.IPublicProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
+
+import static java.util.stream.Collectors.toMap;
 
 @Service
 @RequiredArgsConstructor
@@ -25,25 +29,15 @@ public class PublicProductServiceImpl implements IPublicProductService {
     private final IProductRepository productRepository;
     private final IProductValidationFacade validationFacade;
 
-    @Override
+@Override
     @Cacheable(
             value = "activeProducts",
-            key = "'all-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
+            key = "#locality + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getAllActiveProducts(Pageable pageable) {
-        Page<Product> products = productRepository.findAllActive(pageable);
-        return products.map(ProductMapper::toProductResponse);
-    }
-
-    @Override
-    @Cacheable(value = "productById", key = "#productId")
-    @Transactional(readOnly = true)
-    public ProductResponse getProductById(UUID productId) {
-        Product product = productRepository.findByIdAndActive(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
-
-        return ProductMapper.toProductResponse(product);
+    public Page<ProductResponse> getAllActiveProducts(String locality, Pageable pageable) {
+        Page<UUID> idsPage = productRepository.findAllActiveIdsByLocality(locality.trim(), pageable);
+        return fetchAndMapByIds(idsPage, pageable);
     }
 
     @Override
@@ -54,33 +48,76 @@ public class PublicProductServiceImpl implements IPublicProductService {
     @Transactional(readOnly = true)
     public Page<ProductResponse> getActiveProductsByCommerce(UUID commerceId, Pageable pageable) {
         validationFacade.validateCommerceExists(commerceId);
-        Page<Product> products = productRepository.findActiveByCommerceId(commerceId, pageable);
-        return products.map(ProductMapper::toProductResponse);
+        Page<UUID> idsPage = productRepository.findActiveIdsByCommerceId(commerceId, pageable);
+        return fetchAndMapByIds(idsPage, pageable);
     }
 
     @Override
     @Cacheable(
             value = "activeProductsSortedByPrice",
-            key = "'all-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
+            key = "#locality + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getAllActiveProductsOrderedByPrice(Pageable pageable) {
-        Page<Product> products = productRepository.findAllActiveOrderByDiscountedPriceAsc(pageable);
-        return products.map(ProductMapper::toProductResponse);
+    public Page<ProductResponse> getAllActiveProductsOrderedByPrice(String locality, Pageable pageable) {
+        Page<UUID> idsPage = productRepository.findAllActiveIdsOrderByDiscountedPriceAscAndLocality(locality.trim(), pageable);
+        return fetchAndMapByIds(idsPage, pageable);
     }
 
     @Override
     @Cacheable(
             value = "activeProductsByCommerceTypeSortedByPrice",
-            key = "#commerceType + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
+            key = "#commerceType + '-' + #locality + '-page-' + #pageable.pageNumber + '-size-' + #pageable.pageSize + '-sort-' + #pageable.sort"
     )
     @Transactional(readOnly = true)
     public Page<ProductPublicResponse> getActiveProductsByCommerceTypeOrderedByPrice(
             CommerceTypeEnum commerceType,
+            String locality,
             Pageable pageable
     ) {
-        Page<Product> products = productRepository
-                .findActiveByCommerceTypeOrderByDiscountedPriceAsc(commerceType, pageable);
-        return products.map(ProductMapper::toProductPublicResponse);
+        Page<UUID> idsPage = productRepository.findActiveIdsByCommerceTypeAndLocalityOrderByDiscountedPriceAsc(
+                commerceType, locality.trim(), pageable);
+
+        List<ProductPublicResponse> content;
+        if (idsPage.isEmpty()) {
+            content = List.of();
+        } else {
+            var products = productRepository.findProductsWithDetailsByIds(idsPage.getContent());
+            var byId = products.stream().collect(toMap(Product::getProductId, p -> p));
+            content = idsPage.getContent().stream()
+                    .map(byId::get)
+                    .filter(java.util.Objects::nonNull)
+                    .map(ProductMapper::toProductPublicResponse)
+                    .toList();
+        }
+
+        return new PageImpl<>(content, pageable, idsPage.getTotalElements());
+    }
+
+    private Page<ProductResponse> fetchAndMapByIds(Page<UUID> idsPage, Pageable pageable) {
+        List<ProductResponse> content;
+
+        if (idsPage.isEmpty()) {
+            content = List.of();
+        } else {
+            var products = productRepository.findProductsWithDetailsByIds(idsPage.getContent());
+            var byId = products.stream().collect(toMap(Product::getProductId, p -> p));
+            content = idsPage.getContent().stream()
+                    .map(byId::get)
+                    .filter(java.util.Objects::nonNull)
+                    .map(ProductMapper::toProductResponse)
+                    .toList();
+        }
+
+        return new PageImpl<>(content, pageable, idsPage.getTotalElements());
+    }
+
+    @Override
+    @Cacheable(value = "productById", key = "#productId")
+    @Transactional(readOnly = true)
+    public ProductResponse getProductById(UUID productId) {
+        Product product = productRepository.findByIdAndActive(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+
+        return ProductMapper.toProductResponse(product);
     }
 }

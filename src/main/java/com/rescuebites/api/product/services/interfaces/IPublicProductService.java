@@ -10,16 +10,17 @@ import java.util.UUID;
 
 public interface IPublicProductService {
 
-    Page<ProductResponse> getAllActiveProducts(Pageable pageable);
+    Page<ProductResponse> getAllActiveProducts(String locality, Pageable pageable);
 
     ProductResponse getProductById(UUID productId);
 
     Page<ProductResponse> getActiveProductsByCommerce(UUID commerceId, Pageable pageable);
 
-    Page<ProductResponse> getAllActiveProductsOrderedByPrice(Pageable pageable);
+    Page<ProductResponse> getAllActiveProductsOrderedByPrice(String locality, Pageable pageable);
 
     Page<ProductPublicResponse> getActiveProductsByCommerceTypeOrderedByPrice(
             CommerceTypeEnum commerceType,
+            String locality,
             Pageable pageable
     );
 }
