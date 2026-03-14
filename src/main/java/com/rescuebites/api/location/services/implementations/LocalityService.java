@@ -31,25 +31,26 @@ public class LocalityService implements ILocalityService {
     }
 
     @Transactional
-    public Locality resolveOrCreateByName(String rawName) {
+    public Optional<Locality> resolveOrCreateByName(String rawName) {
 
         if (rawName == null || rawName.isBlank()) {
-            return null;
+            return Optional.empty();
         }
 
         String normalized = NormalizationUtils.normalizeIdentity(rawName);
 
         Optional<Locality> existing = findByNormalizedName(normalized);
         if (existing.isPresent()) {
-            return existing.get();
+            return existing;
         }
 
         Locality locality = LocalityMapper.toLocality(rawName, normalized);
 
         try {
-            return localityRepository.save(locality);
+            Locality saved = localityRepository.save(locality);
+            return Optional.of(saved);
         } catch (DataIntegrityViolationException ex) {
-            return localityRepository.findByNormalizedName(normalized).orElse(null);
+            return localityRepository.findByNormalizedName(normalized);
         }
     }
 }
