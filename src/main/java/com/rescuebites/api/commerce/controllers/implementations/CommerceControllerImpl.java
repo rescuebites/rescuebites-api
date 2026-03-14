@@ -4,7 +4,6 @@ import com.rescuebites.api.commerce.controllers.interfaces.ICommerceController;
 import com.rescuebites.api.commerce.controllers.requests.CreateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceCredentialsRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
-import com.rescuebites.api.commerce.controllers.responses.CommerceResponse;
 import com.rescuebites.api.commerce.services.interfaces.ICommerceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;

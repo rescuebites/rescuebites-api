@@ -42,7 +42,7 @@ public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
     );
 
     @Query("SELECT c.commerceId AS commerceId, c.mercadoPagoWebhookSecret AS mercadoPagoWebhookSecret " +
-            "FROM commerces c WHERE c.deleted = false " +
+            "FROM commerces c WHERE c.deleted = false  " +
             "AND c.mercadoPagoWebhookSecret IS NOT NULL " +
             "AND c.mercadoPagoWebhookSecret <> ''")
     List<CommerceWebhookSecretProjection> findAllWithWebhookSecret();
@@ -102,7 +102,7 @@ public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
 
     @Query("SELECT DISTINCT c FROM commerces c " +
             "JOIN c.commerceTypes ct " +
-            "WHERE c.deleted = false" +
+            "WHERE c.deleted = false " +
             "AND ct.name IN :commerceTypes " +
             "AND c.normalizedLocality = :normalizedLocality")
     Page<Commerce> findActiveByCommerceTypesAndLocality(
@@ -113,7 +113,7 @@ public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
 
     @Query("SELECT DISTINCT c FROM commerces c " +
             "JOIN c.commerceTypes ct " +
-            "WHERE c.deleted = false" +
+            "WHERE c.deleted = false " +
             "AND ct.name IN :commerceTypes " +
             "AND c.commerceId NOT IN :excludeIds " +
             "AND c.normalizedLocality = :normalizedLocality")

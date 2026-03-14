@@ -8,7 +8,6 @@ import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.users.data.models.User;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface ICommerceFacade {
@@ -32,7 +31,4 @@ public interface ICommerceFacade {
     boolean validateAndProcessUpdate(User user, UpdateCommerceRequest request);
 
     void applyUserChanges(User user, UpdateCommerceRequest request, boolean emailChanged);
-
-    Optional<Commerce> findCommerceByExactName(String name);
-
 }

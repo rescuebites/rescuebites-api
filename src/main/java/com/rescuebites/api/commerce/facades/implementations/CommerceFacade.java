@@ -240,14 +240,5 @@ public class CommerceFacade implements ICommerceFacade {
             }
         }
     }
-
-    @Override
-    public Optional<Commerce> findCommerceByExactName(String name) {
-        String normName = NormalizationUtils.normalizeIdentity(name);
-        if (normName == null || normName.isBlank()) {
-            return Optional.empty();
-        }
-        return commerceRepository.findActiveByExactNormalizedName(normName);
-    }
 }
 
