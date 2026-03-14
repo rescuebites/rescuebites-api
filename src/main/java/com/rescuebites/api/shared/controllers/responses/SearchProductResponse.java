@@ -49,11 +49,11 @@ public record SearchProductResponse(
         @Schema(description = "Categoría del producto")
         ProductCategory category,
 
-        @Schema(description = "Condición del producto")
-        ProductCondition condition,
+        @Schema(description = "Condiciones del producto")
+        Set<ProductCondition> conditions,
 
-        @Schema(description = "Nombre legible de la condición")
-        String conditionDisplayName,
+        @Schema(description = "Nombres legibles de las condiciones")
+        List<String> conditionDisplayNames,
 
         @Schema(description = "Fecha de vencimiento")
         LocalDate expirationDate,
