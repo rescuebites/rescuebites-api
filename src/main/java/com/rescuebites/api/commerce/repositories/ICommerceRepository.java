@@ -123,4 +123,8 @@ public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
             @Param("normalizedLocality") String normalizedLocality,
             Pageable pageable
     );
+
+    // Nuevo método para buscar comercio por userId (no borrado)
+    @Query("SELECT c FROM commerces c WHERE c.user.userId = :userId AND c.deleted = false")
+    Optional<Commerce> findByUserId(@Param("userId") UUID userId);
 }

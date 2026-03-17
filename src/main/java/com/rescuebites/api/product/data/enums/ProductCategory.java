@@ -37,8 +37,8 @@ public enum ProductCategory {
     PERSONAL_HYGIENE(EnumSet.of(CommerceTypeEnum.KIOSK, CommerceTypeEnum.SUPERMARKET), "Higiene Personal"),
     CANDY(EnumSet.of(CommerceTypeEnum.KIOSK, CommerceTypeEnum.SUPERMARKET), "Golosinas"),
     SNACKS(EnumSet.of(CommerceTypeEnum.KIOSK, CommerceTypeEnum.SUPERMARKET), "Snacks"),
-    CIGARETTES(EnumSet.of(CommerceTypeEnum.KIOSK), "Cigarrillos"),
-    MAGAZINES(EnumSet.of(CommerceTypeEnum.KIOSK), "Revistas"),
+    CIGARETTES(EnumSet.of(CommerceTypeEnum.KIOSK, CommerceTypeEnum.SUPERMARKET), "Cigarrillos"),
+    MAGAZINES(EnumSet.of(CommerceTypeEnum.KIOSK, CommerceTypeEnum.SUPERMARKET), "Revistas"),
 
     // CATEGORÍAS CROSS (productos de otras categorías vendidos en super/kiosco)
     GREENGROCERY_SECTION(EnumSet.of(CommerceTypeEnum.SUPERMARKET), "Verdulería"),

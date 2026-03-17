@@ -1,5 +1,6 @@
 package com.rescuebites.api.security.filter;
 
+import com.rescuebites.api.security.dto.JwtAuthenticationDetails;
 import com.rescuebites.api.security.services.JwtService;
 import io.jsonwebtoken.ClaimJwtException;
 import jakarta.servlet.FilterChain;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +23,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.UUID;
 
 import static com.rescuebites.api.security.utils.SecurityConstants.WHITELIST;
 
@@ -35,10 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) {
         try{
             /*
              Extraigo el token del Header Authorization de la request.
@@ -69,7 +72,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             userDetails.getAuthorities()
                     );
 
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    // Extraer claims opcionales y guardarlos en details
+                    UUID commerceId = jwtService.extractCommerceIdFromToken(jwtToken);
+                    String commerceType = jwtService.extractCommerceTypeFromToken(jwtToken);
+                    UUID clientId = jwtService.extractClientIdFromToken(jwtToken);
+
+                    authentication.setDetails(new JwtAuthenticationDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request),
+                            commerceId,
+                            commerceType,
+                            clientId
+                    ));
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 } else {
@@ -94,17 +107,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String path = request.getServletPath();
-
-        // Excluir OPTIONS requests
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            return true;
-        }
-
-        // Comparar con el whitelist de forma consistente
-        return Arrays.stream(WHITELIST)
-                .anyMatch(pattern -> pathMatcher.match(pattern, path) || path.startsWith(pattern));    }
+        return Arrays.stream(WHITELIST).anyMatch(p -> pathMatcher.match(p, path));
+    }
 
 }
-
