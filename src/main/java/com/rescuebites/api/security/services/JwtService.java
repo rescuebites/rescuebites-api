@@ -1,20 +1,28 @@
 package com.rescuebites.api.security.services;
 
+import com.rescuebites.api.client.repositories.IClientRepository;
+import com.rescuebites.api.commerce.data.models.Commerce;
+import com.rescuebites.api.commerce.repositories.ICommerceRepository;
 import com.rescuebites.api.users.data.models.User;
+import com.rescuebites.api.security.enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
     @Value("${jwt.secret}")
@@ -23,16 +31,39 @@ public class JwtService {
     @Value("${jwt.access-token-expiration}")
     private long jwtExpiration;
 
+    private final ICommerceRepository commerceRepository;
+    private final IClientRepository clientRepository;
+
     public String generateToken(final User user){
         return buildToken(user, jwtExpiration);
     }
 
     private String buildToken(User user, final long jwtExpiration) {
-        return Jwts.builder()
-                .claim("role", user.getRole())
+        var builder = Jwts.builder()
                 .setSubject(user.getEmail()) //Manera de identificar al usuario con el token
+                .claim("role", user.getRole()) // Agregamos el rol como un claim
                 .setIssuedAt(new Date(System.currentTimeMillis())) //Fecha de creacion del token
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration)); // Fecha de expiracion del token
+
+        // Si el usuario es un comercio, intentamos agregar commerceId y commerceType como claims
+        if (user.getRole() == Role.COMMERCE) {
+            Optional<Commerce> commerceOpt = commerceRepository.findByUserId(user.getUserId());
+            if (commerceOpt.isPresent()) {
+                Commerce commerce = commerceOpt.get();
+                if (commerce.getCommerceId() != null) {
+                    builder.claim("commerceId", commerce.getCommerceId().toString());
+                }
+                if (commerce.getCommerceTypes() != null && !commerce.getCommerceTypes().isEmpty()) {
+                    // Tomamos el primer tipo como tipo principal
+                    builder.claim("commerceType", commerce.getCommerceTypes().get(0).getName().name());
+                }
+            }
+        } else if (user.getRole() == Role.CLIENT) {
+            clientRepository.findByUserId(user.getUserId())
+                    .ifPresent(client -> builder.claim("clientId", client.getClientId()));
+        }
+
+        return builder
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact(); //Genera el token en formato String
     }
@@ -73,6 +104,20 @@ public class JwtService {
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    public UUID extractCommerceIdFromToken(String token) {
+        String val = extractClaim(token, claims -> claims.get("commerceId", String.class));
+        return val == null ? null : UUID.fromString(val);
+    }
+
+    public String extractCommerceTypeFromToken(String token) {
+        return extractClaim(token, claims -> claims.get("commerceType", String.class));
+    }
+
+    public UUID extractClientIdFromToken(String token) {
+        String val = extractClaim(token, claims -> claims.get("clientId", String.class));
+        return val == null ? null : UUID.fromString(val);
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails){
