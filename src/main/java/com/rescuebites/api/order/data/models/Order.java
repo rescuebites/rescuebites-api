@@ -55,11 +55,11 @@ public class Order {
 
     @NotNull
     @Column(precision = 10, scale = 2, nullable = false)
-    private BigDecimal subtotal; // Suma de items
+    private BigDecimal subtotal; // Suma de precios originales × cantidad (sin descuento)
 
     @NotNull
     @Column(precision = 10, scale = 2, nullable = false)
-    private BigDecimal total; // Total final (por ahora igual a subtotal)
+    private BigDecimal total; // discountedSubtotal + serviceFee
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -87,4 +87,17 @@ public class Order {
 
     @Column(length = 500)
     private String notes;
+
+    public BigDecimal calculateSubtotal() {
+        return items.stream()
+                .map(item -> item.getOriginalPrice()
+                        .multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal calculateDiscountedSubtotal() {
+        return items.stream()
+                .map(OrderItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }

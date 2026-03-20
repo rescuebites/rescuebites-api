@@ -119,7 +119,7 @@ public class PublicProductServiceImpl implements IPublicProductService {
     @Cacheable(value = "productById", key = "#productId")
     @Transactional(readOnly = true)
     public ProductResponse getProductById(UUID productId) {
-        Product product = productRepository.findByIdAndActive(productId)
+        Product product = productRepository.findByIdWithDetails(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
 
         return ProductMapper.toProductResponse(product);

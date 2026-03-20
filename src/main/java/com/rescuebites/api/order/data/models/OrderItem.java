@@ -44,6 +44,9 @@ public class OrderItem {
     private String productName;
 
     @NotNull
+    private String productDescription;
+
+    @NotNull
     @Column(precision = 10, scale = 2)
     private BigDecimal originalPrice;
 

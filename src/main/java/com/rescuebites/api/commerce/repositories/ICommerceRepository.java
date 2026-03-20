@@ -18,12 +18,14 @@ import java.util.UUID;
 @Repository
 public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
 
-    Optional<Commerce> findByCommerceIdAndDeletedFalse(UUID commerceId);
 
     @Query("SELECT c FROM commerces c " +
             "LEFT JOIN FETCH c.images " +
             "WHERE c.commerceId = :commerceId AND c.deleted = false")
     Optional<Commerce> findByIdWithDetails(@Param("commerceId") UUID commerceId);
+
+    @Query("SELECT c FROM commerces c LEFT JOIN FETCH c.images WHERE c.commerceId = :commerceId")
+    Optional<Commerce> findByIdIncludingDeleted(@Param("commerceId") UUID commerceId);
 
     @Query("SELECT c FROM commerces c WHERE c.deleted = false AND c.normalizedLocality = :normalizedLocality")
     Page<Commerce> findByDeletedFalseAndLocalityIgnoreCase(

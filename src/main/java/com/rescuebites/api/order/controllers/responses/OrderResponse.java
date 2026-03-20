@@ -1,5 +1,7 @@
 package com.rescuebites.api.order.controllers.responses;
 
+import com.rescuebites.api.client.controllers.responses.ImageResponse;
+import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 import com.rescuebites.api.order.data.enums.OrderStatus;
 import com.rescuebites.api.order.data.enums.PaymentMethod;
 
@@ -12,14 +14,16 @@ import java.util.UUID;
 public record OrderResponse(
         UUID orderId,
         String orderNumber,
-        UUID clientId,
-        String clientName,
         UUID commerceId,
         String commerceName,
         String commerceAddress,
+        String commerceLocality,
         String commercePhone,
+        CommerceTypeEnum commerceType,
+        List<ImageResponse> commerceImages,
         List<OrderItemResponse> items,
         BigDecimal subtotal,
+        BigDecimal discountedSubtotal,
         BigDecimal serviceFee,
         BigDecimal total,
         OrderStatus status,
