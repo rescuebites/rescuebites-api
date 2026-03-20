@@ -1,5 +1,6 @@
 package com.rescuebites.api.order.data.mappers;
 
+import com.rescuebites.api.client.data.mappers.ImageMapper;
 import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
@@ -37,19 +38,26 @@ public class OrderMapper {
     }
 
     public static OrderResponse toOrderResponse(Order order) {
+        Commerce commerce = order.getCommerce();
+
         return new OrderResponse(
                 order.getOrderId(),
                 order.getOrderNumber(),
-                order.getClient().getClientId(),
-                order.getClient().getFirstName() + " " + order.getClient().getLastName(),
-                order.getCommerce().getCommerceId(),
-                order.getCommerce().getName(),
-                order.getCommerce().getAddress(),
-                order.getCommerce().getPhone(),
+                commerce.getCommerceId(),
+                commerce.getName(),
+                commerce.getAddress(),
+                commerce.getLocality() != null ? commerce.getLocality().getName() : null,
+                commerce.getPhone(),
+                commerce.getCommerceTypes().isEmpty() ? null
+                        : commerce.getCommerceTypes().get(0).getName(),
+                commerce.getImages().stream()
+                        .map(ImageMapper::toImageResponse)
+                        .collect(Collectors.toList()),
                 order.getItems().stream()
                         .map(OrderItemMapper::toOrderItemResponse)
                         .collect(Collectors.toList()),
-                order.getSubtotal(),
+                order.calculateSubtotal(),
+                order.calculateDiscountedSubtotal(),
                 SERVICE_FEE,
                 order.getTotal(),
                 order.getStatus(),

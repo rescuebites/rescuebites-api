@@ -109,7 +109,12 @@ public class ClientOrderServiceImpl implements IClientOrderService {
         for (CartItem cartItem : cart.getItems()) {
             OrderItem orderItem = createOrderItemFromCartItem(order, cartItem);
             orderItems.add(orderItem);
-            subtotal = subtotal.add(orderItem.getSubtotal());
+
+            // subtotal = suma de originalPrice × quantity (sin descuento)
+            subtotal = subtotal.add(
+                    orderItem.getOriginalPrice()
+                            .multiply(BigDecimal.valueOf(orderItem.getQuantity()))
+            );
 
             updateProductStock(cartItem.getProduct(), cartItem.getQuantity());
         }
@@ -137,8 +142,10 @@ public class ClientOrderServiceImpl implements IClientOrderService {
     }
 
     private void calculateOrderTotals(Order order) {
-        BigDecimal total = order.getSubtotal().add(SERVICE_FEE);
-        order.setTotal(total);
+        BigDecimal discountedSubtotal = order.getItems().stream()
+                .map(OrderItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        order.setTotal(discountedSubtotal.add(SERVICE_FEE));
     }
 
     private void clearClientCart(Cart cart) {
