@@ -14,7 +14,7 @@ public interface ICommerceFacade {
 
     Commerce findCommerceByIdOrThrowException(UUID commerceId);
 
-    Commerce findCommerceWithDetailsOrThrowException(UUID commerceId);
+    Commerce findCommerceByIdIncludingDeletedOrThrowException(UUID commerceId);
 
     void validateCommerceOwnership(UUID commerceId);
 

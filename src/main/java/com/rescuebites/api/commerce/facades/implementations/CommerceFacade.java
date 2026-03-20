@@ -36,13 +36,13 @@ public class CommerceFacade implements ICommerceFacade {
 
     @Override
     public Commerce findCommerceByIdOrThrowException(UUID commerceId) {
-        return commerceRepository.findByCommerceIdAndDeletedFalse(commerceId)
+        return commerceRepository.findByIdWithDetails(commerceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Commerce", "id", commerceId));
     }
 
     @Override
-    public Commerce findCommerceWithDetailsOrThrowException(UUID commerceId) {
-        return commerceRepository.findByIdWithDetails(commerceId)
+    public Commerce findCommerceByIdIncludingDeletedOrThrowException(UUID commerceId) {
+        return commerceRepository.findByIdIncludingDeleted(commerceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Commerce", "id", commerceId));
     }
 

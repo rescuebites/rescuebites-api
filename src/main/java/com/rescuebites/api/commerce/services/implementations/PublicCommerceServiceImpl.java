@@ -8,8 +8,6 @@ import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.commerce.repositories.ICommerceRepository;
 import com.rescuebites.api.commerce.services.interfaces.IPublicCommerceService;
-import com.rescuebites.api.exceptions.custom_exceptions.ResourceNotFoundException;
-import com.rescuebites.api.security.utils.SecurityUtils;
 import com.rescuebites.api.shared.utils.SearchUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +35,7 @@ public class PublicCommerceServiceImpl implements IPublicCommerceService {
     @Override
     @Transactional
     public CommerceResponse getCommerceById(UUID commerceId) {
-        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
-
+        Commerce commerce = commerceFacade.findCommerceByIdIncludingDeletedOrThrowException(commerceId);
         return CommerceMapper.toCommerceResponse(commerce);
     }
 

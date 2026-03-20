@@ -72,7 +72,7 @@ public class CommerceServiceImpl implements ICommerceService {
     @Override
     @Transactional
     public void updateCommerce(UUID commerceId, UpdateCommerceRequest updateCommerceRequest, MultipartFile[] images) {
-        Commerce commerce = commerceFacade.findCommerceWithDetailsOrThrowException(commerceId);
+        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
         User user = commerce.getUser();
         SecurityUtils.validateOwnership(user.getEmail());
 
@@ -135,7 +135,7 @@ public class CommerceServiceImpl implements ICommerceService {
     @Override
     @Transactional
     public void deleteCommerce(UUID commerceId) {
-        Commerce commerce = commerceFacade.findCommerceWithDetailsOrThrowException(commerceId);
+        Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
         User user = commerce.getUser();
         SecurityUtils.validateOwnership(user.getEmail());
         List<Image> currentImages = commerce.getImages();
