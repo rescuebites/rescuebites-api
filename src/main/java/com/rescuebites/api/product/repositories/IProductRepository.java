@@ -22,14 +22,14 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
     Queries para el dueño del comercio (ve todos los productos, activos e inactivos)
      */
 
-    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @EntityGraph(attributePaths = {"preferenceType", "conditions", "images", "commerce"})
     @Query("SELECT p FROM products p WHERE p.productId = :productId AND p.commerce.commerceId = :commerceId")
     Optional<Product> findByIdAndCommerceId(
             @Param("productId") UUID productId,
             @Param("commerceId") UUID commerceId
     );
 
-    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce"})
+    @EntityGraph(attributePaths = {"preferenceType", "conditions", "images", "commerce"})
     @Query("SELECT p FROM products p WHERE p.productId = :productId AND p.active = true")
     Optional<Product> findByIdAndActive(@Param("productId") UUID productId);
 
@@ -175,9 +175,13 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
             Pageable pageable
     );
 
-    @EntityGraph(attributePaths = {"preferenceType", "images", "commerce", "commerce.businessHours"})
+    @EntityGraph(attributePaths = {"preferenceType", "conditions", "images", "commerce", "commerce.businessHours"})
     @Query("SELECT DISTINCT p FROM products p WHERE p.productId IN :ids")
     List<Product> findProductsWithDetailsByIds(@Param("ids") List<UUID> ids);
+
+    @EntityGraph(attributePaths = {"preferenceType", "conditions", "images", "commerce", "commerce.businessHours"})
+    @Query("SELECT p FROM products p WHERE p.productId = :productId")
+    Optional<Product> findByIdWithDetails(@Param("productId") UUID productId);
 
     @Query("SELECT p.productId FROM products p WHERE p.commerce.commerceId = :commerceId")
     Page<UUID> findIdsByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
