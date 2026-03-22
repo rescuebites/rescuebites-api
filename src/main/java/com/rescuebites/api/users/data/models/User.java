@@ -55,4 +55,8 @@ public class User {
     private boolean deleted = false;
 
     private LocalDateTime deletedAt;
+
+    /** Email pendiente de confirmación (usado durante el flujo de cambio de email). */
+    @Column(name = "pending_email")
+    private String pendingEmail;
 }

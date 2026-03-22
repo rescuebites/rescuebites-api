@@ -43,7 +43,11 @@ public class EmailServiceImpl implements IEmailService {
     @Override
     public void sendEmailUpdatedConfirmationEmail(User user, UUID token) {
         String htmlContent = emailBuilder.buildEmailUpdatedConfirmation(user, token);
-        sendEmail(user.getEmail(), "Email actualizado ✔", htmlContent);
+        // Enviamos al nuevo email pendiente (si existe), de lo contrario al email actual
+        String recipient = (user.getPendingEmail() != null && !user.getPendingEmail().isBlank())
+                ? user.getPendingEmail()
+                : user.getEmail();
+        sendEmail(recipient, "Confirma tu nuevo email ✔", htmlContent);
     }
 
     private void sendEmail(String to, String subject, String htmlContent) {
