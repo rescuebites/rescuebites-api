@@ -140,6 +140,11 @@ public class EmailBuilder {
         String profileUrl = frontendUrl + "/auth/activate?userId=" + user.getUserId()
                 + "&token=" + confirmationToken;
 
+        // Mostramos el nuevo email al que se está migrando
+        String newEmail = (user.getPendingEmail() != null && !user.getPendingEmail().isBlank())
+                ? user.getPendingEmail()
+                : user.getEmail();
+
         return """
             <html>
               <head>
@@ -162,21 +167,24 @@ public class EmailBuilder {
               </head>
               <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #77A787; padding: 40px; text-align: center;">
                   <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                      <h2 style="color: #77A787; margin-bottom: 20px;">¡Tu email se actualizó correctamente!</h2>
-                      <p style="font-size: 16px; color: #333;"><strong>Hola!</strong>,</p>
+                      <h2 style="color: #77A787; margin-bottom: 20px;">Confirmá tu nuevo email</h2>
+                      <p style="font-size: 16px; color: #333;"><strong>¡Hola!</strong>,</p>
                       <p style="font-size: 16px; color: #555;">
-                          Te confirmamos que tu correo electrónico asociado a RescueBites fue actualizado exitosamente.
+                          Recibimos una solicitud para actualizar el correo electrónico asociado a tu cuenta de RescueBites.
                       </p>
                       <p style="font-size: 16px; color: #555;">
-                          <strong>Email registrado:</strong> %s
+                          <strong>Nuevo email:</strong> %s
                       </p>
-                      <a href="%s" class="confirm-button">Ir a mi perfil</a>
+                      <p style="font-size: 15px; color: #555;">
+                          Hacé clic en el botón para confirmar el cambio. Una vez confirmado, deberás iniciar sesión con tu nuevo email.
+                      </p>
+                      <a href="%s" class="confirm-button">Confirmar nuevo email</a>
                       <p style="margin-top: 25px; font-size: 14px; color: #888;">
                           Si no realizaste este cambio, por favor restablece tu contraseña de inmediato desde la aplicación o contáctanos.
                       </p>
                   </div>
               </body>
             </html>
-        \s""".formatted(user.getEmail(), profileUrl);
+        \s""".formatted(newEmail, profileUrl);
     }
 }

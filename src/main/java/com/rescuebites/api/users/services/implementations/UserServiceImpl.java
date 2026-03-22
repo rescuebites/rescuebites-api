@@ -71,8 +71,18 @@ public class UserServiceImpl implements IUserService {
         userFacade.validateTokenNotExpired(token);
 
         User user = token.getUser();
-        userFacade.ifUserIsEnabledThrowException(user);
-        user.setEnabled(true);
+
+        if (user.getPendingEmail() != null && !user.getPendingEmail().isBlank()) {
+            // Flujo de cambio de email: aplicar el email pendiente
+            user.setEmail(user.getPendingEmail());
+            user.setPendingEmail(null);
+        } else {
+            // Flujo de verificación de cuenta nueva
+            userFacade.ifUserIsEnabledThrowException(user);
+            user.setEnabled(true);
+        }
+
+        tokenService.deleteTokensByUser(user);
         userRepository.save(user);
     }
 

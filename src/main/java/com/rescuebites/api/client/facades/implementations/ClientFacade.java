@@ -84,8 +84,7 @@ public class ClientFacade implements IClientFacade {
     @Override
     public void applyUserChanges(User user, UpdateClientRequest request, boolean emailChanged) {
         if (emailChanged) {
-            user.setEmail(request.getEmail().trim());
-            user.setEnabled(false);
+            user.setPendingEmail(request.getEmail().trim());
             tokenService.saveUserToken(user);
         }
 
