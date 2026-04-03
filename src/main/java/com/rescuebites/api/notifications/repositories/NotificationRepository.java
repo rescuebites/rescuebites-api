@@ -1,0 +1,14 @@
+package com.rescuebites.api.notifications.repositories;
+
+import com.rescuebites.api.notifications.data.models.Notification;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface NotificationRepository extends JpaRepository<Notification, UUID> {
+
+    List<Notification> findByUserIdAndReadFalse(UUID userId);
+
+    List<Notification> findByUserIdOrderByCreatedAtDesc(UUID userId);
+}
