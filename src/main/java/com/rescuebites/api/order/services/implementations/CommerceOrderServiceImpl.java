@@ -2,6 +2,7 @@ package com.rescuebites.api.order.services.implementations;
 
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
+import com.rescuebites.api.notifications.Interfaces.INotificationService;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
 import com.rescuebites.api.order.controllers.responses.OrderSummaryForCommerceResponse;
 import com.rescuebites.api.order.data.enums.OrderStatus;
@@ -31,6 +32,7 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
     private final IOrderValidationFacade orderValidationFacade;
     private final IWhatsAppService whatsAppService;
     private final ICommerceFacade commerceFacade;
+    private final INotificationService notificationService;
     private final IProductRepository productRepository;
 
     @Override
@@ -78,6 +80,9 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
         }
 
         orderRepository.save(order);
+
+        // 🔥 ESTA ES LA CLAVE
+        notificationService.notifyOrderStatusChange(order);
         whatsAppService.notifyClientOrderStatusChange(order);
     }
 
@@ -89,7 +94,8 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
                 order.setCancelledAt(LocalDateTime.now());
                 order.setCancellationReason(reason);
             }
-            default -> {} // PENDING, PREPARING, READY no tienen timestamp específico
+            default -> {
+            } // PENDING, PREPARING, READY no tienen timestamp específico
         }
     }
 
