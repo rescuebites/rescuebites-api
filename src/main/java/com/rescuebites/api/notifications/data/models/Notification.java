@@ -16,23 +16,27 @@ import java.util.UUID;
 public class Notification {
 
     @Id
-    @GeneratedValue
-    private UUID id;
+    @Column(name = "notification_id")
+    @Builder.Default
+    private UUID id = UUID.randomUUID();
 
     private UUID userId;
 
-    private String role; // CLIENT / COMMERCE
+    private String role;
 
-    private String type; // ORDER_STATUS, NEW_ORDER, etc
+    private String type;
 
     private String title;
 
     private String message;
 
     @Column(columnDefinition = "TEXT")
-    private String data; // JSON serializado
+    private String data;
 
-    private boolean read;
+    @Column(name = "is_read")
+    @Builder.Default
+    private boolean isRead = false;
 
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 }
