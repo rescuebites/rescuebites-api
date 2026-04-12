@@ -77,11 +77,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/commerces/*/products/*").hasRole("COMMERCE")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/commerces/*/products/*").hasRole("COMMERCE")
 
+                        // Búsqueda del home del comercio
+                        .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*/search").hasRole("COMMERCE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*/search/suggestions").hasRole("COMMERCE")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/images/*").authenticated()
+
                         // Operaciones del HOME del cliente (Públicas)
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/type/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/products/commerce/*/ordered-by-stock").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/products/commerce/*/expiring").permitAll()
 
                         // SEARCH (Búsqueda pública)
                         .requestMatchers(HttpMethod.GET, "/api/v1/search").permitAll()
