@@ -17,23 +17,9 @@ public interface IImageFacade {
 
     void deleteImage(String publicId);
 
-    /**
-     * Valida que las imágenes cumplan con los requisitos (cantidad, tamaño, formato)
-     * @throws ValidationException si las imágenes no son válidas
-     */
     void validateImages(MultipartFile[] images);
-
-    /**
-     * Procesa y actualiza las imágenes de una entidad.
-     * Elimina las imágenes antiguas y sube las nuevas.
-     * @param currentImages Lista actual de imágenes de la entidad
-     * @param newImages Nuevas imágenes a cargar
-     * @return Lista de nuevas imágenes procesadas y almacenadas
-     * @throws ValidationException si las imágenes no son válidas
-     */
-    List<Image> processAndUpdateImages(List<Image> currentImages, MultipartFile[] newImages);
 
     Image replaceImage(Image currentImage, MultipartFile newImage);
 
-    List<Image> processImagesIfProvided(List<Image> currentImages, MultipartFile[] newImages);
+    void addImagesToExisting(List<Image> currentImages, MultipartFile[] newImages);
 }

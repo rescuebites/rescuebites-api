@@ -34,6 +34,10 @@ public class Image {
 
     private String publicId;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer position = 0;
+
     @OneToOne(mappedBy = "image")
     private Client client;
 
