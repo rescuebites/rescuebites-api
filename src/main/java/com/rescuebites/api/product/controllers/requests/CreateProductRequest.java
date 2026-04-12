@@ -25,8 +25,7 @@ public class CreateProductRequest{
         @Schema(description = "Nombre del producto", example = "Manzanas Red Delicious")
         private String name;
 
-        @NotBlank(message = "La descripción es requerida")
-        @Size(min = 10, max = 500, message = "La descripción debe tener entre 10 y 500 caracteres")
+        @Size(max = 500, message = "La descripción debe tener entre 5 y 500 caracteres")
         @Schema(description = "Descripción detallada", example = "Manzanas frescas de la región")
         private String description;
 

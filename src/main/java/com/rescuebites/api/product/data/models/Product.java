@@ -57,7 +57,6 @@ public class Product {
     @NotBlank(message = "El nombre es obligatorio")
     private String name;
 
-    @NotBlank(message = "La descripción es obligatoria")
     private String description;
 
     @NotNull(message = "El stock es obligatorio")
@@ -96,6 +95,7 @@ public class Product {
     private CommerceTypeEnum commerceType;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("position ASC")
     @Builder.Default
     @BatchSize(size = 20)
     private List<Image> images = new ArrayList<>();
