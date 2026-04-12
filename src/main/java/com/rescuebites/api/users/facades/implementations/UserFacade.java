@@ -24,7 +24,7 @@ public class UserFacade implements IUserFacade {
     @Override
     public void ifEmailAlreadyExistsThrowException(String email) {
         if (userRepository.existsByEmail(email)){
-            throw new DuplicateResourceException("User", "email");
+            throw new DuplicateResourceException("usuario", "email");
         }
     }
 
@@ -39,14 +39,14 @@ public class UserFacade implements IUserFacade {
     @Override
     public void validatePasswordOrThrowException(String rawPassword, User user) {
         if(!passwordEncoder.matches(rawPassword, user.getPassword())){
-            throw new RuntimeException("Contraseña inválida.");
+            throw new UnauthorizedException("El correo electrónico o la contraseña son incorrectos");
         }
     }
 
     @Override
     public void ifUserIsNotEnabledThrowException(User user) {
         if (!user.isEnabled()) {
-            throw new RuntimeException("Debes confirmar tu cuenta antes de iniciar sesión");
+            throw new UnauthorizedException("Debes confirmar tu cuenta antes de iniciar sesión");
         }
     }
 
