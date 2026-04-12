@@ -3,6 +3,7 @@ package com.rescuebites.api.order.services.implementations;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
+import com.rescuebites.api.order.controllers.responses.OrderSummaryForCommerceResponse;
 import com.rescuebites.api.order.data.enums.OrderStatus;
 import com.rescuebites.api.order.data.mappers.OrderMapper;
 import com.rescuebites.api.order.data.models.Order;
@@ -31,18 +32,18 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
 
     @Override
     @Transactional
-    public Page<OrderResponse> getCommerceOrders(UUID commerceId, Pageable pageable) {
+    public Page<OrderSummaryForCommerceResponse> getCommerceOrders(UUID commerceId, Pageable pageable) {
         commerceFacade.validateCommerceOwnership(commerceId);
         Page<Order> orders = orderRepository.findByCommerceId(commerceId, pageable);
-        return orders.map(OrderMapper::toOrderResponse);
+        return orders.map(OrderMapper::toOrderSummaryForCommerce);
     }
 
     @Override
     @Transactional
-    public Page<OrderResponse> getCommerceOrdersByStatus(UUID commerceId, OrderStatus status, Pageable pageable) {
+    public Page<OrderSummaryForCommerceResponse> getCommerceOrdersByStatus(UUID commerceId, OrderStatus status, Pageable pageable) {
         commerceFacade.validateCommerceOwnership(commerceId);
         Page<Order> orders = orderRepository.findByCommerceIdAndStatus(commerceId, status, pageable);
-        return orders.map(OrderMapper::toOrderResponse);
+        return orders.map(OrderMapper::toOrderSummaryForCommerce);
     }
 
     @Override

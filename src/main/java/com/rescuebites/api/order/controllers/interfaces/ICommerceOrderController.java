@@ -2,6 +2,7 @@ package com.rescuebites.api.order.controllers.interfaces;
 
 import com.rescuebites.api.order.controllers.requests.UpdateOrderStatusRequest;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
+import com.rescuebites.api.order.controllers.responses.OrderSummaryForCommerceResponse;
 import com.rescuebites.api.order.data.enums.OrderStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,7 +31,7 @@ public interface ICommerceOrderController {
             @ApiResponse(responseCode = "200", description = "Pedidos obtenidos exitosamente"),
             @ApiResponse(responseCode = "404", description = "Comercio no encontrado")
     })
-    Page<OrderResponse> getCommerceOrders(
+    Page<OrderSummaryForCommerceResponse> getCommerceOrders(
             @Parameter(description = "ID del comercio", required = true)
             @PathVariable UUID commerceId,
 
@@ -47,7 +48,7 @@ public interface ICommerceOrderController {
             @ApiResponse(responseCode = "200", description = "Pedidos obtenidos exitosamente"),
             @ApiResponse(responseCode = "404", description = "Comercio no encontrado")
     })
-    Page<OrderResponse> getCommerceOrdersByStatus(
+    Page<OrderSummaryForCommerceResponse> getCommerceOrdersByStatus(
             @Parameter(description = "ID del comercio", required = true)
             @PathVariable UUID commerceId,
 
