@@ -72,7 +72,8 @@ public class CommerceMapper {
                 commerce.getPhone(),
                 commerce.getImages().stream()
                         .map(ImageMapper::toImageResponse)
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                commerce.getUser().getEmail()
         );
     }
 
@@ -148,12 +149,7 @@ public class CommerceMapper {
         if (request.getPhone() != null) {
             commerce.setPhone(request.getPhone());
         }
-        if (newImages != null && !newImages.isEmpty()) {
-            commerce.getImages().clear();
-            newImages.forEach(image -> {
-                image.setCommerce(commerce);
-                commerce.getImages().add(image);
-            });
-        }
+        // Las imágenes ya fueron agregadas directamente en el servicio
+        // No procesamos newImages aquí para evitar duplicados
     }
 }

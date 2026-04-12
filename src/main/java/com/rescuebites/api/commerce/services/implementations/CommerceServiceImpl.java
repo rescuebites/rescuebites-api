@@ -104,18 +104,29 @@ public class CommerceServiceImpl implements ICommerceService {
                 effectiveLocalityName
         );
 
-        List<Image> newImages = imageFacade.processImagesIfProvided(commerce.getImages(), images);
+        // Procesar imágenes si se enviaron nuevas
+        // addImagesToExisting agrega directamente a commerce.getImages()
+        if (images != null && images.length > 0) {
+            int sizeBeforeAdd = commerce.getImages().size();
+            imageFacade.addImagesToExisting(commerce.getImages(), images);
+
+            // Establecer la relación bidireccional para las nuevas imágenes
+            for (int i = sizeBeforeAdd; i < commerce.getImages().size(); i++) {
+                commerce.getImages().get(i).setCommerce(commerce);
+            }
+        }
 
         List<CommerceType> commerceTypes = updateCommerceRequest.getCommerceTypes() != null
                 && !updateCommerceRequest.getCommerceTypes().isEmpty()
                 ? commerceFacade.getOrCreateCommerceTypes(updateCommerceRequest.getCommerceTypes())
                 : null;
 
+        // El mapper NO debe recibir imágenes - ya están en commerce.getImages()
         CommerceMapper.updateCommerceFromRequest(
                 commerce,
                 updateCommerceRequest,
                 commerceTypes,
-                newImages,
+                null, // null porque las imágenes ya fueron agregadas directamente
                 locality
         );
         commerceFacade.applyUserChanges(
@@ -186,3 +197,4 @@ public class CommerceServiceImpl implements ICommerceService {
         return localityService.resolveOrCreateByName(request.getLocality());
     }
 }
+
