@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-
 /* Response para listado de pedidos desde la perspectiva del cliente.  */
 public record OrderSummaryForClientResponse(
         UUID orderId,

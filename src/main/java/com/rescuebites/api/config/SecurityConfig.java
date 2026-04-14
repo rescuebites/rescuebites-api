@@ -67,6 +67,11 @@ public class SecurityConfig {
                         // Crear comercio (público - después del registro)
                         .requestMatchers(HttpMethod.POST, "/api/v1/commerces").permitAll()
 
+                        // Validación previa al registro (público - antes de registrar usuario)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/commerces/identity/availability").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/commerces/validate-registration").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/commerces/validate-business-hours").permitAll()
+
                         // Operaciones de comercio (solo COMMERCE role + ownership)
                         .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*").hasRole("COMMERCE")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/commerces/*").hasRole("COMMERCE")

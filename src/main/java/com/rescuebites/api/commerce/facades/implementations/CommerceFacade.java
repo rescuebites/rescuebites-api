@@ -158,6 +158,105 @@ public class CommerceFacade implements ICommerceFacade {
         }
     }
 
+    @Override
+    public boolean isCommerceIdentityAvailable(String name, String address, String locality) {
+        String normName = NormalizationUtils.normalizeIdentity(name);
+        String normAddress = NormalizationUtils.normalizeIdentity(address);
+        String normLocality = NormalizationUtils.normalizeIdentity(locality);
+
+        if (normName == null || normName.isBlank()) {
+            return true;
+        }
+
+        if (normAddress == null || normAddress.isBlank() || normLocality == null || normLocality.isBlank()) {
+            return commerceRepository.findActiveByExactNormalizedName(normName).isEmpty();
+        }
+
+        return !commerceRepository.existsActiveByNormalizedIdentity(normName, normAddress, normLocality);
+    }
+
+    @Override
+    public boolean existsIdentityExcludingId(UUID commerceId, String name, String address, String locality) {
+        String normName = NormalizationUtils.normalizeIdentity(name);
+        String normAddress = NormalizationUtils.normalizeIdentity(address);
+        String normLocality = NormalizationUtils.normalizeIdentity(locality);
+
+        if (normName == null || normName.isBlank()
+                || normAddress == null || normAddress.isBlank()
+                || normLocality == null || normLocality.isBlank()) {
+            return false;
+        }
+
+        return commerceRepository.existsActiveByNormalizedIdentityExcludingId(commerceId, normName, normAddress, normLocality);
+    }
+
+    @Override
+    public List<String> collectBusinessHoursErrors(List<BusinessHoursRequest> businessHours, boolean requireAllDays) {
+        List<String> errors = new ArrayList<>();
+
+        if (businessHours == null || businessHours.isEmpty()) {
+            if (requireAllDays) {
+                errors.add("Debe definir el horario de todos los días de la semana");
+            }
+            return errors;
+        }
+
+        // Días duplicados
+        Set<DayOfWeek> days = new HashSet<>();
+        for (BusinessHoursRequest bh : businessHours) {
+            if (bh.getDayOfWeek() == null) continue;
+            if (!days.add(bh.getDayOfWeek())) {
+                errors.add("El día " + bh.getDayOfWeek() + " está duplicado en los horarios de atención");
+            }
+        }
+
+        // Todos los días presentes
+        if (requireAllDays && days.size() < 7) {
+            Set<DayOfWeek> missingDays = new HashSet<>(Set.of(DayOfWeek.values()));
+            missingDays.removeAll(days);
+            errors.add("Debe definir el horario de todos los días de la semana. Faltan: " +
+                    missingDays.stream().map(DayOfWeek::name).collect(Collectors.joining(", ")));
+        }
+
+        // Validación individual por día
+        for (BusinessHoursRequest bh : businessHours) {
+            if (bh.getDayOfWeek() == null || bh.isClosed()) continue;
+            collectSingleBusinessHoursErrors(bh, errors);
+        }
+
+        return errors;
+    }
+
+    private void collectSingleBusinessHoursErrors(BusinessHoursRequest bh, List<String> errors) {
+        String day = bh.getDayOfWeek().name();
+
+        if (bh.getOpenTime() == null || bh.getCloseTime() == null) {
+            errors.add(day + ": la hora de apertura y cierre son obligatorias cuando el comercio está abierto");
+            return;
+        }
+
+        if (!bh.getOpenTime().isBefore(bh.getCloseTime())) {
+            errors.add(day + ": la hora de apertura debe ser anterior a la hora de cierre");
+        }
+
+        boolean hasAfternoonOpen = bh.getAfternoonOpenTime() != null;
+        boolean hasAfternoonClose = bh.getAfternoonCloseTime() != null;
+
+        if (hasAfternoonOpen != hasAfternoonClose) {
+            errors.add(day + ": debe definir ambos horarios del turno tarde (apertura y cierre) o ninguno");
+            return;
+        }
+
+        if (hasAfternoonOpen) {
+            if (!bh.getAfternoonOpenTime().isAfter(bh.getCloseTime())) {
+                errors.add(day + ": la apertura del turno tarde debe ser posterior al cierre del turno mañana");
+            }
+            if (!bh.getAfternoonOpenTime().isBefore(bh.getAfternoonCloseTime())) {
+                errors.add(day + ": la apertura del turno tarde debe ser anterior al cierre del turno tarde");
+            }
+        }
+    }
+
     private CommerceType getOrCreateCommerceType(CommerceTypeEnum commerceTypeEnum) {
         return commerceTypeRepository.findByName(commerceTypeEnum)
                 .orElseGet(() -> createNewCommerceType(commerceTypeEnum));

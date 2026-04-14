@@ -1,8 +1,10 @@
 package com.rescuebites.api.commerce.services.implementations;
 
+import com.rescuebites.api.commerce.controllers.requests.BusinessHoursRequest;
 import com.rescuebites.api.commerce.controllers.requests.CreateCommerceRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceCredentialsRequest;
 import com.rescuebites.api.commerce.controllers.requests.UpdateCommerceRequest;
+import com.rescuebites.api.commerce.controllers.responses.CommerceIdentityCheckResponse;
 import com.rescuebites.api.commerce.data.mappers.CommerceMapper;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.data.models.CommerceType;
@@ -189,6 +191,24 @@ public class CommerceServiceImpl implements ICommerceService {
         eventPublisher.publishEvent(new EmailUpdatedEvent(user, tokenId));
     }
 
+    @Override
+    public CommerceIdentityCheckResponse checkIdentityAvailability(String name, String address, String locality, UUID excludeCommerceId) {
+        boolean available;
+        if (excludeCommerceId != null) {
+            available = !commerceFacade.existsIdentityExcludingId(excludeCommerceId, name, address, locality);
+        } else {
+            available = commerceFacade.isCommerceIdentityAvailable(name, address, locality);
+        }
+        return available
+                ? CommerceIdentityCheckResponse.ok()
+                : CommerceIdentityCheckResponse.taken();
+    }
+
+    @Override
+    public List<String> validateBusinessHours(List<BusinessHoursRequest> businessHours) {
+        return commerceFacade.collectBusinessHoursErrors(businessHours, true);
+    }
+
     private Locality resolveLocalityIfNeeded(UpdateCommerceRequest request) {
         if (!StringUtils.hasText(request.getLocality())) {
             return null;
@@ -197,4 +217,3 @@ public class CommerceServiceImpl implements ICommerceService {
         return localityService.resolveOrCreateByName(request.getLocality());
     }
 }
-
