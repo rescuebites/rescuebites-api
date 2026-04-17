@@ -10,10 +10,13 @@ import com.rescuebites.api.notifications.data.models.Notification;
 import com.rescuebites.api.notifications.repositories.NotificationRepository;
 import com.rescuebites.api.notifications.services.SseService;
 import com.rescuebites.api.product.data.models.Product;
+import lombok.extern.slf4j.Slf4j;
+
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements INotificationService {
@@ -42,6 +45,7 @@ public class NotificationServiceImpl implements INotificationService {
 
     @Override
     public void notifyNewOrder(Order order) {
+        log.info("NUEVA NOTIFICACION", order.getOrderId());
         Map<String, Object> payload = Map.of(
                 "type", "NEW_ORDER",
                 "orderId", order.getOrderId());
@@ -68,7 +72,7 @@ public class NotificationServiceImpl implements INotificationService {
                 .title("Actualización de pedido")
                 .message("Hubo un cambio en tu pedido")
                 .data(payload.toString()) // después podés serializar a JSON
-                .read(false)
+                .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
 
