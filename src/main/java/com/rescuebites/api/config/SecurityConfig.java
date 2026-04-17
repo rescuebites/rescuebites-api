@@ -86,6 +86,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*/search").hasRole("COMMERCE")
                         .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*/search/suggestions").hasRole("COMMERCE")
 
+                        // Reportes del comercio
+                        .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*/reports/**").hasRole("COMMERCE")
+
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/images/*").authenticated()
 
                         // Operaciones del HOME del cliente (Públicas)
