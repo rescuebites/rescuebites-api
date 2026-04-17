@@ -8,6 +8,7 @@ import com.rescuebites.api.client.facades.interfaces.IClientFacade;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
+import com.rescuebites.api.notifications.Interfaces.INotificationService;
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
 import com.rescuebites.api.order.controllers.responses.OrderSummaryForClientResponse;
@@ -41,6 +42,9 @@ import static com.rescuebites.api.cart.utils.CartConstants.SERVICE_FEE;
 import static com.rescuebites.api.order.data.enums.OrderStatus.CONFIRMED;
 import static com.rescuebites.api.order.data.enums.PaymentMethod.CASH;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ClientOrderServiceImpl implements IClientOrderService {
@@ -52,6 +56,8 @@ public class ClientOrderServiceImpl implements IClientOrderService {
     private final IOrderValidationFacade orderValidationFacade;
     private final IOrderRepository orderRepository;
     private final IWhatsAppService whatsAppService;
+    private final INotificationService notificationService;
+
 
     @Override
     @Transactional
@@ -61,6 +67,7 @@ public class ClientOrderServiceImpl implements IClientOrderService {
             allEntries = true
     )
     public OrderResponse createOrder(UUID clientId, CreateOrderRequest request) {
+        log.info("ORDEN NUEVA");
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
 
@@ -83,6 +90,7 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         createOrderItemsAndUpdateStock(order, cart);
         calculateOrderTotals(order);
+        notificationService.notifyNewOrder(order);
 
         if (CASH.equals(paymentMethod)) {
             order.setStatus(CONFIRMED);
