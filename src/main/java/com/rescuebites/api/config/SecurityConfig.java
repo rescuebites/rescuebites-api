@@ -22,87 +22,106 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final AuthenticationProvider authenticationProvider;
-    private final GlobalAuthenticationEntryPoint globalAuthenticationEntryPoint;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final AuthenticationProvider authenticationProvider;
+        private final GlobalAuthenticationEntryPoint globalAuthenticationEntryPoint;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS).permitAll()
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                .csrf(AbstractHttpConfigurer::disable)
+                                .cors(Customizer.withDefaults())
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                                                .requestMatchers("/subscribe/**").permitAll()
 
-                        // AUTENTICACIÓN (Público)
-                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                                                // AUTENTICACIÓN (Público)
+                                                .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
 
-                        // GESTIÓN DE USUARIOS (Público)
-                        .requestMatchers(HttpMethod.POST, "/api/users/*/verify-account").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/resend-verification-account").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/reset-password/email").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()
+                                                // GESTIÓN DE USUARIOS (Público)
+                                                .requestMatchers(HttpMethod.POST, "/api/users/*/verify-account")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/users/resend-verification-account")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/users/reset-password/email")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/users/reset-password")
+                                                .permitAll()
 
-                        // CLIENTS
-                        // Crear cliente (público - después del registro)
-                        .requestMatchers(HttpMethod.POST, "/api/v1/clients").permitAll()
+                                                // CLIENTS
+                                                // Crear cliente (público - después del registro)
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/clients").permitAll()
 
-                        // Operaciones de cliente (solo CLIENT role + ownership)
-                        .requestMatchers(HttpMethod.GET, "/api/v1/clients/*").hasRole("CLIENT")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/clients/*").hasRole("CLIENT")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/clients/*").hasRole("CLIENT")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/clients/*/search").hasRole("CLIENT")
+                                                // Operaciones de cliente (solo CLIENT role + ownership)
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/clients/*").hasRole("CLIENT")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/v1/clients/*")
+                                                .hasRole("CLIENT")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/clients/*")
+                                                .hasRole("CLIENT")
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/clients/*/search")
+                                                .hasRole("CLIENT")
 
-                        // CART (Solo clientes)
-                        .requestMatchers("/api/v1/clients/*/cart/**").hasRole("CLIENT")
+                                                // CART (Solo clientes)
+                                                .requestMatchers("/api/v1/clients/*/cart/**").hasRole("CLIENT")
 
-                        // PRODUCTS - Client (preferencias)
-                        .requestMatchers("/api/v1/clients/*/products/**").hasRole("CLIENT")
+                                                // PRODUCTS - Client (preferencias)
+                                                .requestMatchers("/api/v1/clients/*/products/**").hasRole("CLIENT")
 
-                        // ORDERS - Client
-                        .requestMatchers("/api/v1/clients/*/orders/**").hasRole("CLIENT")
+                                                // ORDERS - Client
+                                                .requestMatchers("/api/v1/clients/*/orders/**").hasRole("CLIENT")
 
-                        // COMMERCES
-                        // Crear comercio (público - después del registro)
-                        .requestMatchers(HttpMethod.POST, "/api/v1/commerces").permitAll()
+                                                // COMMERCES
+                                                // Crear comercio (público - después del registro)
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/commerces").permitAll()
 
-                        // Operaciones de comercio (solo COMMERCE role + ownership)
-                        .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*").hasRole("COMMERCE")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/commerces/*").hasRole("COMMERCE")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/commerces/*").hasRole("COMMERCE")
+                                                // Operaciones de comercio (solo COMMERCE role + ownership)
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*")
+                                                .hasRole("COMMERCE")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/v1/commerces/*")
+                                                .hasRole("COMMERCE")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/commerces/*")
+                                                .hasRole("COMMERCE")
 
-                        // Productos de comercio
-                        .requestMatchers(HttpMethod.POST, "/api/v1/commerces/*/products").hasRole("COMMERCE")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/commerces/*/products/*").hasRole("COMMERCE")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/commerces/*/products/*").hasRole("COMMERCE")
+                                                // Productos de comercio
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/commerces/*/products")
+                                                .hasRole("COMMERCE")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/v1/commerces/*/products/*")
+                                                .hasRole("COMMERCE")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/v1/commerces/*/products/*")
+                                                .hasRole("COMMERCE")
 
-                        // Operaciones del HOME del cliente (Públicas)
-                        .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/type/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/public/**").permitAll()
+                                                // Operaciones del HOME del cliente (Públicas)
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/*")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/type/*")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/public/**").permitAll()
 
-                        // SEARCH (Búsqueda pública)
-                        .requestMatchers(HttpMethod.GET, "/api/v1/search").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/search/*").permitAll()
+                                                // SEARCH (Búsqueda pública)
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/search").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/search/*").permitAll()
 
-                        // PAYMENTS
-                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/orders/*/create-preference").hasRole("CLIENT")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll() // Webhook de Mercado Pago
-                        .requestMatchers(HttpMethod.GET, "/api/v1/payments/**").permitAll() // URLs de retorno
+                                                // PAYMENTS
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/v1/payments/orders/*/create-preference")
+                                                .hasRole("CLIENT")
+                                                .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook")
+                                                .permitAll() // Webhook de Mercado Pago
+                                                .requestMatchers(HttpMethod.GET, "/api/v1/payments/**").permitAll() // URLs
+                                                                                                                    // de
+                                                                                                                    // retorno
 
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(sessionManagement -> sessionManagement
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .httpBasic(httpBasic -> httpBasic
-                        .authenticationEntryPoint(globalAuthenticationEntryPoint)
-                )
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                                                .anyRequest().authenticated())
+                                .sessionManagement(sessionManagement -> sessionManagement
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .httpBasic(httpBasic -> httpBasic
+                                                .authenticationEntryPoint(globalAuthenticationEntryPoint))
+                                .authenticationProvider(authenticationProvider)
+                                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+                return http.build();
+        }
 }

@@ -2,12 +2,17 @@ package com.rescuebites.api.security.utils;
 
 import com.rescuebites.api.exceptions.custom_exceptions.UnauthorizedException;
 import com.rescuebites.api.security.dto.JwtAuthenticationDetails;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.apache.maven.doxia.logging.Log;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class SecurityUtils {
 
@@ -85,6 +90,7 @@ public class SecurityUtils {
 
         Object details = authentication.getDetails();
         if (details instanceof JwtAuthenticationDetails jwtDetails) {
+            log.info("JWT DETAILS: {}", jwtDetails);
             return jwtDetails.clientId();
         }
         return null;

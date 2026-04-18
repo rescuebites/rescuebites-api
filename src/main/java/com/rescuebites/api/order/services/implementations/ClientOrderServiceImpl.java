@@ -57,14 +57,10 @@ public class ClientOrderServiceImpl implements IClientOrderService {
     private final IWhatsAppService whatsAppService;
     private final INotificationService notificationService;
 
-
     @Override
     @Transactional
-    @CacheEvict(
-            value = {"activeProducts", "productsByCommerce", "productById",
-                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
-            allEntries = true
-    )
+    @CacheEvict(value = { "activeProducts", "productsByCommerce", "productById",
+            "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice" }, allEntries = true)
     public OrderResponse createOrder(UUID clientId, CreateOrderRequest request) {
         log.info("ORDEN NUEVA");
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
@@ -89,7 +85,7 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         createOrderItemsAndUpdateStock(order, cart);
         calculateOrderTotals(order);
-        notificationService.notifyNewOrder(order);
+        notificationService.notifyNewOrderCommerce(order);
 
         if (CASH.equals(paymentMethod)) {
             order.setStatus(CONFIRMED);
@@ -121,8 +117,7 @@ public class ClientOrderServiceImpl implements IClientOrderService {
             // subtotal = suma de originalPrice × quantity (sin descuento)
             subtotal = subtotal.add(
                     orderItem.getOriginalPrice()
-                            .multiply(BigDecimal.valueOf(orderItem.getQuantity()))
-            );
+                            .multiply(BigDecimal.valueOf(orderItem.getQuantity())));
 
             updateProductStock(cartItem.getProduct(), cartItem.getQuantity());
         }
@@ -143,7 +138,8 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         if (product.getStock() == 0) {
             product.setActive(false);
-            // ACÁ FALTA NOTIFICAR AL COMERCIO QUE SE QUEDÓ SIN STOCK DE ESE PRODUCTO, PARA QUE LO REPONGA SI QUIERE SEGUIR VENDIÉNDOLO
+            // ACÁ FALTA NOTIFICAR AL COMERCIO QUE SE QUEDÓ SIN STOCK DE ESE PRODUCTO, PARA
+            // QUE LO REPONGA SI QUIERE SEGUIR VENDIÉNDOLO
         }
 
         productRepository.save(product);
@@ -185,11 +181,8 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {"activeProducts", "productsByCommerce", "productById",
-                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
-            allEntries = true
-    )
+    @CacheEvict(value = { "activeProducts", "productsByCommerce", "productById",
+            "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice" }, allEntries = true)
     public void cancelOrder(UUID clientId, UUID orderId, String reason) {
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
