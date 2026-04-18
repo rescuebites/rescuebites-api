@@ -81,7 +81,6 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
 
         orderRepository.save(order);
 
-        // 🔥 ESTA ES LA CLAVE
         notificationService.notifyOrderStatusChange(order);
         whatsAppService.notifyClientOrderStatusChange(order);
     }

@@ -12,7 +12,6 @@ import com.rescuebites.api.notifications.services.SseService;
 import com.rescuebites.api.product.data.models.Product;
 import lombok.extern.slf4j.Slf4j;
 
-
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -22,7 +21,7 @@ import java.util.Map;
 public class NotificationServiceImpl implements INotificationService {
 
     private final SseService sseService; // 👈 tu manejador de emitters
-    private final  NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
 
     @Override
     public void notifyOrderStatusChange(Order order) {
@@ -44,18 +43,19 @@ public class NotificationServiceImpl implements INotificationService {
     }
 
     @Override
-    public void notifyNewOrder(Order order) {
+    public void notifyNewOrderCommerce(Order order) {
         log.info("NUEVA NOTIFICACION", order.getOrderId());
         Map<String, Object> payload = Map.of(
-                "type", "NEW_ORDER",
-                "orderId", order.getOrderId());
+                "type", "Confirmed",
+                "orderId", order.getOrderId(),
+                "message", "We´ve receive your order and payment. You´ll get another update soon.");
 
         sseService.sendToCommerce(order.getCommerce().getCommerceId(), payload);
         saveNotification(order.getCommerce().getCommerceId(), payload);
     }
 
     @Override
-    public void notifyProductOutOfStock(Product product, UUID commerceId) {
+    public void notifyProductExpiredProduct(Product product, UUID commerceId) {
         Map<String, Object> payload = Map.of(
                 "type", "OUT_OF_STOCK",
                 "productId", product.getProductId(),
@@ -65,12 +65,67 @@ public class NotificationServiceImpl implements INotificationService {
         saveNotification(commerceId, payload);
     }
 
+    @Override
+    public void notifyOrderCanceledCommerce(Order order) {
+        Map<String, Object> payload = Map.of(
+                "type", "Confirmed",
+                "orderId", order.getOrderId(),
+                "message", "We´ve receive your order and payment. You´ll get another update soon.");
+
+        sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
+        saveNotification(order.getCommerce().getCommerceId(), payload);
+    }
+
+    @Override
+    public void notifyNewOrderClient(Order order) {
+        Map<String, Object> payload = Map.of(
+                "type", "Confirmed",
+                "orderId", order.getOrderId(),
+                "message", "We´ve receive your order and payment. You´ll get another update soon.");
+
+        sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
+        saveNotification(order.getCommerce().getCommerceId(), payload);
+    }
+
+    @Override
+    public void notifyOrderCompleteClient(Order order) {
+        Map<String, Object> payload = Map.of(
+                "type", "Confirmed",
+                "orderId", order.getOrderId(),
+                "message", "We´ve receive your order and payment. You´ll get another update soon.");
+
+        sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
+        saveNotification(order.getCommerce().getCommerceId(), payload);
+    }
+
+    @Override
+    public void notifyOrderReadyClient(Order order) {
+        Map<String, Object> payload = Map.of(
+                "type", "Confirmed",
+                "orderId", order.getOrderId(),
+                "message", "We´ve receive your order and payment. You´ll get another update soon.");
+
+        sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
+        saveNotification(order.getCommerce().getCommerceId(), payload);
+    }
+
+    @Override
+    public void notifyPreparingOrderClient(Order order) {
+        Map<String, Object> payload = Map.of(
+                "type", "Confirmed",
+                "orderId", order.getOrderId(),
+                "message", "We´ve receive your order and payment. You´ll get another update soon.");
+
+        sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
+        saveNotification(order.getCommerce().getCommerceId(), payload);
+    }
+
     private void saveNotification(UUID userId, Map<String, Object> payload) {
         Notification notification = Notification.builder()
                 .userId(userId)
                 .type((String) payload.get("type"))
-                .title("Actualización de pedido")
-                .message("Hubo un cambio en tu pedido")
+                .title("Pedido confirmado")
+                .message("Ha recibido un nuevo pedido")
                 .data(payload.toString()) // después podés serializar a JSON
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
@@ -78,4 +133,5 @@ public class NotificationServiceImpl implements INotificationService {
 
         notificationRepository.save(notification);
     }
+
 }

@@ -7,6 +7,19 @@ import java.util.UUID;
 
 public interface INotificationService {
     void notifyOrderStatusChange(Order order);
-    void notifyNewOrder(Order order);
-    void notifyProductOutOfStock(Product product, UUID commerceId);
+
+    void notifyNewOrderCommerce(Order order);
+
+    void notifyOrderCanceledCommerce(Order order);
+
+    void notifyProductExpiredProduct(Product product, UUID commerceId);
+
+    void notifyNewOrderClient(Order order);
+
+    void notifyOrderCompleteClient(Order order);
+
+    void notifyOrderReadyClient(Order order);
+
+    void notifyPreparingOrderClient(Order order);
+
 }

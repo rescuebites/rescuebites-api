@@ -2,6 +2,8 @@ package com.rescuebites.api.security.utils;
 
 import com.rescuebites.api.exceptions.custom_exceptions.UnauthorizedException;
 import com.rescuebites.api.security.dto.JwtAuthenticationDetails;
+
+import org.apache.maven.doxia.logging.Log;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
