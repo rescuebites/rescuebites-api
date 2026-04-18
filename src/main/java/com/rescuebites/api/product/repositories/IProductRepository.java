@@ -395,4 +395,12 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
             @Param("query") String query,
             Pageable pageable
     );
+
+    // Queries para el scheduler de vencimiento
+    @EntityGraph(attributePaths = {"commerce", "commerce.user"})
+    @Query("SELECT p FROM products p " +
+            "WHERE p.active = true " +
+            "AND p.expirationDate IS NOT NULL " +
+            "AND p.expirationDate < :today")
+    List<Product> findAllExpiredActiveProducts(@Param("today") java.time.LocalDate today);
 }

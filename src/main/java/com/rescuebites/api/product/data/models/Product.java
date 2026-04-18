@@ -109,6 +109,10 @@ public class Product {
 
     private LocalDateTime updateAt;
 
+    // Fecha y hora en que el sistema dio de baja automáticamente el producto al detectar que su fecha de vencimiento ya había pasado.
+    @Column(name = "deactivated_at")
+    private LocalDateTime deactivatedAt;
+
     @Column(name = "normalized_name", nullable = false)
     private String normalizedName;
 
