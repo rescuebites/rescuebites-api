@@ -207,6 +207,7 @@ public class ClientOrderServiceImpl implements IClientOrderService {
         order.setCancelledAt(LocalDateTime.now());
         order.setCancellationReason(reason);
         orderRepository.save(order);
+        notificationService.notifyOrderCanceledCommerce(order);
 
         whatsAppService.notifyCommerceCancelledOrder(order);
     }

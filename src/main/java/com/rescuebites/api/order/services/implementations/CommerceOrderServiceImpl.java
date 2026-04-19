@@ -30,7 +30,6 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
 
     private final IOrderRepository orderRepository;
     private final IOrderValidationFacade orderValidationFacade;
-    private final IWhatsAppService whatsAppService;
     private final ICommerceFacade commerceFacade;
     private final INotificationService notificationService;
     private final IProductRepository productRepository;
@@ -81,8 +80,7 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
 
         orderRepository.save(order);
 
-        notificationService.notifyOrderStatusChange(order);
-        whatsAppService.notifyClientOrderStatusChange(order);
+        notificationService.notifyOrderStatusChange(order, newStatus);
     }
 
     private void applyStatusTimestamp(Order order, OrderStatus newStatus, String reason) {

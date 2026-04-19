@@ -31,12 +31,12 @@ public class SseService {
 
         emitter.onCompletion(() -> removeClientEmitter(clientId, emitter));
         emitter.onTimeout(() -> removeClientEmitter(clientId, emitter));
-log.info("EMITER  {}", emitter);
+        log.info("EMITER  {}", emitter);
         return emitter;
     }
 
     public SseEmitter subscribeCommerce(UUID commerceId) {
-                log.info("subcribiendo COMERCIO...", commerceId);
+        log.info("subcribiendo COMERCIO...", commerceId);
 
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
 
@@ -46,7 +46,7 @@ log.info("EMITER  {}", emitter);
 
         emitter.onCompletion(() -> removeCommerceEmitter(commerceId, emitter));
         emitter.onTimeout(() -> removeCommerceEmitter(commerceId, emitter));
-log.info("EMITER  {}", emitter);
+        log.info("EMITER  {}", emitter);
 
         return emitter;
     }
@@ -63,7 +63,8 @@ log.info("EMITER  {}", emitter);
     }
 
     private void send(List<SseEmitter> emitters, String eventName, Object data) {
-        if (emitters == null) return;
+        if (emitters == null)
+            return;
         log.info("SENDIANDOOO {} {} {} ", emitters, eventName, data);
 
         for (SseEmitter emitter : emitters) {
@@ -71,7 +72,7 @@ log.info("EMITER  {}", emitter);
                 emitter.send(SseEmitter.event()
                         .name(eventName)
                         .data(data));
-                        log.info("SE HIZO BIENNNN");
+                log.info("SE HIZO BIENNNN");
             } catch (IOException e) {
                 emitters.remove(emitter);
             }
@@ -82,11 +83,13 @@ log.info("EMITER  {}", emitter);
 
     private void removeClientEmitter(UUID clientId, SseEmitter emitter) {
         List<SseEmitter> list = clientEmitters.get(clientId);
-        if (list != null) list.remove(emitter);
+        if (list != null)
+            list.remove(emitter);
     }
 
     private void removeCommerceEmitter(UUID commerceId, SseEmitter emitter) {
         List<SseEmitter> list = commerceEmitters.get(commerceId);
-        if (list != null) list.remove(emitter);
+        if (list != null)
+            list.remove(emitter);
     }
 }

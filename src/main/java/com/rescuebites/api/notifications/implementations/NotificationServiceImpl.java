@@ -1,8 +1,11 @@
 package com.rescuebites.api.notifications.implementations;
 
 import com.rescuebites.api.order.data.models.Order;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
+
 import java.util.UUID;
 
 import com.rescuebites.api.notifications.Interfaces.INotificationService;
@@ -10,10 +13,17 @@ import com.rescuebites.api.notifications.data.models.Notification;
 import com.rescuebites.api.notifications.repositories.NotificationRepository;
 import com.rescuebites.api.notifications.services.SseService;
 import com.rescuebites.api.product.data.models.Product;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.rescuebites.api.order.data.enums.OrderStatus;
+
+import jakarta.transaction.Transactional;
 
 @Slf4j
 @Service
@@ -24,20 +34,41 @@ public class NotificationServiceImpl implements INotificationService {
     private final NotificationRepository notificationRepository;
 
     @Override
-    public void notifyOrderStatusChange(Order order) {
+    public void notifyOrderStatusChange(Order order, OrderStatus newStatus) {
 
-        Map<String, Object> payload = Map.of(
-                "type", "ORDER_STATUS",
-                "orderId", order.getOrderId(),
-                "status", order.getStatus());
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", "ORDER_STATUS");
+        payload.put("orderId", order.getOrderId());
+        payload.put("status", newStatus);
 
-        // 🔔 CLIENTE
+        switch (newStatus) {
+            case PENDING -> {
+                payload.put("message", "Tu pedido fue creado");
+            }
+            case CONFIRMED -> {
+                payload.put("message", "Tu pedido fue confirmado");
+            }
+            case PREPARING -> {
+                payload.put("message", "El comercio está preparando tu pedido");
+            }
+            case READY -> {
+                payload.put("message", "Tu pedido está listo para retirar");
+            }
+            case COMPLETED -> {
+                payload.put("message", "Pedido completado");
+            }
+            case CANCELLED -> {
+                payload.put("message", "Pedido cancelado");
+            }
+        }
+
+        // CLIENTE
         sseService.sendToClient(order.getClient().getClientId(), payload);
 
-        // 🔔 COMERCIO
+        // COMERCIO
         sseService.sendToCommerce(order.getCommerce().getCommerceId(), payload);
 
-        // 💾 persistencia (clave)
+        // Persistencia
         saveNotification(order.getClient().getClientId(), payload);
         saveNotification(order.getCommerce().getCommerceId(), payload);
     }
@@ -122,16 +153,33 @@ public class NotificationServiceImpl implements INotificationService {
 
     private void saveNotification(UUID userId, Map<String, Object> payload) {
         Notification notification = Notification.builder()
+                .id(UUID.randomUUID())
                 .userId(userId)
                 .type((String) payload.get("type"))
-                .title("Pedido confirmado")
-                .message("Ha recibido un nuevo pedido")
-                .data(payload.toString()) // después podés serializar a JSON
-                .isRead(false)
+                .message((String) payload.get("message"))
+                .title("Nueva notificación")
+                .data(payload.toString())
+                .isRead(false) // 👈 CLAVE
                 .createdAt(LocalDateTime.now())
                 .build();
 
         notificationRepository.save(notification);
+    }
+
+    // ================= READ =================
+
+    public List<Notification> getUnread(UUID userId) {
+        return notificationRepository.findByUserIdAndIsReadFalse(userId);
+    }
+
+    @Transactional
+    public void markAllAsRead(UUID userId) {
+        notificationRepository.markAllAsRead(userId);
+    }
+
+    @Transactional
+    public void markAsRead(UUID id) {
+        notificationRepository.markAsRead(id);
     }
 
 }
