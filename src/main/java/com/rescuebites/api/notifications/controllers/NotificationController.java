@@ -38,13 +38,13 @@ public class NotificationController {
     }
 
     @GetMapping("/notifications/unread")
-    public List<Notification> getUnread(@RequestParam UUID commerceId) {
-        return notificationService.getUnread(commerceId);
+    public List<Notification> getUnread(@RequestParam UUID userId) {
+        return notificationService.getUnread(userId);
     }
 
     @PatchMapping("/notifications/read/all")
-    public void markAllAsRead(@RequestParam UUID commerceId) {
-        notificationService.markAllAsRead(commerceId);
+    public void markAllAsRead(@RequestParam UUID userId) {
+        notificationService.markAllAsRead(userId);
     }
 
     @PatchMapping("/notifications/{id}/read")
