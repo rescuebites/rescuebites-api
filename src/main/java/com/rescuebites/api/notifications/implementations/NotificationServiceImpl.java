@@ -38,7 +38,7 @@ public class NotificationServiceImpl implements INotificationService {
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "ORDER_STATUS");
-        payload.put("orderId", order.getOrderId());
+        payload.put("orderId", order.getOrderNumber());
         payload.put("status", newStatus);
 
         switch (newStatus) {
@@ -75,10 +75,9 @@ public class NotificationServiceImpl implements INotificationService {
 
     @Override
     public void notifyNewOrderCommerce(Order order) {
-        log.info("NUEVA NOTIFICACION", order.getOrderId());
         Map<String, Object> payload = Map.of(
                 "type", "Confirmed",
-                "orderId", order.getOrderId(),
+                "orderId", order.getOrderNumber(),
                 "message", "We´ve receive your order and payment. You´ll get another update soon.");
 
         sseService.sendToCommerce(order.getCommerce().getCommerceId(), payload);
@@ -100,7 +99,7 @@ public class NotificationServiceImpl implements INotificationService {
     public void notifyOrderCanceledCommerce(Order order) {
         Map<String, Object> payload = Map.of(
                 "type", "Confirmed",
-                "orderId", order.getOrderId(),
+                "orderId", order.getOrderNumber(),
                 "message", "We´ve receive your order and payment. You´ll get another update soon.");
 
         sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
@@ -111,44 +110,44 @@ public class NotificationServiceImpl implements INotificationService {
     public void notifyNewOrderClient(Order order) {
         Map<String, Object> payload = Map.of(
                 "type", "Confirmed",
-                "orderId", order.getOrderId(),
+                "orderId", order.getOrderNumber(),
                 "message", "We´ve receive your order and payment. You´ll get another update soon.");
 
-        sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
-        saveNotification(order.getCommerce().getCommerceId(), payload);
+        sseService.sendToClient(order.getClient().getClientId(), payload);
+        saveNotification(order.getClient().getClientId(), payload);
     }
 
     @Override
     public void notifyOrderCompleteClient(Order order) {
         Map<String, Object> payload = Map.of(
                 "type", "Confirmed",
-                "orderId", order.getOrderId(),
+                "orderId", order.getOrderNumber(),
                 "message", "We´ve receive your order and payment. You´ll get another update soon.");
 
-        sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
-        saveNotification(order.getCommerce().getCommerceId(), payload);
+         sseService.sendToClient(order.getClient().getClientId(), payload);
+        saveNotification(order.getClient().getClientId(), payload);
     }
 
     @Override
     public void notifyOrderReadyClient(Order order) {
         Map<String, Object> payload = Map.of(
                 "type", "Confirmed",
-                "orderId", order.getOrderId(),
+                "orderId", order.getOrderNumber(),
                 "message", "We´ve receive your order and payment. You´ll get another update soon.");
 
-        sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
-        saveNotification(order.getCommerce().getCommerceId(), payload);
+         sseService.sendToClient(order.getClient().getClientId(), payload);
+        saveNotification(order.getClient().getClientId(), payload);
     }
 
     @Override
     public void notifyPreparingOrderClient(Order order) {
         Map<String, Object> payload = Map.of(
                 "type", "Confirmed",
-                "orderId", order.getOrderId(),
+                "orderId", order.getOrderNumber(),
                 "message", "We´ve receive your order and payment. You´ll get another update soon.");
 
-        sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
-        saveNotification(order.getCommerce().getCommerceId(), payload);
+         sseService.sendToClient(order.getClient().getClientId(), payload);
+        saveNotification(order.getClient().getClientId(), payload);
     }
 
     private void saveNotification(UUID userId, Map<String, Object> payload) {
