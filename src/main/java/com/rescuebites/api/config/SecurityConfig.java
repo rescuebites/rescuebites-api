@@ -34,7 +34,7 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(HttpMethod.OPTIONS).permitAll()
                                                 .requestMatchers("/subscribe/**").permitAll()
-
+                                                .requestMatchers("/notifications/**").permitAll()
                                                 // AUTENTICACIÓN (Público)
                                                 .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()

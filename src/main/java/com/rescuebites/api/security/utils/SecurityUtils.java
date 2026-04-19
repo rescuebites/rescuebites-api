@@ -58,12 +58,14 @@ public class SecurityUtils {
 
     public static UUID getAuthenticatedCommerceId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        log.info("AUUUTHEHEHH");
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new UnauthorizedException("No estás autenticado");
         }
 
-        Object details = authentication.getDetails();
+        Object details = authentication.getPrincipal();
         if (details instanceof JwtAuthenticationDetails jwtDetails) {
+            log.info("TEST", jwtDetails.commerceId());
             return jwtDetails.commerceId();
         }
         return null;

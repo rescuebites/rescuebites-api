@@ -5,8 +5,10 @@ import com.rescuebites.api.product.data.models.Product;
 
 import java.util.UUID;
 
+import com.rescuebites.api.order.data.enums.OrderStatus;
+
 public interface INotificationService {
-    void notifyOrderStatusChange(Order order);
+    void notifyOrderStatusChange(Order order, OrderStatus newStatus);
 
     void notifyNewOrderCommerce(Order order);
 
