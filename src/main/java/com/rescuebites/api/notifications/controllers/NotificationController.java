@@ -12,12 +12,12 @@ import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.rescuebites.api.notifications.data.models.Notification;
 import com.rescuebites.api.notifications.implementations.NotificationServiceImpl;
 import com.rescuebites.api.notifications.services.SseService;
-import com.rescuebites.api.security.utils.SecurityUtils;
 
 @Slf4j
 @RestController
@@ -28,35 +28,23 @@ public class NotificationController {
     private final NotificationServiceImpl notificationService;
 
     @GetMapping("/subscribe/client")
-    public SseEmitter subscribeClient() {
-        UUID clientId = SecurityUtils.getAuthenticatedClientId(); // 👈 ya lo tenés
+    public SseEmitter subscribeClient(@RequestParam UUID clientId) {
         return sseService.subscribeClient(clientId);
     }
 
     @GetMapping("/subscribe/commerce")
-    public SseEmitter subscribeCommerce() {
-        UUID commerceId = SecurityUtils.getAuthenticatedCommerceId();
+    public SseEmitter subscribeCommerce(@RequestParam UUID commerceId) {
         return sseService.subscribeCommerce(commerceId);
     }
 
-    // @GetMapping("/subscribe/commerce")
-    // public SseEmitter subscribeCommerce() {
-    // UUID commerceId = UUID.fromString("b4b934d1-1ee2-4903-895b-804a93a79d03"); //
-
-    // return sseService.subscribeCommerce(commerceId);
-    // }
-
     @GetMapping("/notifications/unread")
-    public List<Notification> getUnread() {
-        UUID commerceId = UUID.fromString("b4b934d1-1ee2-4903-895b-804a93a79d03");
-
+    public List<Notification> getUnread(@RequestParam UUID commerceId) {
         return notificationService.getUnread(commerceId);
     }
 
     @PatchMapping("/notifications/read/all")
-    public void markAllAsRead() {
-        UUID userId = UUID.fromString("b4b934d1-1ee2-4903-895b-804a93a79d03");
-        notificationService.markAllAsRead(userId);
+    public void markAllAsRead(@RequestParam UUID commerceId) {
+        notificationService.markAllAsRead(commerceId);
     }
 
     @PatchMapping("/notifications/{id}/read")
