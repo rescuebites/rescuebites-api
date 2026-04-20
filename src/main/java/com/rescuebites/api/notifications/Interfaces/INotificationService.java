@@ -15,13 +15,4 @@ public interface INotificationService {
     void notifyOrderCanceledCommerce(Order order);
 
     void notifyProductExpiredProduct(Product product, UUID commerceId);
-
-    void notifyNewOrderClient(Order order);
-
-    void notifyOrderCompleteClient(Order order);
-
-    void notifyOrderReadyClient(Order order);
-
-    void notifyPreparingOrderClient(Order order);
-
 }
