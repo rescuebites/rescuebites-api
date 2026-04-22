@@ -37,32 +37,31 @@ public class NotificationServiceImpl implements INotificationService {
     public void notifyOrderStatusChange(Order order, OrderStatus newStatus) {
 
         Map<String, Object> payload = new HashMap<>();
-        payload.put("type", "Estado de la orden");
-        payload.put("orderId", order.getOrderNumber());
+        payload.put("eventId", order.getOrderNumber());
 
         switch (newStatus) {
             case PENDING -> {
-                payload.put("status", "PENDING");
+                payload.put("type", "PENDING");
                 payload.put("message", "Tu pedido fue creado");
             }
             case CONFIRMED -> {
-                payload.put("status", "CONFIRMED");
+                payload.put("type", "CONFIRMED");
                 payload.put("message", "Tu pedido fue confirmado");
             }
             case PREPARING -> {
-                payload.put("status", "PREPARING");
+                payload.put("type", "PREPARING");
                 payload.put("message", "El comercio está preparando tu pedido");
             }
             case READY -> {
-                payload.put("status", "READY");
+                payload.put("type", "READY");
                 payload.put("message", "Tu pedido está listo para retirar");
             }
             case COMPLETED -> {
-                payload.put("status", "COMPLETED");
+                payload.put("type", "COMPLETED");
                 payload.put("message", "Pedido completado");
             }
             case CANCELLED -> {
-                payload.put("status", "CANCELLED");
+                payload.put("type", "CANCELED");
                 payload.put("message", "Pedido cancelado");
             }
         }
@@ -77,9 +76,9 @@ public class NotificationServiceImpl implements INotificationService {
     @Override
     public void notifyNewOrderCommerce(Order order) {
         Map<String, Object> payload = Map.of(
-                "type", "Confirmed",
-                "orderId", order.getOrderNumber(),
-                "message", "We´ve receive your order and payment. You´ll get another update soon.");
+                "type", "CONFIRMED",
+                "eventId", order.getOrderNumber(),
+                "message", "Ha recibido un nuevo pedido.");
 
         sseService.sendToCommerce(order.getCommerce().getCommerceId(), payload);
         saveNotification(order.getCommerce().getCommerceId(), payload);
@@ -89,7 +88,7 @@ public class NotificationServiceImpl implements INotificationService {
     public void notifyProductExpiredProduct(Product product, UUID commerceId) {
         Map<String, Object> payload = Map.of(
                 "type", "OUT_OF_STOCK",
-                "productId", product.getProductId(),
+                "eventId", product.getProductId(),
                 "name", product.getName());
 
         sseService.sendToCommerce(commerceId, payload);
@@ -99,9 +98,9 @@ public class NotificationServiceImpl implements INotificationService {
     @Override
     public void notifyOrderCanceledCommerce(Order order) {
         Map<String, Object> payload = Map.of(
-                "type", "Confirmed",
-                "orderId", order.getOrderNumber(),
-                "message", "We´ve receive your order and payment. You´ll get another update soon.");
+                "type", "CANCELED",
+                "eventId", order.getOrderNumber(),
+                "message", "Pedido cancelado.");
 
         sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
         saveNotification(order.getCommerce().getCommerceId(), payload);
@@ -114,6 +113,7 @@ public class NotificationServiceImpl implements INotificationService {
                 .type((String) payload.get("type"))
                 .message((String) payload.get("message"))
                 .title("Nueva notificación")
+                .eventId((String) payload.get("eventId"))
                 .data(payload.toString())
                 .isRead(false) // 👈 CLAVE
                 .createdAt(LocalDateTime.now())
