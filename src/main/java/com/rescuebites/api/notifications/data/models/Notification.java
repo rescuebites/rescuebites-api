@@ -30,6 +30,8 @@ public class Notification {
 
     private String message;
 
+    private String eventId;
+
     @Column(columnDefinition = "TEXT")
     private String data;
 
