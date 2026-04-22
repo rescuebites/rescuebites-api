@@ -102,7 +102,7 @@ public class NotificationServiceImpl implements INotificationService {
                 "eventId", order.getOrderNumber(),
                 "message", "Pedido cancelado.");
 
-        sseService.sendToClient(order.getCommerce().getCommerceId(), payload);
+        sseService.sendToCommerce(order.getCommerce().getCommerceId(), payload);
         saveNotification(order.getCommerce().getCommerceId(), payload);
     }
 
