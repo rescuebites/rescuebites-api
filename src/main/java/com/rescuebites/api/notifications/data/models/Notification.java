@@ -32,6 +32,8 @@ public class Notification {
 
     private String eventId;
 
+    private String registerId;
+
     @Column(columnDefinition = "TEXT")
     private String data;
 
