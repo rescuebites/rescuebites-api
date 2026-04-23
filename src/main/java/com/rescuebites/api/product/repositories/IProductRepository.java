@@ -204,13 +204,15 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
 
     // ========== Queries para filtros de vencimiento (gestión del comercio) ==========
 
-    // ALL: todos los productos con fecha de vencimiento definida, ordenados por vencimiento asc
+    // ALL: productos vencidos + próximos a vencer (≤7 días), ordenados por vencimiento asc
     @Query("SELECT p.productId FROM products p " +
             "WHERE p.commerce.commerceId = :commerceId " +
             "AND p.expirationDate IS NOT NULL " +
+            "AND p.expirationDate <= :limitDate " +
             "ORDER BY p.expirationDate ASC")
     Page<UUID> findAllWithExpirationIdsByCommerceId(
             @Param("commerceId") UUID commerceId,
+            @Param("limitDate") java.time.LocalDate limitDate,
             Pageable pageable
     );
 

@@ -116,7 +116,7 @@ public class ProductManagementServiceImpl implements IProductManagementService {
 
         LocalDate today = LocalDate.now();
         Page<UUID> idsPage = switch (filter) {
-            case ALL -> productRepository.findAllWithExpirationIdsByCommerceId(commerceId, pageable);
+            case ALL -> productRepository.findAllWithExpirationIdsByCommerceId(commerceId, today.plusDays(7), pageable);
             case EXPIRING_SOON -> productRepository.findExpiringIdsByCommerceId(commerceId, today, today.plusDays(7), pageable);
             case CRITICAL -> productRepository.findCriticalExpiringIdsByCommerceId(commerceId, today, today.plusDays(2), pageable);
             case EXPIRED -> productRepository.findExpiredIdsByCommerceId(commerceId, today, pageable);
