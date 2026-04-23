@@ -4,6 +4,7 @@ import com.rescuebites.api.client.controllers.responses.ImageResponse;
 import com.rescuebites.api.client.data.mappers.ImageMapper;
 import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.commerce.data.models.Commerce;
+import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
 import com.rescuebites.api.order.controllers.responses.OrderSummaryForClientResponse;
@@ -52,8 +53,9 @@ public class OrderMapper {
                 commerce.getAddress(),
                 commerce.getLocality() != null ? commerce.getLocality().getName() : null,
                 commerce.getPhone(),
-                commerce.getCommerceTypes().isEmpty() ? null
-                        : commerce.getCommerceTypes().get(0).getName(),
+                commerce.getCommerceTypes().stream()
+                        .map(CommerceType::getName)
+                        .collect(Collectors.toList()),
                 commerce.getImages().stream()
                         .map(ImageMapper::toImageResponse)
                         .collect(Collectors.toList()),

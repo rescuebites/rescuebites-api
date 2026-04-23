@@ -19,7 +19,7 @@ public record OrderResponse(
         String commerceAddress,
         String commerceLocality,
         String commercePhone,
-        CommerceTypeEnum commerceType,
+        List<CommerceTypeEnum> commerceTypes,
         List<ImageResponse> commerceImages,
         List<OrderItemResponse> items,
         BigDecimal subtotal,

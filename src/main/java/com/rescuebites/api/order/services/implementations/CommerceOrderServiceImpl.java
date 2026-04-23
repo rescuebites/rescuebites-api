@@ -11,6 +11,8 @@ import com.rescuebites.api.order.facades.interfaces.IOrderValidationFacade;
 import com.rescuebites.api.order.repositories.IOrderRepository;
 import com.rescuebites.api.order.services.interfaces.ICommerceOrderService;
 import com.rescuebites.api.order.utils.OrderStatusValidator;
+import com.rescuebites.api.product.data.models.Product;
+import com.rescuebites.api.product.repositories.IProductRepository;
 import com.rescuebites.api.shared.services.interfaces.IWhatsAppService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
     private final IOrderValidationFacade orderValidationFacade;
     private final IWhatsAppService whatsAppService;
     private final ICommerceFacade commerceFacade;
+    private final IProductRepository productRepository;
 
     @Override
     @Transactional
@@ -70,6 +73,10 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
         order.setStatus(newStatus);
         applyStatusTimestamp(order, newStatus, reason);
 
+        if (newStatus == OrderStatus.CANCELLED) {
+            restoreStockForCancelledOrder(order);
+        }
+
         orderRepository.save(order);
         whatsAppService.notifyClientOrderStatusChange(order);
     }
@@ -83,6 +90,15 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
                 order.setCancellationReason(reason);
             }
             default -> {} // PENDING, PREPARING, READY no tienen timestamp específico
+        }
+    }
+
+    private void restoreStockForCancelledOrder(Order order) {
+        for (var item : order.getItems()) {
+            Product product = item.getProduct();
+            product.setStock(product.getStock() + item.getQuantity());
+            product.setActive(true);
+            productRepository.save(product);
         }
     }
 }
