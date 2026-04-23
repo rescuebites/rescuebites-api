@@ -38,6 +38,7 @@ public class NotificationServiceImpl implements INotificationService {
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("eventId", order.getOrderNumber());
+        payload.put("registerId", order.getOrderId().toString());
 
         switch (newStatus) {
             case PENDING -> {
@@ -77,7 +78,8 @@ public class NotificationServiceImpl implements INotificationService {
     public void notifyNewOrderCommerce(Order order) {
         Map<String, Object> payload = Map.of(
                 "type", "CONFIRMED",
-                "eventId", order.getOrderNumber(),
+                "eventId", order.getOrderNumber().toString(),
+                "registerId", order.getOrderId().toString(),
                 "message", "Ha recibido un nuevo pedido.");
 
         sseService.sendToCommerce(order.getCommerce().getCommerceId(), payload);
@@ -99,7 +101,8 @@ public class NotificationServiceImpl implements INotificationService {
     public void notifyOrderCanceledCommerce(Order order) {
         Map<String, Object> payload = Map.of(
                 "type", "CANCELED",
-                "eventId", order.getOrderNumber(),
+                "eventId", order.getOrderNumber().toString(),
+                "registerId", order.getOrderId().toString(),
                 "message", "Pedido cancelado.");
 
         sseService.sendToCommerce(order.getCommerce().getCommerceId(), payload);
@@ -114,6 +117,7 @@ public class NotificationServiceImpl implements INotificationService {
                 .message((String) payload.get("message"))
                 .title("Nueva notificación")
                 .eventId((String) payload.get("eventId"))
+                .registerId((String) payload.get("registerId"))
                 .data(payload.toString())
                 .isRead(false) // 👈 CLAVE
                 .createdAt(LocalDateTime.now())
