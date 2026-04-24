@@ -106,6 +106,7 @@ public class SecurityConfig {
                         // PAYMENTS
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/orders/*/create-preference").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll() // Webhook de Mercado Pago
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/orders/*/confirm").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/payments/**").permitAll() // URLs de retorno
 
                         .anyRequest().authenticated()
