@@ -71,7 +71,8 @@ public class OrderMapper {
                 order.getCreatedAt(),
                 order.getConfirmedAt(),
                 order.getScheduledPickupTime(),
-                order.getNotes()
+                order.getNotes(),
+                order.getCancellationReason()
         );
     }
 

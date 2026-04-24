@@ -31,5 +31,6 @@ public record OrderResponse(
         LocalDateTime createdAt,
         LocalDateTime confirmedAt,
         LocalTime scheduledPickupTime,
-        String notes
+        String notes,
+        String cancellationReason
 ) {}
