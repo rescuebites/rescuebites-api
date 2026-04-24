@@ -37,7 +37,7 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
     @Transactional
     public Page<OrderSummaryForCommerceResponse> getCommerceOrders(UUID commerceId, Pageable pageable) {
         commerceFacade.validateCommerceOwnership(commerceId);
-        Page<Order> orders = orderRepository.findByCommerceId(commerceId, pageable);
+        Page<Order> orders = orderRepository.findByCommerceIdExcludingPending(commerceId, pageable);
         return orders.map(OrderMapper::toOrderSummaryForCommerce);
     }
 

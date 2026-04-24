@@ -26,6 +26,9 @@ public interface IOrderRepository extends JpaRepository<Order, UUID> {
     @Query("SELECT o FROM orders o WHERE o.commerce.commerceId = :commerceId ORDER BY o.createdAt DESC")
     Page<Order> findByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
 
+    @Query("SELECT o FROM orders o WHERE o.commerce.commerceId = :commerceId AND o.status <> 'PENDING' ORDER BY o.createdAt DESC")
+    Page<Order> findByCommerceIdExcludingPending(@Param("commerceId") UUID commerceId, Pageable pageable);
+
     @Query("SELECT o FROM orders o WHERE o.orderId = :orderId AND o.client.clientId = :clientId")
     Optional<Order> findByIdAndClientId(
             @Param("orderId") UUID orderId,
