@@ -1,15 +1,19 @@
 package com.rescuebites.api.order.data.mappers;
 
+import com.rescuebites.api.client.controllers.responses.ImageResponse;
 import com.rescuebites.api.client.data.mappers.ImageMapper;
 import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
+import com.rescuebites.api.order.controllers.responses.OrderSummaryForClientResponse;
+import com.rescuebites.api.order.controllers.responses.OrderSummaryForCommerceResponse;
 import com.rescuebites.api.order.data.enums.OrderStatus;
 import com.rescuebites.api.order.data.enums.PaymentMethod;
 import com.rescuebites.api.order.data.models.Order;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -66,6 +70,53 @@ public class OrderMapper {
                 order.getConfirmedAt(),
                 order.getScheduledPickupTime(),
                 order.getNotes()
+        );
+    }
+
+    /**
+     * Mapea Order a OrderSummaryForClientResponse (listado para el cliente).
+     * Incluye información básica del pedido y datos del comercio.
+     */
+    public static OrderSummaryForClientResponse toOrderSummaryForClient(Order order) {
+        Commerce commerce = order.getCommerce();
+
+        return new OrderSummaryForClientResponse(
+                order.getOrderId(),
+                order.getOrderNumber(),
+                commerce.getCommerceId(),
+                commerce.getName(),
+                commerce.getImages().stream()
+                        .map(ImageMapper::toImageResponse)
+                        .collect(Collectors.toList()),
+                order.getItems().size(),
+                order.getCreatedAt(),
+                order.getTotal(),
+                order.getStatus()
+        );
+    }
+
+    /**
+     * Mapea Order a OrderSummaryForCommerceResponse (listado para el comercio).
+     * Incluye información básica del pedido y datos del cliente.
+     */
+    public static OrderSummaryForCommerceResponse toOrderSummaryForCommerce(Order order) {
+        Client client = order.getClient();
+
+        List<ImageResponse> clientImages = client.getImage() != null
+                ? List.of(ImageMapper.toImageResponse(client.getImage()))
+                : List.of();
+
+        return new OrderSummaryForCommerceResponse(
+                order.getOrderId(),
+                order.getOrderNumber(),
+                client.getClientId(),
+                client.getFirstName(),
+                client.getLastName(),
+                clientImages,
+                order.getItems().size(),
+                order.getCreatedAt(),
+                order.getTotal(),
+                order.getStatus()
         );
     }
 }

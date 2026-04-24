@@ -141,13 +141,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiError> handleUnauthorizedException(UnauthorizedException ex) {
+        logger.warn("Unauthorized access attempt: {}", ex.getMessage());
         ApiError error = new ApiError(
-                HttpStatus.FORBIDDEN.value(),
+                HttpStatus.UNAUTHORIZED.value(),
                 ex.getMessage(),
-                "You´re not authorized to access to this resource"
+                "Authentication failed"
         );
-
-        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(PaymentException.class)

@@ -97,9 +97,18 @@ public class PublicProductServiceImpl implements IPublicProductService {
         return new PageImpl<>(content, pageable, idsPage.getTotalElements());
     }
 
+    @Override
+    @Cacheable(value = "productById", key = "#productId")
+    @Transactional(readOnly = true)
+    public ProductResponse getProductById(UUID productId) {
+        Product product = productRepository.findByIdWithDetails(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        return ProductMapper.toProductResponse(product);
+    }
+
+
     private Page<ProductResponse> fetchAndMapByIds(Page<UUID> idsPage, Pageable pageable) {
         List<ProductResponse> content;
-
         if (idsPage.isEmpty()) {
             content = List.of();
         } else {
@@ -111,17 +120,6 @@ public class PublicProductServiceImpl implements IPublicProductService {
                     .map(ProductMapper::toProductResponse)
                     .toList();
         }
-
         return new PageImpl<>(content, pageable, idsPage.getTotalElements());
-    }
-
-    @Override
-    @Cacheable(value = "productById", key = "#productId")
-    @Transactional(readOnly = true)
-    public ProductResponse getProductById(UUID productId) {
-        Product product = productRepository.findByIdWithDetails(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
-
-        return ProductMapper.toProductResponse(product);
     }
 }

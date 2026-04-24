@@ -3,6 +3,7 @@ package com.rescuebites.api.order.controllers.implementations;
 import com.rescuebites.api.order.controllers.interfaces.IClientOrderController;
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
+import com.rescuebites.api.order.controllers.responses.OrderSummaryForClientResponse;
 import com.rescuebites.api.order.services.interfaces.IClientOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,7 +24,7 @@ public class ClientOrderControllerImpl implements IClientOrderController {
     }
 
     @Override
-    public Page<OrderResponse> getClientOrders(UUID clientId, Pageable pageable) {
+    public Page<OrderSummaryForClientResponse> getClientOrders(UUID clientId, Pageable pageable) {
         return clientOrderService.getClientOrders(clientId, pageable);
     }
 

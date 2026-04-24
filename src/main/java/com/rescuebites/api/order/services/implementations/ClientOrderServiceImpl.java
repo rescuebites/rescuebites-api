@@ -8,8 +8,10 @@ import com.rescuebites.api.client.facades.interfaces.IClientFacade;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
+import com.rescuebites.api.notifications.Interfaces.INotificationService;
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
+import com.rescuebites.api.order.controllers.responses.OrderSummaryForClientResponse;
 import com.rescuebites.api.order.data.enums.OrderStatus;
 import com.rescuebites.api.order.data.enums.PaymentMethod;
 import com.rescuebites.api.order.data.mappers.OrderItemMapper;
@@ -40,6 +42,9 @@ import static com.rescuebites.api.cart.utils.CartConstants.SERVICE_FEE;
 import static com.rescuebites.api.order.data.enums.OrderStatus.CONFIRMED;
 import static com.rescuebites.api.order.data.enums.PaymentMethod.CASH;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ClientOrderServiceImpl implements IClientOrderService {
@@ -51,15 +56,14 @@ public class ClientOrderServiceImpl implements IClientOrderService {
     private final IOrderValidationFacade orderValidationFacade;
     private final IOrderRepository orderRepository;
     private final IWhatsAppService whatsAppService;
+    private final INotificationService notificationService;
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {"activeProducts", "productsByCommerce", "productById",
-                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
-            allEntries = true
-    )
+    @CacheEvict(value = { "activeProducts", "productsByCommerce", "productById",
+            "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice" }, allEntries = true)
     public OrderResponse createOrder(UUID clientId, CreateOrderRequest request) {
+        log.info("ORDEN NUEVA");
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
 
@@ -82,6 +86,7 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         createOrderItemsAndUpdateStock(order, cart);
         calculateOrderTotals(order);
+        notificationService.notifyNewOrderCommerce(order);
 
         if (CASH.equals(paymentMethod)) {
             order.setStatus(CONFIRMED);
@@ -113,8 +118,7 @@ public class ClientOrderServiceImpl implements IClientOrderService {
             // subtotal = suma de originalPrice × quantity (sin descuento)
             subtotal = subtotal.add(
                     orderItem.getOriginalPrice()
-                            .multiply(BigDecimal.valueOf(orderItem.getQuantity()))
-            );
+                            .multiply(BigDecimal.valueOf(orderItem.getQuantity())));
 
             updateProductStock(cartItem.getProduct(), cartItem.getQuantity());
         }
@@ -135,7 +139,8 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         if (product.getStock() == 0) {
             product.setActive(false);
-            // ACÁ FALTA NOTIFICAR AL COMERCIO QUE SE QUEDÓ SIN STOCK DE ESE PRODUCTO, PARA QUE LO REPONGA SI QUIERE SEGUIR VENDIÉNDOLO
+            // ACÁ FALTA NOTIFICAR AL COMERCIO QUE SE QUEDÓ SIN STOCK DE ESE PRODUCTO, PARA
+            // QUE LO REPONGA SI QUIERE SEGUIR VENDIÉNDOLO
         }
 
         productRepository.save(product);
@@ -166,22 +171,19 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
     @Override
     @Transactional
-    public Page<OrderResponse> getClientOrders(UUID clientId, Pageable pageable) {
+    public Page<OrderSummaryForClientResponse> getClientOrders(UUID clientId, Pageable pageable) {
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
 
         Page<Order> orders = orderRepository.findByClientId(clientId, pageable);
 
-        return orders.map(OrderMapper::toOrderResponse);
+        return orders.map(OrderMapper::toOrderSummaryForClient);
     }
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {"activeProducts", "productsByCommerce", "productById",
-                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
-            allEntries = true
-    )
+    @CacheEvict(value = { "activeProducts", "productsByCommerce", "productById",
+            "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice" }, allEntries = true)
     public void cancelOrder(UUID clientId, UUID orderId, String reason) {
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
@@ -205,6 +207,7 @@ public class ClientOrderServiceImpl implements IClientOrderService {
         order.setCancelledAt(LocalDateTime.now());
         order.setCancellationReason(reason);
         orderRepository.save(order);
+        notificationService.notifyOrderCanceledCommerce(order);
 
         whatsAppService.notifyCommerceCancelledOrder(order);
     }

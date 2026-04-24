@@ -1,4 +1,4 @@
-package com.rescuebites.api.location.mappers;
+package com.rescuebites.api.location.data.mappers;
 
 import com.rescuebites.api.location.data.models.Locality;
 

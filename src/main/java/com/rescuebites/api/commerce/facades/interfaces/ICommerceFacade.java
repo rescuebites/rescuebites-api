@@ -31,4 +31,10 @@ public interface ICommerceFacade {
     boolean validateAndProcessUpdate(User user, UpdateCommerceRequest request);
 
     void applyUserChanges(User user, UpdateCommerceRequest request, boolean emailChanged);
+
+    boolean isCommerceIdentityAvailable(String name, String address, String locality);
+
+    boolean existsIdentityExcludingId(UUID commerceId, String name, String address, String locality);
+
+    List<String> collectBusinessHoursErrors(List<BusinessHoursRequest> businessHours, boolean requireAllDays);
 }

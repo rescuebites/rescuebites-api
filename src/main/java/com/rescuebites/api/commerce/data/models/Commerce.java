@@ -92,6 +92,7 @@ public class Commerce {
     private String mercadoPagoWebhookSecret;
 
     @OneToMany(mappedBy = "commerce", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("position ASC")
     @Builder.Default
     private List<Image> images = new ArrayList<>();
 
@@ -112,7 +113,6 @@ public class Commerce {
     @Column(name = "normalized_address", nullable = false, length = 255)
     private String normalizedAddress;
 
-    // Mantener columna para compatibilidad; ahora se puede usar para almacenar normalized locality name
     @Column(name = "normalized_locality", nullable = false, length = 255)
     private String normalizedLocality;
 }

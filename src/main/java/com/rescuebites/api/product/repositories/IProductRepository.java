@@ -165,6 +165,22 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
     @Query("SELECT p.productId FROM products p WHERE p.active = true AND p.commerce.commerceId = :commerceId")
     Page<UUID> findActiveIdsByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
 
+    @Query("SELECT p.productId FROM products p WHERE p.active = true AND p.commerce.commerceId = :commerceId ORDER BY p.stock ASC")
+    Page<UUID> findActiveIdsByCommerceIdOrderByStockAsc(@Param("commerceId") UUID commerceId, Pageable pageable);
+
+    @Query("SELECT p.productId FROM products p " +
+            "WHERE p.active = true " +
+            "AND p.commerce.commerceId = :commerceId " +
+            "AND p.expirationDate IS NOT NULL " +
+            "AND p.expirationDate BETWEEN :today AND :limitDate " +
+            "ORDER BY p.expirationDate ASC")
+    Page<UUID> findExpiringIdsByCommerceId(
+            @Param("commerceId") UUID commerceId,
+            @Param("today") java.time.LocalDate today,
+            @Param("limitDate") java.time.LocalDate limitDate,
+            Pageable pageable
+    );
+
     @Query("SELECT p.productId FROM products p WHERE p.active = true AND p.commerce.normalizedLocality = :normalizedLocality ORDER BY p.calculatedDiscountedPrice ASC")
     Page<UUID> findAllActiveIdsOrderByDiscountedPriceAscAndLocality(@Param("normalizedLocality") String normalizedLocality, Pageable pageable);
 
@@ -185,6 +201,43 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
 
     @Query("SELECT p.productId FROM products p WHERE p.commerce.commerceId = :commerceId")
     Page<UUID> findIdsByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
+
+    // ========== Queries para filtros de vencimiento (gestión del comercio) ==========
+
+    // ALL: todos los productos con fecha de vencimiento definida, ordenados por vencimiento asc
+    @Query("SELECT p.productId FROM products p " +
+            "WHERE p.commerce.commerceId = :commerceId " +
+            "AND p.expirationDate IS NOT NULL " +
+            "ORDER BY p.expirationDate ASC")
+    Page<UUID> findAllWithExpirationIdsByCommerceId(
+            @Param("commerceId") UUID commerceId,
+            Pageable pageable
+    );
+
+    // CRITICAL: vencen dentro de los próximos 2 días
+    @Query("SELECT p.productId FROM products p " +
+            "WHERE p.commerce.commerceId = :commerceId " +
+            "AND p.expirationDate IS NOT NULL " +
+            "AND p.expirationDate BETWEEN :today AND :limitDate " +
+            "ORDER BY p.expirationDate ASC")
+    Page<UUID> findCriticalExpiringIdsByCommerceId(
+            @Param("commerceId") UUID commerceId,
+            @Param("today") java.time.LocalDate today,
+            @Param("limitDate") java.time.LocalDate limitDate,
+            Pageable pageable
+    );
+
+    // EXPIRED: productos ya vencidos
+    @Query("SELECT p.productId FROM products p " +
+            "WHERE p.commerce.commerceId = :commerceId " +
+            "AND p.expirationDate IS NOT NULL " +
+            "AND p.expirationDate < :today " +
+            "ORDER BY p.expirationDate ASC")
+    Page<UUID> findExpiredIdsByCommerceId(
+            @Param("commerceId") UUID commerceId,
+            @Param("today") java.time.LocalDate today,
+            Pageable pageable
+    );
 
     /*
      Queries para búsqueda de productos (sin prioridad por comercio)
@@ -293,4 +346,61 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
             @Param("normalizedLocality") String normalizedLocality,
             Pageable pageable
     );
+
+    /*
+     * Queries para búsqueda de productos de un comercio específico (buscador del home del comercio)
+     * Jerarquía: nombre > descripción
+     */
+
+    // Búsqueda con jerarquía estricta:
+    // 0 → nombre empieza con la query
+    // 1 → nombre contiene la query
+    // 2 → descripción empieza con la query
+    // 3 → descripción contiene la query
+    @EntityGraph(attributePaths = {"preferenceType", "conditions", "images", "commerce"})
+    @Query("SELECT p FROM products p " +
+            "WHERE p.commerce.commerceId = :commerceId " +
+            "AND (" +
+            "   p.normalizedName LIKE CONCAT('%', :query, '%') " +
+            "   OR p.normalizedDescription LIKE CONCAT('%', :query, '%')" +
+            ") " +
+            "ORDER BY CASE " +
+            "   WHEN p.normalizedName LIKE CONCAT(:query, '%') THEN 0 " +
+            "   WHEN p.normalizedName LIKE CONCAT('%', :query, '%') THEN 1 " +
+            "   WHEN p.normalizedDescription LIKE CONCAT(:query, '%') THEN 2 " +
+            "   ELSE 3 " +
+            "END, p.name ASC")
+    Page<Product> searchProductsByCommerceIdAndQuery(
+            @Param("commerceId") UUID commerceId,
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    // Sugerencias (liviano, solo commerce eager): misma jerarquía
+    @EntityGraph(attributePaths = {"commerce"})
+    @Query("SELECT p FROM products p " +
+            "WHERE p.commerce.commerceId = :commerceId " +
+            "AND (" +
+            "   p.normalizedName LIKE CONCAT('%', :query, '%') " +
+            "   OR p.normalizedDescription LIKE CONCAT('%', :query, '%')" +
+            ") " +
+            "ORDER BY CASE " +
+            "   WHEN p.normalizedName LIKE CONCAT(:query, '%') THEN 0 " +
+            "   WHEN p.normalizedName LIKE CONCAT('%', :query, '%') THEN 1 " +
+            "   WHEN p.normalizedDescription LIKE CONCAT(:query, '%') THEN 2 " +
+            "   ELSE 3 " +
+            "END, p.name ASC")
+    Page<Product> suggestProductsByCommerceIdAndQuery(
+            @Param("commerceId") UUID commerceId,
+            @Param("query") String query,
+            Pageable pageable
+    );
+
+    // Queries para el scheduler de vencimiento
+    @EntityGraph(attributePaths = {"commerce", "commerce.user"})
+    @Query("SELECT p FROM products p " +
+            "WHERE p.active = true " +
+            "AND p.expirationDate IS NOT NULL " +
+            "AND p.expirationDate < :today")
+    List<Product> findAllExpiredActiveProducts(@Param("today") java.time.LocalDate today);
 }

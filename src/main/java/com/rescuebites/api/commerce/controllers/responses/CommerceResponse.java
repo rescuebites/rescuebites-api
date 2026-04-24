@@ -13,5 +13,6 @@ public record CommerceResponse(
         String address,
         String locality,
         String phone,
-        List<ImageResponse> images
+        List<ImageResponse> images,
+        String email
 ) {}

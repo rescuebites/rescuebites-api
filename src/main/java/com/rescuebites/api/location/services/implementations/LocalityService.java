@@ -1,7 +1,7 @@
 package com.rescuebites.api.location.services.implementations;
 
 import com.rescuebites.api.location.data.models.Locality;
-import com.rescuebites.api.location.mappers.LocalityMapper;
+import com.rescuebites.api.location.data.mappers.LocalityMapper;
 import com.rescuebites.api.location.repositories.ILocalityRepository;
 import com.rescuebites.api.location.services.interfaces.ILocalityService;
 import com.rescuebites.api.shared.utils.NormalizationUtils;

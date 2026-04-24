@@ -13,7 +13,6 @@ import com.rescuebites.api.users.events.UserRegisteredEvent;
 import com.rescuebites.api.users.facades.interfaces.IUserFacade;
 import com.rescuebites.api.users.repositories.IUserRepository;
 import com.rescuebites.api.security.services.JwtService;
-import com.rescuebites.api.users.services.interfaces.IEmailService;
 import com.rescuebites.api.users.services.interfaces.ITokenService;
 import com.rescuebites.api.users.services.interfaces.IUserService;
 import jakarta.transaction.Transactional;
@@ -32,7 +31,6 @@ public class UserServiceImpl implements IUserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final ITokenService tokenService;
-    private final IEmailService emailService;
     private final JwtService jwtService;
     private final IUserFacade userFacade;
     private final ApplicationEventPublisher eventPublisher;
@@ -55,13 +53,13 @@ public class UserServiceImpl implements IUserService {
     @Override
     public User findByIdOrThrowException(UUID userId) {
         return userRepository.findByUserIdAndDeletedFalse(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "id", userId));
     }
 
     @Override
     public User findUserByEmailOrThrowException(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "email", email));
     }
 
     @Override
@@ -73,11 +71,9 @@ public class UserServiceImpl implements IUserService {
         User user = token.getUser();
 
         if (user.getPendingEmail() != null && !user.getPendingEmail().isBlank()) {
-            // Flujo de cambio de email: aplicar el email pendiente
             user.setEmail(user.getPendingEmail());
             user.setPendingEmail(null);
         } else {
-            // Flujo de verificación de cuenta nueva
             userFacade.ifUserIsEnabledThrowException(user);
             user.setEnabled(true);
         }

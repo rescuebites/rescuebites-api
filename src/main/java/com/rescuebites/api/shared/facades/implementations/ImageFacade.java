@@ -64,9 +64,16 @@ public class ImageFacade implements IImageFacade {
 
     @Override
     public List<Image> uploadAndSaveImages(MultipartFile[] files) {
-        return Arrays.stream(files)
+        List<Image> images = Arrays.stream(files)
                 .map(this::uploadAndSaveImage)
                 .toList();
+
+        // Asignar posiciones iniciales (0, 1, 2, ...)
+        for (int i = 0; i < images.size(); i++) {
+            images.get(i).setPosition(i);
+        }
+
+        return images;
     }
 
     @Override
@@ -108,27 +115,6 @@ public class ImageFacade implements IImageFacade {
     }
 
     @Override
-    public List<Image> processAndUpdateImages(List<Image> currentImages, MultipartFile[] newImages) {
-        validateImages(newImages);
-
-        // Subir nuevas primero (si falla, no perdemos las anteriores)
-        List<Image> uploadedImages = uploadAndSaveImages(newImages);
-
-        // Borrar anteriores solo si la subida fue exitosa
-        if (currentImages != null && !currentImages.isEmpty()) {
-            List<String> publicIdsToDelete = currentImages.stream()
-                    .filter(image -> StringUtils.hasText(image.getPublicId()))
-                    .map(Image::getPublicId)
-                    .toList();
-
-            currentImages.clear();
-            publicIdsToDelete.forEach(this::deleteImage);
-        }
-
-        return uploadedImages;
-    }
-
-    @Override
     public Image replaceImage(Image currentImage, MultipartFile newImage) {
         if (newImage == null || newImage.isEmpty()) {
             return currentImage;
@@ -149,11 +135,68 @@ public class ImageFacade implements IImageFacade {
     }
 
     @Override
-    public List<Image> processImagesIfProvided(List<Image> currentImages, MultipartFile[] newImages) {
+    public void addImagesToExisting(List<Image> currentImages, MultipartFile[] newImages) {
         if (newImages == null || newImages.length == 0) {
-            return currentImages;
+            return;
         }
 
-        return processAndUpdateImages(currentImages, newImages);
+        // Detectar duplicados existentes antes de proceder
+        if (currentImages != null && !currentImages.isEmpty()) {
+            long uniqueImagesCount = currentImages.stream()
+                    .map(Image::getImageId)
+                    .distinct()
+                    .count();
+
+            if (uniqueImagesCount != currentImages.size()) {
+                // Limpiar duplicados automáticamente
+                List<Image> uniqueImages = currentImages.stream()
+                        .collect(java.util.stream.Collectors.toMap(
+                                Image::getImageId,
+                                img -> img,
+                                (existing, duplicate) -> existing, // Mantener el primero
+                                java.util.LinkedHashMap::new
+                        ))
+                        .values()
+                        .stream()
+                        .toList();
+
+                currentImages.clear();
+                currentImages.addAll(uniqueImages);
+            }
+        }
+
+        // Validar las nuevas imágenes
+        Arrays.stream(newImages).forEach(image -> {
+            if (image != null && !image.isEmpty()) {
+                ifProfilePictureExceedsMaximumSizeThrowException(image);
+                ifProfilePictureIsNotJpgOrPngThrowException(image.getContentType());
+            }
+        });
+
+        // Subir las nuevas imágenes a Cloudinary
+        List<Image> uploadedImages = uploadAndSaveImages(newImages);
+
+        // Si no hay imágenes existentes, asignar posiciones desde 0
+        if (currentImages == null || currentImages.isEmpty()) {
+            for (int i = 0; i < uploadedImages.size(); i++) {
+                uploadedImages.get(i).setPosition(i);
+            }
+            return;
+        }
+
+        // Calcular la siguiente posición disponible
+        int nextPosition = currentImages.stream()
+                .mapToInt(Image::getPosition)
+                .max()
+                .orElse(-1) + 1;
+
+        // Asignar posiciones a las nuevas imágenes y agregarlas directamente
+        for (int i = 0; i < uploadedImages.size(); i++) {
+            Image newImage = uploadedImages.get(i);
+            newImage.setPosition(nextPosition + i);
+            currentImages.add(newImage);
+        }
+
+        // Retornar la misma lista (ahora con las nuevas imágenes)
     }
 }
