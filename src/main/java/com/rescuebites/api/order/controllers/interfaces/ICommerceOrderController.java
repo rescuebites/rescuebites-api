@@ -22,43 +22,6 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 @Tag(name = "Orders - Commerce", description = "Gestión de pedidos del comercio")
 public interface ICommerceOrderController {
 
-    @GetMapping
-    @Operation(
-            summary = "Listar pedidos del comercio",
-            description = "Retorna todos los pedidos del comercio ordenados por fecha (más reciente primero)"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Pedidos obtenidos exitosamente"),
-            @ApiResponse(responseCode = "404", description = "Comercio no encontrado")
-    })
-    Page<OrderSummaryForCommerceResponse> getCommerceOrders(
-            @Parameter(description = "ID del comercio", required = true)
-            @PathVariable UUID commerceId,
-
-            @Parameter(description = "Parámetros de paginación")
-            Pageable pageable
-    );
-
-    @GetMapping("/status/{status}")
-    @Operation(
-            summary = "Listar pedidos por estado",
-            description = "Retorna pedidos del comercio filtrados por estado"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Pedidos obtenidos exitosamente"),
-            @ApiResponse(responseCode = "404", description = "Comercio no encontrado")
-    })
-    Page<OrderSummaryForCommerceResponse> getCommerceOrdersByStatus(
-            @Parameter(description = "ID del comercio", required = true)
-            @PathVariable UUID commerceId,
-
-            @Parameter(description = "Estado del pedido", required = true)
-            @PathVariable OrderStatus status,
-
-            @Parameter(description = "Parámetros de paginación")
-            Pageable pageable
-    );
-
     @GetMapping("/{orderId}")
     @Operation(
             summary = "Obtener detalle de un pedido",
@@ -96,5 +59,42 @@ public interface ICommerceOrderController {
 
             @Parameter(description = "Nuevo estado", required = true)
             @RequestBody @Valid UpdateOrderStatusRequest request
+    );
+
+    @GetMapping
+    @Operation(
+            summary = "Listar pedidos del comercio",
+            description = "Retorna todos los pedidos del comercio ordenados por fecha (más reciente primero)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedidos obtenidos exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Comercio no encontrado")
+    })
+    Page<OrderSummaryForCommerceResponse> getCommerceOrders(
+            @Parameter(description = "ID del comercio", required = true)
+            @PathVariable UUID commerceId,
+
+            @Parameter(description = "Parámetros de paginación")
+            Pageable pageable
+    );
+
+    @GetMapping("/status/{status}")
+    @Operation(
+            summary = "Listar pedidos por estado",
+            description = "Retorna pedidos del comercio filtrados por estado"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedidos obtenidos exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Comercio no encontrado")
+    })
+    Page<OrderSummaryForCommerceResponse> getCommerceOrdersByStatus(
+            @Parameter(description = "ID del comercio", required = true)
+            @PathVariable UUID commerceId,
+
+            @Parameter(description = "Estado del pedido", required = true)
+            @PathVariable OrderStatus status,
+
+            @Parameter(description = "Parámetros de paginación")
+            Pageable pageable
     );
 }

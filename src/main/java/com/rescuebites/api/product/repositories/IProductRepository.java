@@ -29,7 +29,7 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
             @Param("commerceId") UUID commerceId
     );
 
-    @EntityGraph(attributePaths = {"preferenceType", "conditions", "images", "commerce"})
+    @EntityGraph(attributePaths = {"preferenceType", "conditions", "images", "commerce", "commerce.businessHours"})
     @Query("SELECT p FROM products p WHERE p.productId = :productId AND p.active = true")
     Optional<Product> findByIdAndActive(@Param("productId") UUID productId);
 
