@@ -80,6 +80,7 @@ public class NotificationServiceImpl implements INotificationService {
                 "type", "CONFIRMED",
                 "eventId", order.getOrderNumber().toString(),
                 "registerId", order.getOrderId().toString(),
+                "notes", order.getNotes() != null ? order.getNotes() : "",
                 "message", "Ha recibido un nuevo pedido.");
 
         sseService.sendToCommerce(order.getCommerce().getCommerceId(), payload);
@@ -103,6 +104,7 @@ public class NotificationServiceImpl implements INotificationService {
                 "type", "CANCELED",
                 "eventId", order.getOrderNumber().toString(),
                 "registerId", order.getOrderId().toString(),
+                "notes", order.getNotes() != null ? order.getNotes() : "",
                 "message", "Pedido cancelado.");
 
         sseService.sendToCommerce(order.getCommerce().getCommerceId(), payload);
@@ -121,6 +123,7 @@ public class NotificationServiceImpl implements INotificationService {
                 .data(payload.toString())
                 .isRead(false) // 👈 CLAVE
                 .createdAt(LocalDateTime.now())
+                .notes((String) payload.get("notes"))
                 .build();
 
         notificationRepository.save(notification);

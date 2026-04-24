@@ -34,6 +34,8 @@ public class Notification {
 
     private String registerId;
 
+    private String notes;
+
     @Column(columnDefinition = "TEXT")
     private String data;
 
