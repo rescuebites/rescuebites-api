@@ -7,8 +7,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.UUID;
 
 @RequestMapping("/api/v1/payments")
@@ -27,7 +29,9 @@ public interface IPaymentController {
     })
     PaymentLinkResponse createPaymentPreference(
             @Parameter(description = "ID del pedido", required = true)
-            @PathVariable UUID orderId
+            @PathVariable UUID orderId,
+            @Parameter(description = "URL base del frontend para las redirecciones de pago", required = false)
+            @RequestParam(required = false) String frontendBaseUrl
     );
 
     @PostMapping("/webhook")
@@ -41,12 +45,22 @@ public interface IPaymentController {
             @RequestHeader(value = "x-request-id", required = false) String xRequestId
     );
 
+    @PostMapping("/orders/{orderId}/confirm")
+    @Operation(
+            summary = "Confirm order (client callback)",
+            description = "Endpoint público que puede invocar el frontend al aterrizar en la página de éxito para asegurar que la orden quede confirmada (fallback cuando el webhook no llega)."
+    )
+    ResponseEntity<Void> confirmOrder(
+            @Parameter(description = "ID del pedido")
+            @PathVariable UUID orderId
+    );
+
     @GetMapping("/success")
     @Operation(
             summary = "Página de éxito de pago",
             description = "Redirección después de un pago exitoso"
     )
-    PaymentStatusResponse paymentSuccess(
+    ResponseEntity<Void> paymentSuccess(
             @Parameter(description = "ID del pedido")
             @RequestParam UUID orderId
     );
@@ -56,7 +70,7 @@ public interface IPaymentController {
             summary = "Página de fallo de pago",
             description = "Redirección después de un pago fallido"
     )
-    PaymentStatusResponse paymentFailure(
+    ResponseEntity<Void> paymentFailure(
             @Parameter(description = "ID del pedido")
             @RequestParam UUID orderId
     );
@@ -66,7 +80,7 @@ public interface IPaymentController {
             summary = "Página de pago pendiente",
             description = "Redirección cuando el pago está pendiente"
     )
-    PaymentStatusResponse paymentPending(
+    ResponseEntity<Void> paymentPending(
             @Parameter(description = "ID del pedido")
             @RequestParam UUID orderId
     );

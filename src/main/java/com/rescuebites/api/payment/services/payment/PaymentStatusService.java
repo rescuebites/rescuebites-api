@@ -15,8 +15,22 @@ import java.util.function.Supplier;
 public class PaymentStatusService {
 
     private final PaymentRedirectConfig redirectConfig;
+    private final PaymentConfirmationService paymentConfirmationService;
 
+    /**
+     * Maneja la redirección de éxito de Mercado Pago.
+     * Además de redirigir al frontend, intenta confirmar el pedido aquí como
+     * fallback para entornos donde el webhook no llega (sandbox con ngrok offline, etc).
+     * En producción el webhook es el mecanismo canónico, pero este fallback garantiza
+     * que el estado del pedido se actualice cuando el usuario termina el checkout.
+     */
     public PaymentStatusResponse handlePaymentSuccess(UUID orderId) {
+        try {
+            paymentConfirmationService.confirmPaymentIfNotAlreadyConfirmed(orderId);
+        } catch (Exception e) {
+            // No bloquear la redirección si ya estaba confirmado u ocurre otro error
+            log.warn("No se pudo confirmar el pago por redirect-callback para orderId={}: {}", orderId, e.getMessage());
+        }
         return buildPaymentResponse(
                 orderId,
                 "SUCCESS",
