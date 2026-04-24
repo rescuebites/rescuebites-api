@@ -34,7 +34,7 @@ public class PaymentServiceImpl implements IPaymentService {
 
     @Override
     @Transactional
-    public PaymentLinkResponse createPaymentPreference(UUID orderId) {
+    public PaymentLinkResponse createPaymentPreference(UUID orderId, String frontendBaseUrl) {
         Order order = getOrderOrThrow(orderId);
 
         paymentValidationService.validateOrderForPayment(order);
@@ -42,7 +42,7 @@ public class PaymentServiceImpl implements IPaymentService {
         Payment payment = paymentInitializationService.getOrCreatePayment(orderId, order);
         paymentRepository.save(payment);
 
-        PaymentLinkResponse response = mercadoPagoService.createPaymentPreference(order);
+        PaymentLinkResponse response = mercadoPagoService.createPaymentPreference(order, frontendBaseUrl);
 
         paymentInitializationService.updatePreferenceId(payment, response.preferenceId());
 

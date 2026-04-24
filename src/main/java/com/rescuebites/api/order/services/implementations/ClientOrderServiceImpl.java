@@ -10,6 +10,7 @@ import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
+import com.rescuebites.api.order.controllers.responses.OrderSummaryForClientResponse;
 import com.rescuebites.api.order.data.enums.OrderStatus;
 import com.rescuebites.api.order.data.enums.PaymentMethod;
 import com.rescuebites.api.order.data.mappers.OrderItemMapper;
@@ -166,13 +167,13 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
     @Override
     @Transactional
-    public Page<OrderResponse> getClientOrders(UUID clientId, Pageable pageable) {
+    public Page<OrderSummaryForClientResponse> getClientOrders(UUID clientId, Pageable pageable) {
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
 
         Page<Order> orders = orderRepository.findByClientId(clientId, pageable);
 
-        return orders.map(OrderMapper::toOrderResponse);
+        return orders.map(OrderMapper::toOrderSummaryForClient);
     }
 
     @Override

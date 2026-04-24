@@ -1,6 +1,7 @@
 package com.rescuebites.api.cart.controllers.responses;
 
 import com.rescuebites.api.client.controllers.responses.ImageResponse;
+import com.rescuebites.api.commerce.data.enums.CommerceTypeEnum;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -20,5 +21,8 @@ public record CartItemResponse(
         UUID commerceId,
         String commerceName,
         String commerceAddress,
+        String commerceLocality,
+        List<CommerceTypeEnum> commerceTypes,
+        List<ImageResponse> commerceImages,
         List<ImageResponse> images
 ) {}

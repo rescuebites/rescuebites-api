@@ -67,6 +67,11 @@ public class SecurityConfig {
                         // Crear comercio (público - después del registro)
                         .requestMatchers(HttpMethod.POST, "/api/v1/commerces").permitAll()
 
+                        // Validación previa al registro (público - antes de registrar usuario)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/commerces/identity/availability").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/commerces/validate-registration").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/commerces/validate-business-hours").permitAll()
+
                         // Operaciones de comercio (solo COMMERCE role + ownership)
                         .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*").hasRole("COMMERCE")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/commerces/*").hasRole("COMMERCE")
@@ -77,11 +82,22 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/commerces/*/products/*").hasRole("COMMERCE")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/commerces/*/products/*").hasRole("COMMERCE")
 
+                        // Búsqueda del home del comercio
+                        .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*/search").hasRole("COMMERCE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*/search/suggestions").hasRole("COMMERCE")
+
+                        // Reportes del comercio
+                        .requestMatchers(HttpMethod.GET, "/api/v1/commerces/*/reports/**").hasRole("COMMERCE")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/images/*").authenticated()
+
                         // Operaciones del HOME del cliente (Públicas)
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/commerces/type/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/products/commerce/*/ordered-by-stock").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/products/commerce/*/expiring").permitAll()
 
                         // SEARCH (Búsqueda pública)
                         .requestMatchers(HttpMethod.GET, "/api/v1/search").permitAll()
@@ -90,6 +106,7 @@ public class SecurityConfig {
                         // PAYMENTS
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/orders/*/create-preference").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll() // Webhook de Mercado Pago
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/orders/*/confirm").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/payments/**").permitAll() // URLs de retorno
 
                         .anyRequest().authenticated()

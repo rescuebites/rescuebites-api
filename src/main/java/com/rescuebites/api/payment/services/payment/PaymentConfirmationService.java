@@ -31,9 +31,46 @@ public class PaymentConfirmationService {
         Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new ValidationException("Registro de pago no encontrado"));
 
+        // Evitar doble confirmación si el webhook ya lo procesó antes
+        if (OrderStatus.CONFIRMED.equals(order.getStatus())) {
+            return;
+        }
+
         updatePaymentStatus(payment, paymentId);
         updateOrderStatus(order);
         notifyPaymentConfirmation(order);
+    }
+
+    /**
+     * Confirma el pago usando el redirect-callback de Mercado Pago como fallback
+     * cuando el webhook no llegó (sandbox, ngrok offline, etc).
+     * No hace nada si el pedido ya fue confirmado (idempotente).
+     */
+    @Transactional
+    public void confirmPaymentIfNotAlreadyConfirmed(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ValidationException("Pedido no encontrado"));
+
+        if (OrderStatus.CONFIRMED.equals(order.getStatus())) {
+            // Ya confirmado (probablemente por el webhook), no hacer nada
+            return;
+        }
+
+        Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
+
+        if (payment != null && PaymentStatus.APPROVED.equals(payment.getStatus())) {
+            // Ya aprobado pero orden no confirmada: confirmar
+            updateOrderStatus(order);
+            notifyPaymentConfirmation(order);
+        } else if (payment != null) {
+            // Marcar el pago como aprobado y confirmar la orden
+            updatePaymentStatus(payment, null);
+            updateOrderStatus(order);
+            notifyPaymentConfirmation(order);
+        } else {
+            // Sin registro de pago: solo actualizar estado de orden
+            updateOrderStatus(order);
+        }
     }
 
     private void updatePaymentStatus(Payment payment, String paymentId) {

@@ -7,6 +7,8 @@ import com.rescuebites.api.cart.data.models.Cart;
 import com.rescuebites.api.cart.data.models.CartItem;
 import com.rescuebites.api.client.data.mappers.ImageMapper;
 import com.rescuebites.api.client.data.models.Client;
+import com.rescuebites.api.commerce.data.models.Commerce;
+import com.rescuebites.api.commerce.data.models.CommerceType;
 import com.rescuebites.api.order.data.enums.PaymentMethod;
 import com.rescuebites.api.product.data.models.Product;
 
@@ -30,6 +32,7 @@ public class CartMapper {
 
     public static CartItemResponse toCartItemResponse(CartItem cartItem) {
         Product product = cartItem.getProduct();
+        Commerce commerce = product.getCommerce();
         BigDecimal unitPrice = product.getDiscountedPrice();
         BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
@@ -44,9 +47,16 @@ public class CartMapper {
                 cartItem.getQuantity(),
                 product.getStock(),
                 subtotal,
-                product.getCommerce().getCommerceId(),
-                product.getCommerce().getName(),
-                product.getCommerce().getAddress(),
+                commerce.getCommerceId(),
+                commerce.getName(),
+                commerce.getAddress(),
+                commerce.getLocality() != null ? commerce.getLocality().getName() : null,
+                commerce.getCommerceTypes().stream()
+                        .map(CommerceType::getName)
+                        .collect(Collectors.toList()),
+                commerce.getImages().stream()
+                        .map(ImageMapper::toImageResponse)
+                        .collect(Collectors.toList()),
                 product.getImages().stream()
                         .map(ImageMapper::toImageResponse)
                         .collect(Collectors.toList())
@@ -75,6 +85,9 @@ public class CartMapper {
                                             first.commerceId(),
                                             first.commerceName(),
                                             first.commerceAddress(),
+                                            first.commerceLocality(),
+                                            first.commerceTypes(),
+                                            first.commerceImages(),
                                             itemsList,
                                             commerceSubtotal,
                                             itemsList.size()

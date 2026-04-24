@@ -14,6 +14,7 @@ import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.shared.Image;
 import com.rescuebites.api.shared.utils.NormalizationUtils;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -125,8 +126,7 @@ public class ProductMapper {
     public static void updateProductFromRequest(
             Product product,
             UpdateProductRequest request,
-            Set<PreferenceType> preferences,
-            List<Image> newImages
+            Set<PreferenceType> preferences
             ) {
         if (request.getName() != null) {
             product.setName(request.getName());
@@ -154,15 +154,12 @@ public class ProductMapper {
         if (request.getExpirationDate() != null) {
             product.setExpirationDate(request.getExpirationDate());
         }
-        if (preferences != null) {
-            product.setPreferenceType(preferences);
-        }
-        if (newImages != null && !newImages.isEmpty()) {
-            product.getImages().clear();
-            newImages.forEach(image -> {
-                image.setProduct(product);
-                product.getImages().add(image);
-            });
+
+        // Agregar nuevas preferencias a las existentes (sin duplicar)
+        if (preferences != null && !preferences.isEmpty()) {
+            Set<PreferenceType> combined = new HashSet<>(product.getPreferenceType());
+            combined.addAll(preferences);
+            product.setPreferenceType(combined);
         }
     }
 }

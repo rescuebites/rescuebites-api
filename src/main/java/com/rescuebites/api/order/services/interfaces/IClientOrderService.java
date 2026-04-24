@@ -2,6 +2,7 @@ package com.rescuebites.api.order.services.interfaces;
 
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
+import com.rescuebites.api.order.controllers.responses.OrderSummaryForClientResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,7 +14,7 @@ public interface IClientOrderService {
 
     OrderResponse getOrderById(UUID clientId, UUID orderId);
 
-    Page<OrderResponse> getClientOrders(UUID clientId, Pageable pageable);
+    Page<OrderSummaryForClientResponse> getClientOrders(UUID clientId, Pageable pageable);
 
     void cancelOrder(UUID clientId, UUID orderId, String reason);
 }

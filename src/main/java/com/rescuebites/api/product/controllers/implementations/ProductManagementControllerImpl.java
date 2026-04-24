@@ -4,6 +4,7 @@ import com.rescuebites.api.product.controllers.interfaces.IProductManagementCont
 import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
 import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
+import com.rescuebites.api.product.data.enums.ExpirationFilter;
 import com.rescuebites.api.product.services.interfaces.IProductManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -47,5 +48,15 @@ public class ProductManagementControllerImpl implements IProductManagementContro
     @Override
     public void deactivateProduct(UUID commerceId, UUID productId) {
         productManagementService.deactivateProduct(commerceId, productId);
+    }
+
+    @Override
+    public Page<ProductResponse> getProductsByCommerceOrderedByStock(UUID commerceId, Pageable pageable) {
+        return productManagementService.getProductsByCommerceOrderedByStock(commerceId, pageable);
+    }
+
+    @Override
+    public Page<ProductResponse> getProductsByExpirationFilter(UUID commerceId, ExpirationFilter filter, Pageable pageable) {
+        return productManagementService.getProductsByExpirationFilter(commerceId, filter, pageable);
     }
 }

@@ -57,7 +57,6 @@ public class Product {
     @NotBlank(message = "El nombre es obligatorio")
     private String name;
 
-    @NotBlank(message = "La descripción es obligatoria")
     private String description;
 
     @NotNull(message = "El stock es obligatorio")
@@ -96,6 +95,7 @@ public class Product {
     private CommerceTypeEnum commerceType;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("position ASC")
     @Builder.Default
     @BatchSize(size = 20)
     private List<Image> images = new ArrayList<>();
@@ -108,6 +108,10 @@ public class Product {
     private BigDecimal calculatedDiscountedPrice;
 
     private LocalDateTime updateAt;
+
+    // Fecha y hora en que el sistema dio de baja automáticamente el producto al detectar que su fecha de vencimiento ya había pasado.
+    @Column(name = "deactivated_at")
+    private LocalDateTime deactivatedAt;
 
     @Column(name = "normalized_name", nullable = false)
     private String normalizedName;

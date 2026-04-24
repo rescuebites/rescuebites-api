@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface IMercadoPagoService {
 
-    PaymentLinkResponse createPaymentPreference(Order order);
+    PaymentLinkResponse createPaymentPreference(Order order, String frontendBaseUrl);
 
     Optional<PaymentWebhookData> processWebhookNotification(String notification, String xSignature, String xRequestId);
 }

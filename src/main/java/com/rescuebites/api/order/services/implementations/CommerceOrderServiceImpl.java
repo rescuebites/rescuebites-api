@@ -3,6 +3,7 @@ package com.rescuebites.api.order.services.implementations;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
+import com.rescuebites.api.order.controllers.responses.OrderSummaryForCommerceResponse;
 import com.rescuebites.api.order.data.enums.OrderStatus;
 import com.rescuebites.api.order.data.mappers.OrderMapper;
 import com.rescuebites.api.order.data.models.Order;
@@ -10,6 +11,8 @@ import com.rescuebites.api.order.facades.interfaces.IOrderValidationFacade;
 import com.rescuebites.api.order.repositories.IOrderRepository;
 import com.rescuebites.api.order.services.interfaces.ICommerceOrderService;
 import com.rescuebites.api.order.utils.OrderStatusValidator;
+import com.rescuebites.api.product.data.models.Product;
+import com.rescuebites.api.product.repositories.IProductRepository;
 import com.rescuebites.api.shared.services.interfaces.IWhatsAppService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,21 +31,22 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
     private final IOrderValidationFacade orderValidationFacade;
     private final IWhatsAppService whatsAppService;
     private final ICommerceFacade commerceFacade;
+    private final IProductRepository productRepository;
 
     @Override
     @Transactional
-    public Page<OrderResponse> getCommerceOrders(UUID commerceId, Pageable pageable) {
+    public Page<OrderSummaryForCommerceResponse> getCommerceOrders(UUID commerceId, Pageable pageable) {
         commerceFacade.validateCommerceOwnership(commerceId);
-        Page<Order> orders = orderRepository.findByCommerceId(commerceId, pageable);
-        return orders.map(OrderMapper::toOrderResponse);
+        Page<Order> orders = orderRepository.findByCommerceIdExcludingPending(commerceId, pageable);
+        return orders.map(OrderMapper::toOrderSummaryForCommerce);
     }
 
     @Override
     @Transactional
-    public Page<OrderResponse> getCommerceOrdersByStatus(UUID commerceId, OrderStatus status, Pageable pageable) {
+    public Page<OrderSummaryForCommerceResponse> getCommerceOrdersByStatus(UUID commerceId, OrderStatus status, Pageable pageable) {
         commerceFacade.validateCommerceOwnership(commerceId);
         Page<Order> orders = orderRepository.findByCommerceIdAndStatus(commerceId, status, pageable);
-        return orders.map(OrderMapper::toOrderResponse);
+        return orders.map(OrderMapper::toOrderSummaryForCommerce);
     }
 
     @Override
@@ -69,6 +73,10 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
         order.setStatus(newStatus);
         applyStatusTimestamp(order, newStatus, reason);
 
+        if (newStatus == OrderStatus.CANCELLED) {
+            restoreStockForCancelledOrder(order);
+        }
+
         orderRepository.save(order);
         whatsAppService.notifyClientOrderStatusChange(order);
     }
@@ -82,6 +90,15 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
                 order.setCancellationReason(reason);
             }
             default -> {} // PENDING, PREPARING, READY no tienen timestamp específico
+        }
+    }
+
+    private void restoreStockForCancelledOrder(Order order) {
+        for (var item : order.getItems()) {
+            Product product = item.getProduct();
+            product.setStock(product.getStock() + item.getQuantity());
+            product.setActive(true);
+            productRepository.save(product);
         }
     }
 }

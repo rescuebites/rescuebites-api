@@ -19,8 +19,8 @@ public class MercadoPagoServiceImpl implements IMercadoPagoService {
     private final WebhookProcessor webhookProcessor;
 
     @Override
-    public PaymentLinkResponse createPaymentPreference(Order order) {
-        return preferenceCreator.createPaymentPreference(order);
+    public PaymentLinkResponse createPaymentPreference(Order order, String frontendBaseUrl) {
+        return preferenceCreator.createPaymentPreference(order, frontendBaseUrl);
     }
 
     @Override
