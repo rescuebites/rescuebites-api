@@ -171,7 +171,7 @@ public interface IProductRepository extends JpaRepository<Product, UUID> {
     @Query("SELECT p.productId FROM products p WHERE p.active = true AND p.commerce.commerceId = :commerceId AND p.stock > 0 ORDER BY p.stock ASC")
     Page<UUID> findInStockIdsByCommerceIdOrderByStockAsc(@Param("commerceId") UUID commerceId, Pageable pageable);
 
-    @Query("SELECT p.productId FROM products p WHERE p.commerce.commerceId = :commerceId AND p.stock = 0")
+    @Query("SELECT p.productId FROM products p WHERE p.commerce.commerceId = :commerceId AND p.stock = 0 ORDER BY p.productId ASC")
     Page<UUID> findOutOfStockIdsByCommerceId(@Param("commerceId") UUID commerceId, Pageable pageable);
 
     @Query("SELECT p.productId FROM products p WHERE p.commerce.commerceId = :commerceId ORDER BY p.stock ASC")
