@@ -2,7 +2,7 @@ package com.rescuebites.api.order.services.implementations;
 
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
-import com.rescuebites.api.notifications.Interfaces.INotificationService;
+import com.rescuebites.api.notifications.services.interfaces.INotificationService;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
 import com.rescuebites.api.order.controllers.responses.OrderSummaryForCommerceResponse;
 import com.rescuebites.api.order.data.enums.OrderStatus;
@@ -14,7 +14,6 @@ import com.rescuebites.api.order.services.interfaces.ICommerceOrderService;
 import com.rescuebites.api.order.utils.OrderStatusValidator;
 import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.product.repositories.IProductRepository;
-import com.rescuebites.api.shared.services.interfaces.IWhatsAppService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

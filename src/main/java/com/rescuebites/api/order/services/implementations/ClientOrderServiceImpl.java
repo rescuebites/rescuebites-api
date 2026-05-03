@@ -10,7 +10,7 @@ import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.commerce.utils.BusinessHoursUtils;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
-import com.rescuebites.api.notifications.Interfaces.INotificationService;
+import com.rescuebites.api.notifications.services.interfaces.INotificationService;
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
 import com.rescuebites.api.order.controllers.responses.OrderSummaryForClientResponse;
@@ -43,8 +43,6 @@ import java.util.UUID;
 import static com.rescuebites.api.cart.utils.CartConstants.SERVICE_FEE;
 import static com.rescuebites.api.order.data.enums.OrderStatus.CONFIRMED;
 import static com.rescuebites.api.order.data.enums.PaymentMethod.CASH;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
