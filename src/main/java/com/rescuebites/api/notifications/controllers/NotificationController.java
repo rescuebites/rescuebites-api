@@ -3,7 +3,6 @@ package com.rescuebites.api.notifications.controllers;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,16 +15,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.rescuebites.api.notifications.data.models.Notification;
-import com.rescuebites.api.notifications.implementations.NotificationServiceImpl;
+import com.rescuebites.api.notifications.services.interfaces.INotificationService;
 import com.rescuebites.api.notifications.services.SseService;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class NotificationController {
 
     private final SseService sseService;
-    private final NotificationServiceImpl notificationService;
+    private final INotificationService notificationService;
 
     @GetMapping("/subscribe/client")
     public SseEmitter subscribeClient(@RequestParam UUID clientId) {

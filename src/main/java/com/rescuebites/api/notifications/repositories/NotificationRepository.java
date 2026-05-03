@@ -18,13 +18,11 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     @Query("SELECT n FROM Notification n WHERE n.scheduledFor IS NOT NULL AND n.scheduledFor <= :now AND n.isRead = false")
     List<Notification> findDueScheduledNotifications(@Param("now") LocalDateTime now);
 
-    List<Notification> findByUserIdOrderByCreatedAtDesc(UUID userId);
-
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.userId = :userId")
-    void markAllAsRead(UUID userId);
+    void markAllAsRead(@Param("userId") UUID userId);
 
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.id = :id")
-    void markAsRead(UUID id);
+    void markAsRead(@Param("id") UUID id);
 }

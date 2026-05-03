@@ -1,4 +1,4 @@
-package com.rescuebites.api.notifications.implementations;
+package com.rescuebites.api.notifications.services.implementations;
 
 import com.rescuebites.api.order.data.models.Order;
 
@@ -8,13 +8,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-import com.rescuebites.api.notifications.Interfaces.INotificationService;
+import com.rescuebites.api.notifications.services.interfaces.INotificationService;
 import com.rescuebites.api.notifications.data.models.Notification;
 import com.rescuebites.api.notifications.repositories.NotificationRepository;
 import com.rescuebites.api.notifications.services.SseService;
 import com.rescuebites.api.product.data.models.Product;
-
-import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -105,7 +103,7 @@ public class NotificationServiceImpl implements INotificationService {
     public void notifyProductExpiredProduct(Product product, UUID commerceId) {
         Map<String, Object> payload = Map.of(
                 "type", "OUT_OF_STOCK",
-                "eventId", product.getProductId(),
+                "eventId", product.getProductId().toString(),
                 "name", product.getName());
 
         sseService.sendToCommerce(commerceId, payload);
@@ -133,19 +131,24 @@ public class NotificationServiceImpl implements INotificationService {
         Notification notification = Notification.builder()
                 .id(UUID.randomUUID())
                 .userId(userId)
-                .type((String) payload.get("type"))
-                .message((String) payload.get("message"))
+                .type(getPayloadAsString(payload, "type"))
+                .message(getPayloadAsString(payload, "message"))
                 .title("Nueva notificación")
-                .eventId((String) payload.get("eventId"))
-                .registerId((String) payload.get("registerId"))
+                .eventId(getPayloadAsString(payload, "eventId"))
+                .registerId(getPayloadAsString(payload, "registerId"))
                 .data(payload.toString())
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
-                .notes((String) payload.get("notes"))
+                .notes(getPayloadAsString(payload, "notes"))
                 .scheduledFor(scheduledFor)
                 .build();
 
         notificationRepository.save(notification);
+    }
+
+    private String getPayloadAsString(Map<String, Object> payload, String key) {
+        Object value = payload.get(key);
+        return value != null ? String.valueOf(value) : null;
     }
 
     public List<Notification> getUnread(UUID userId) {
