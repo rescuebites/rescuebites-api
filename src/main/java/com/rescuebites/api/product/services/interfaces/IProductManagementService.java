@@ -4,6 +4,7 @@ import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
 import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
 import com.rescuebites.api.product.data.enums.ExpirationFilter;
+import com.rescuebites.api.product.data.enums.StockFilter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,7 +17,7 @@ public interface IProductManagementService {
 
     Page<ProductResponse> getProductsByCommerce(UUID commerceId, Pageable pageable);
 
-    Page<ProductResponse> getProductsByCommerceOrderedByStock(UUID commerceId, Pageable pageable);
+    Page<ProductResponse> getProductsByCommerceOrderedByStock(UUID commerceId, StockFilter stockFilter, Pageable pageable);
 
     Page<ProductResponse> getProductsByExpirationFilter(UUID commerceId, ExpirationFilter filter, Pageable pageable);
 
