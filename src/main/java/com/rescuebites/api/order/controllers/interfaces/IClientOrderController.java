@@ -21,23 +21,6 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 @RequestMapping("/api/v1/clients/{clientId}/orders")
 @Tag(name = "Orders - Client", description = "Gestión de pedidos del cliente")
 public interface IClientOrderController {
-    @GetMapping
-    @Operation(
-            summary = "Listar pedidos del cliente",
-            description = "Retorna todos los pedidos del cliente ordenados por fecha (más reciente primero)"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Pedidos obtenidos exitosamente"),
-            @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
-    })
-    Page<OrderSummaryForClientResponse> getClientOrders(
-            @Parameter(description = "ID del cliente", required = true)
-            @PathVariable UUID clientId,
-
-            @Parameter(description = "Parámetros de paginación")
-            Pageable pageable
-    );
-
     @PostMapping
     @ResponseStatus(CREATED)
     @Operation(
@@ -55,6 +38,23 @@ public interface IClientOrderController {
 
             @Parameter(description = "Datos del pedido", required = true)
             @RequestBody @Valid CreateOrderRequest request
+    );
+
+    @GetMapping
+    @Operation(
+            summary = "Listar pedidos del cliente",
+            description = "Retorna todos los pedidos del cliente ordenados por fecha (más reciente primero)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedidos obtenidos exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
+    })
+    Page<OrderSummaryForClientResponse> getClientOrders(
+            @Parameter(description = "ID del cliente", required = true)
+            @PathVariable UUID clientId,
+
+            @Parameter(description = "Parámetros de paginación")
+            Pageable pageable
     );
 
     @GetMapping("/{orderId}")

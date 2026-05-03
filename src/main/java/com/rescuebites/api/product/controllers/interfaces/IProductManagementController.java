@@ -4,6 +4,7 @@ import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
 import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
 import com.rescuebites.api.product.data.enums.ExpirationFilter;
+import com.rescuebites.api.product.data.enums.StockFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -24,13 +25,6 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 @RequestMapping("/api/v1/commerces/{commerceId}/products")
 @Tag(name = "Products", description = "Gestión de productos del comercio")
 public interface IProductManagementController {
-
-    @PatchMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Actualizar un producto")
-    void updateProduct(@PathVariable UUID commerceId,
-                       @PathVariable UUID productId,
-                       @RequestPart("product") @Valid UpdateProductRequest request,
-                       @RequestPart(value = "images", required = false) MultipartFile[] images);
 
     @GetMapping("/expiration")
     @Operation(
@@ -54,6 +48,13 @@ public interface IProductManagementController {
             @RequestParam ExpirationFilter filter,
             Pageable pageable
     );
+
+    @PatchMapping(value = "/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Actualizar un producto")
+    void updateProduct(@PathVariable UUID commerceId,
+                       @PathVariable UUID productId,
+                       @RequestPart("product") @Valid UpdateProductRequest request,
+                       @RequestPart(value = "images", required = false) MultipartFile[] images);
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(CREATED)
@@ -110,7 +111,12 @@ public interface IProductManagementController {
     @GetMapping("/ordered-by-stock")
     @Operation(
             summary = "Listar productos activos ordenados por stock ascendente",
-            description = "Permite al comercio ver sus productos activos del más escaso al más abundante."
+            description = """
+                    Retorna productos activos del comercio ordenados por stock ASC según el filtro indicado:
+                    - **ALL**: todos los productos activos.
+                    - **IN_STOCK**: solo productos con stock > 0.
+                    - **OUT_OF_STOCK**: solo productos con stock = 0.
+                    """
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista obtenida exitosamente"),
@@ -118,6 +124,8 @@ public interface IProductManagementController {
     })
     Page<ProductResponse> getProductsByCommerceOrderedByStock(
             @PathVariable UUID commerceId,
+            @Parameter(description = "Filtro de stock: ALL, IN_STOCK, OUT_OF_STOCK", required = false)
+            @RequestParam(defaultValue = "ALL") StockFilter stockFilter,
             Pageable pageable
     );
 }

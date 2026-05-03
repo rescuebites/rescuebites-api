@@ -38,14 +38,14 @@ public class EmailBuilder {
                 </head>
                 <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #77A787; padding: 40px; text-align: center;">
                     <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                        <h2 style="color: #77A787; margin-bottom: 20px;">Welcome to RescueBites!</h2>
-                        <p style="font-size: 16px; color: #333;"><strong>Hi!, it's our pleasure that you're here</strong>,</p>
+                        <h2 style="color: #77A787; margin-bottom: 20px;">¡Bienvenido/a a RescueBites!</h2>
+                        <p style="font-size: 16px; color: #333;"><strong>¡Hola! Es un placer tenerte aquí</strong>,</p>
                         <p style="font-size: 16px; color: #555;">
-                            Thank you for registering. To complete your registration, please confirm your email by clicking the button below:
+                            Gracias por registrarte. Para completar tu registro, por favor confirmá tu correo electrónico haciendo clic en el botón de abajo:
                         </p>
-                        <a href="%s" class="confirm-button">Confirm Account</a>
+                        <a href="%s" class="confirm-button">Confirmar cuenta</a>
                         <p style="margin-top: 25px; font-size: 14px; color: #888;">
-                            If you didn’t create this account, you can safely ignore this email.
+                            Si no creaste esta cuenta, podés ignorar este correo de forma segura.
                         </p>
                     </div>
                 </body>
@@ -78,15 +78,15 @@ public class EmailBuilder {
             </head>
             <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #77A787; padding: 40px; text-align: center;">
                 <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                    <h2 style="color: #77A787; margin-bottom: 20px;">Account Confirmation - New Link</h2>
-                    <p style="font-size: 16px; color: #333;"><strong>Hi %s</strong>,</p>
+                    <h2 style="color: #77A787; margin-bottom: 20px;">Restablecer contraseña</h2>
+                    <p style="font-size: 16px; color: #333;"><strong>Hola %s</strong>,</p>
                     <p style="font-size: 16px; color: #555;">
-                        You (or someone else) requested a new confirmation link for your account.\s
-                                  Please confirm your email address by clicking the button below:
+                        Recibimos una solicitud para restablecer la contraseña de tu cuenta.\s
+                                  Hacé clic en el botón de abajo para continuar:
                     </p>
-                    <a href="%s" class="confirm-button">Confirm Account</a>
+                    <a href="%s" class="confirm-button">Restablecer contraseña</a>
                     <p style="margin-top: 25px; font-size: 14px; color: #888;">
-                        If you didn’t create this account, you can safely ignore this email.
+                        Si no solicitaste esto, podés ignorar este correo de forma segura.
                     </p>
                 </div>
             </body>
@@ -120,15 +120,15 @@ public class EmailBuilder {
             </head>
             <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #77A787; padding: 40px; text-align: center;">
                 <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                    <h2 style="color: #77A787; margin-bottom: 20px;">Account Confirmation - New Link</h2>
-                    <p style="font-size: 16px; color: #333;"><strong>Hi %s</strong>,</p>
+                    <h2 style="color: #77A787; margin-bottom: 20px;">Confirmación de cuenta - Nuevo enlace</h2>
+                    <p style="font-size: 16px; color: #333;"><strong>Hola %s</strong>,</p>
                     <p style="font-size: 16px; color: #555;">
-                        You (or someone else) requested a new confirmation link for your account.\s
-                                  Please confirm your email address by clicking the button below:
+                        Solicitaste un nuevo enlace de confirmación para tu cuenta.\s
+                                  Por favor confirmá tu dirección de correo electrónico haciendo clic en el botón de abajo:
                     </p>
-                    <a href="%s" class="confirm-button">Confirm Account</a>
+                    <a href="%s" class="confirm-button">Confirmar cuenta</a>
                     <p style="margin-top: 25px; font-size: 14px; color: #888;">
-                        If you didn’t create this account, you can safely ignore this email.
+                        Si no creaste esta cuenta, podés ignorar este correo de forma segura.
                     </p>
                 </div>
             </body>

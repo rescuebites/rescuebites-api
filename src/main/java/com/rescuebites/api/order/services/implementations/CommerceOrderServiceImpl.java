@@ -2,6 +2,7 @@ package com.rescuebites.api.order.services.implementations;
 
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
+import com.rescuebites.api.notifications.services.interfaces.INotificationService;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
 import com.rescuebites.api.order.controllers.responses.OrderSummaryForCommerceResponse;
 import com.rescuebites.api.order.data.enums.OrderStatus;
@@ -13,7 +14,6 @@ import com.rescuebites.api.order.services.interfaces.ICommerceOrderService;
 import com.rescuebites.api.order.utils.OrderStatusValidator;
 import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.product.repositories.IProductRepository;
-import com.rescuebites.api.shared.services.interfaces.IWhatsAppService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,8 +29,8 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
 
     private final IOrderRepository orderRepository;
     private final IOrderValidationFacade orderValidationFacade;
-    private final IWhatsAppService whatsAppService;
     private final ICommerceFacade commerceFacade;
+    private final INotificationService notificationService;
     private final IProductRepository productRepository;
 
     @Override
@@ -78,7 +78,8 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
         }
 
         orderRepository.save(order);
-        whatsAppService.notifyClientOrderStatusChange(order);
+
+        notificationService.notifyOrderStatusChange(order, newStatus);
     }
 
     private void applyStatusTimestamp(Order order, OrderStatus newStatus, String reason) {
@@ -89,7 +90,8 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
                 order.setCancelledAt(LocalDateTime.now());
                 order.setCancellationReason(reason);
             }
-            default -> {} // PENDING, PREPARING, READY no tienen timestamp específico
+            default -> {
+            } // PENDING, PREPARING, READY no tienen timestamp específico
         }
     }
 
@@ -101,4 +103,5 @@ public class CommerceOrderServiceImpl implements ICommerceOrderService {
             productRepository.save(product);
         }
     }
+
 }
