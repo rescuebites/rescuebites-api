@@ -45,4 +45,7 @@ public class Notification {
 
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "scheduled_for")
+    private LocalDateTime scheduledFor;
 }

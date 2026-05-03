@@ -23,14 +23,15 @@ import java.util.Map;
 
 import com.rescuebites.api.order.data.enums.OrderStatus;
 
+import org.springframework.scheduling.annotation.Scheduled;
+
 import jakarta.transaction.Transactional;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements INotificationService {
 
-    private final SseService sseService; // 👈 tu manejador de emitters
+    private final SseService sseService;
     private final NotificationRepository notificationRepository;
 
     @Override
@@ -78,13 +79,26 @@ public class NotificationServiceImpl implements INotificationService {
     public void notifyNewOrderCommerce(Order order) {
         Map<String, Object> payload = Map.of(
                 "type", "CONFIRMED",
-                "eventId", order.getOrderNumber().toString(),
+                "eventId", order.getOrderNumber(),
                 "registerId", order.getOrderId().toString(),
                 "notes", order.getNotes() != null ? order.getNotes() : "",
                 "message", "Ha recibido un nuevo pedido.");
 
         sseService.sendToCommerce(order.getCommerce().getCommerceId(), payload);
         saveNotification(order.getCommerce().getCommerceId(), payload);
+    }
+
+    @Override
+    public void notifyNewOrderCommerceScheduled(Order order, LocalDateTime scheduledFor) {
+        Map<String, Object> payload = Map.of(
+                "type", "CONFIRMED",
+                "eventId", order.getOrderNumber(),
+                "registerId", order.getOrderId().toString(),
+                "notes", order.getNotes() != null ? order.getNotes() : "",
+                "message", "Ha recibido un nuevo pedido.");
+
+        // La notificación no se enviará hasta que reabra el comercio
+        saveNotification(order.getCommerce().getCommerceId(), payload, scheduledFor);
     }
 
     @Override
@@ -112,6 +126,10 @@ public class NotificationServiceImpl implements INotificationService {
     }
 
     private void saveNotification(UUID userId, Map<String, Object> payload) {
+        saveNotification(userId, payload, null);
+    }
+
+    private void saveNotification(UUID userId, Map<String, Object> payload, LocalDateTime scheduledFor) {
         Notification notification = Notification.builder()
                 .id(UUID.randomUUID())
                 .userId(userId)
@@ -121,18 +139,17 @@ public class NotificationServiceImpl implements INotificationService {
                 .eventId((String) payload.get("eventId"))
                 .registerId((String) payload.get("registerId"))
                 .data(payload.toString())
-                .isRead(false) // 👈 CLAVE
+                .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .notes((String) payload.get("notes"))
+                .scheduledFor(scheduledFor)
                 .build();
 
         notificationRepository.save(notification);
     }
 
-    // ================= READ =================
-
     public List<Notification> getUnread(UUID userId) {
-        return notificationRepository.findByUserIdAndIsReadFalse(userId);
+        return notificationRepository.findVisibleUnreadByUserId(userId, LocalDateTime.now());
     }
 
     @Transactional
@@ -145,4 +162,21 @@ public class NotificationServiceImpl implements INotificationService {
         notificationRepository.markAsRead(id);
     }
 
+    // Este método se ejecutará cada minuto para entregar notificaciones programadas
+    @Scheduled(fixedDelay = 60_000)
+    @Transactional
+    public void deliverPendingNotifications() {
+        List<Notification> due = notificationRepository.findDueScheduledNotifications(LocalDateTime.now());
+        for (Notification notification : due) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", notification.getType());
+            payload.put("eventId", notification.getEventId());
+            payload.put("registerId", notification.getRegisterId());
+            payload.put("notes", notification.getNotes() != null ? notification.getNotes() : "");
+            payload.put("message", notification.getMessage());
+            sseService.sendToCommerce(notification.getUserId(), payload);
+            notification.setScheduledFor(null);
+            notificationRepository.save(notification);
+        }
+    }
 }
