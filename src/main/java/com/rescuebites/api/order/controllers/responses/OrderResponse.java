@@ -7,7 +7,6 @@ import com.rescuebites.api.order.data.enums.PaymentMethod;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,7 +29,6 @@ public record OrderResponse(
         PaymentMethod paymentMethod,
         LocalDateTime createdAt,
         LocalDateTime confirmedAt,
-        LocalTime scheduledPickupTime,
         String notes,
         String cancellationReason
 ) {}

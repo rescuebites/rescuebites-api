@@ -5,8 +5,10 @@ import com.rescuebites.api.cart.data.models.CartItem;
 import com.rescuebites.api.cart.repositories.ICartRepository;
 import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.facades.interfaces.IClientFacade;
+import com.rescuebites.api.commerce.data.enums.CommerceScheduleStatus;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
+import com.rescuebites.api.commerce.utils.BusinessHoursUtils;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
 import com.rescuebites.api.notifications.Interfaces.INotificationService;
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
@@ -44,7 +46,6 @@ import static com.rescuebites.api.order.data.enums.PaymentMethod.CASH;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ClientOrderServiceImpl implements IClientOrderService {
@@ -63,7 +64,6 @@ public class ClientOrderServiceImpl implements IClientOrderService {
     @CacheEvict(value = { "activeProducts", "productsByCommerce", "productById",
             "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice" }, allEntries = true)
     public OrderResponse createOrder(UUID clientId, CreateOrderRequest request) {
-        log.info("ORDEN NUEVA");
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
 
@@ -72,21 +72,22 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         validateCartForOrder(cart, request.commerceId());
 
-        // Validar disponibilidad horaria del comercio
-        orderValidationFacade.validateCommerceAvailability(commerce, request.scheduledPickupTime());
+        orderValidationFacade.validateCommerceAvailability(commerce);
 
         PaymentMethod paymentMethod = cart.getSelectedPaymentMethod();
         String orderNumber = orderValidationFacade.generateOrderNumber();
         Order order = OrderMapper.toOrder(client, commerce, orderNumber, request, paymentMethod);
 
-        // Guardar horario programado de retiro si fue proporcionado
-        if (request.scheduledPickupTime() != null) {
-            order.setScheduledPickupTime(request.scheduledPickupTime());
-        }
-
         createOrderItemsAndUpdateStock(order, cart);
         calculateOrderTotals(order);
-        notificationService.notifyNewOrderCommerce(order);
+
+        CommerceScheduleStatus scheduleStatus = BusinessHoursUtils.getCommerceStatus(commerce, LocalDateTime.now());
+        if (!scheduleStatus.isOpen() && !scheduleStatus.isClosedForDay()) {
+            LocalDateTime nextOpen = LocalDateTime.now().toLocalDate().atTime(scheduleStatus.nextOpenTime());
+            notificationService.notifyNewOrderCommerceScheduled(order, nextOpen);
+        } else {
+            notificationService.notifyNewOrderCommerce(order);
+        }
 
         if (CASH.equals(paymentMethod)) {
             order.setStatus(CONFIRMED);
@@ -95,8 +96,6 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         Order savedOrder = orderRepository.save(order);
         clearClientCart(cart);
-
-        whatsAppService.notifyCommerceNewOrder(savedOrder);
 
         return OrderMapper.toOrderResponse(savedOrder);
     }
