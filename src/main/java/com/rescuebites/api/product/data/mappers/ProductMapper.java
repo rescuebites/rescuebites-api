@@ -119,7 +119,9 @@ public class ProductMapper {
                 product.getExpirationDate(),
                 product.getImages().stream()
                         .map(ImageMapper::toImageResponse)
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                product.getCategory(),
+                product.getPreferenceType()
         );
     }
 

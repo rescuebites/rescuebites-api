@@ -16,7 +16,6 @@ import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -81,9 +80,6 @@ public class Order {
 
     @Column(length = 500)
     private String cancellationReason;
-
-    @Column(name = "scheduled_pickup_time")
-    private LocalTime scheduledPickupTime;
 
     @Column(length = 500)
     private String notes;

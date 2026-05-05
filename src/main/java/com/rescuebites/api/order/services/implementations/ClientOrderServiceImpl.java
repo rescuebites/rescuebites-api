@@ -5,9 +5,12 @@ import com.rescuebites.api.cart.data.models.CartItem;
 import com.rescuebites.api.cart.repositories.ICartRepository;
 import com.rescuebites.api.client.data.models.Client;
 import com.rescuebites.api.client.facades.interfaces.IClientFacade;
+import com.rescuebites.api.commerce.data.enums.CommerceScheduleStatus;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.commerce.facades.interfaces.ICommerceFacade;
+import com.rescuebites.api.commerce.utils.BusinessHoursUtils;
 import com.rescuebites.api.exceptions.custom_exceptions.ValidationException;
+import com.rescuebites.api.notifications.services.interfaces.INotificationService;
 import com.rescuebites.api.order.controllers.requests.CreateOrderRequest;
 import com.rescuebites.api.order.controllers.responses.OrderResponse;
 import com.rescuebites.api.order.controllers.responses.OrderSummaryForClientResponse;
@@ -52,14 +55,12 @@ public class ClientOrderServiceImpl implements IClientOrderService {
     private final IOrderValidationFacade orderValidationFacade;
     private final IOrderRepository orderRepository;
     private final IWhatsAppService whatsAppService;
+    private final INotificationService notificationService;
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {"activeProducts", "productsByCommerce", "productById",
-                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
-            allEntries = true
-    )
+    @CacheEvict(value = { "activeProducts", "productsByCommerce", "productById",
+            "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice" }, allEntries = true)
     public OrderResponse createOrder(UUID clientId, CreateOrderRequest request) {
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
@@ -69,20 +70,22 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         validateCartForOrder(cart, request.commerceId());
 
-        // Validar disponibilidad horaria del comercio
-        orderValidationFacade.validateCommerceAvailability(commerce, request.scheduledPickupTime());
+        orderValidationFacade.validateCommerceAvailability(commerce);
 
         PaymentMethod paymentMethod = cart.getSelectedPaymentMethod();
         String orderNumber = orderValidationFacade.generateOrderNumber();
         Order order = OrderMapper.toOrder(client, commerce, orderNumber, request, paymentMethod);
 
-        // Guardar horario programado de retiro si fue proporcionado
-        if (request.scheduledPickupTime() != null) {
-            order.setScheduledPickupTime(request.scheduledPickupTime());
-        }
-
         createOrderItemsAndUpdateStock(order, cart);
         calculateOrderTotals(order);
+
+        CommerceScheduleStatus scheduleStatus = BusinessHoursUtils.getCommerceStatus(commerce, LocalDateTime.now());
+        if (!scheduleStatus.isOpen() && !scheduleStatus.isClosedForDay()) {
+            LocalDateTime nextOpen = LocalDateTime.now().toLocalDate().atTime(scheduleStatus.nextOpenTime());
+            notificationService.notifyNewOrderCommerceScheduled(order, nextOpen);
+        } else {
+            notificationService.notifyNewOrderCommerce(order);
+        }
 
         if (CASH.equals(paymentMethod)) {
             order.setStatus(CONFIRMED);
@@ -91,8 +94,6 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         Order savedOrder = orderRepository.save(order);
         clearClientCart(cart);
-
-        whatsAppService.notifyCommerceNewOrder(savedOrder);
 
         return OrderMapper.toOrderResponse(savedOrder);
     }
@@ -114,8 +115,7 @@ public class ClientOrderServiceImpl implements IClientOrderService {
             // subtotal = suma de originalPrice × quantity (sin descuento)
             subtotal = subtotal.add(
                     orderItem.getOriginalPrice()
-                            .multiply(BigDecimal.valueOf(orderItem.getQuantity()))
-            );
+                            .multiply(BigDecimal.valueOf(orderItem.getQuantity())));
 
             updateProductStock(cartItem.getProduct(), cartItem.getQuantity());
         }
@@ -136,7 +136,8 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
         if (product.getStock() == 0) {
             product.setActive(false);
-            // ACÁ FALTA NOTIFICAR AL COMERCIO QUE SE QUEDÓ SIN STOCK DE ESE PRODUCTO, PARA QUE LO REPONGA SI QUIERE SEGUIR VENDIÉNDOLO
+            // ACÁ FALTA NOTIFICAR AL COMERCIO QUE SE QUEDÓ SIN STOCK DE ESE PRODUCTO, PARA
+            // QUE LO REPONGA SI QUIERE SEGUIR VENDIÉNDOLO
         }
 
         productRepository.save(product);
@@ -178,11 +179,8 @@ public class ClientOrderServiceImpl implements IClientOrderService {
 
     @Override
     @Transactional
-    @CacheEvict(
-            value = {"activeProducts", "productsByCommerce", "productById",
-                     "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice"},
-            allEntries = true
-    )
+    @CacheEvict(value = { "activeProducts", "productsByCommerce", "productById",
+            "activeProductsSortedByPrice", "activeProductsByCommerceTypeSortedByPrice" }, allEntries = true)
     public void cancelOrder(UUID clientId, UUID orderId, String reason) {
         Client client = clientFacade.findClientByIdOrThrowException(clientId);
         SecurityUtils.validateOwnership(client.getUser().getEmail());
@@ -206,6 +204,7 @@ public class ClientOrderServiceImpl implements IClientOrderService {
         order.setCancelledAt(LocalDateTime.now());
         order.setCancellationReason(reason);
         orderRepository.save(order);
+        notificationService.notifyOrderCanceledCommerce(order);
 
         whatsAppService.notifyCommerceCancelledOrder(order);
     }

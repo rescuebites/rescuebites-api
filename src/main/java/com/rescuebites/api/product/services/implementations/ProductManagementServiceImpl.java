@@ -8,6 +8,7 @@ import com.rescuebites.api.product.controllers.requests.CreateProductRequest;
 import com.rescuebites.api.product.controllers.requests.UpdateProductRequest;
 import com.rescuebites.api.product.controllers.responses.ProductResponse;
 import com.rescuebites.api.product.data.enums.ExpirationFilter;
+import com.rescuebites.api.product.data.enums.StockFilter;
 import com.rescuebites.api.product.data.mappers.ProductMapper;
 import com.rescuebites.api.product.data.models.Product;
 import com.rescuebites.api.product.facades.interfaces.IProductValidationFacade;
@@ -100,11 +101,16 @@ public class ProductManagementServiceImpl implements IProductManagementService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getProductsByCommerceOrderedByStock(UUID commerceId, Pageable pageable) {
+    public Page<ProductResponse> getProductsByCommerceOrderedByStock(UUID commerceId, StockFilter stockFilter, Pageable pageable) {
         Commerce commerce = commerceFacade.findCommerceByIdOrThrowException(commerceId);
         SecurityUtils.validateOwnership(commerce.getUser().getEmail());
 
-        Page<UUID> idsPage = productRepository.findActiveIdsByCommerceIdOrderByStockAsc(commerceId, pageable);
+        Page<UUID> idsPage = switch (stockFilter) {
+            case ACTIVE -> productRepository.findActiveIdsByCommerceIdOrderByStockAsc(commerceId, pageable);
+            case IN_STOCK -> productRepository.findInStockIdsByCommerceIdOrderByStockAsc(commerceId, pageable);
+            case OUT_OF_STOCK -> productRepository.findOutOfStockIdsByCommerceId(commerceId, pageable);
+            default -> productRepository.findAllIdsByCommerceIdOrderByStockAsc(commerceId, pageable);
+        };
         return fetchAndMapByIds(idsPage, pageable);
     }
 

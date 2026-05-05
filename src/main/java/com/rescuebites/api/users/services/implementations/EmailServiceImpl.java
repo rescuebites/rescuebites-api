@@ -25,29 +25,25 @@ public class EmailServiceImpl implements IEmailService {
     @Override
     public void sendConfirmAccountEmail(User user, UUID token) {
         String htmlContent = emailBuilder.buildConfirmAccount(user, token);
-        sendEmail(user.getEmail(),"Confirm your registration ✔", htmlContent);
+        sendEmail(user.getEmail(), "Confirmá tu registro en RescueBites ✔", htmlContent);
     }
 
     @Override
     public void sendResendConfirmAccountEmail(User user, UUID token) {
         String htmlContent = emailBuilder.buildResendConfirmAccount(user, token);
-        sendEmail(user.getEmail(), "Confirm your registration ✔", htmlContent);
+        sendEmail(user.getEmail(), "Nuevo enlace de confirmación ✔", htmlContent);
     }
 
     @Override
     public void sendResetPasswordEmail(String email, UUID token) {
         String htmlContent = emailBuilder.buildResetPassword(email, token);
-        sendEmail(email, "Reset your password ✔", htmlContent);
+        sendEmail(email, "Restablecé tu contraseña ✔", htmlContent);
     }
 
     @Override
     public void sendEmailUpdatedConfirmationEmail(User user, UUID token) {
         String htmlContent = emailBuilder.buildEmailUpdatedConfirmation(user, token);
-        // Enviamos al nuevo email pendiente (si existe), de lo contrario al email actual
-        String recipient = (user.getPendingEmail() != null && !user.getPendingEmail().isBlank())
-                ? user.getPendingEmail()
-                : user.getEmail();
-        sendEmail(recipient, "Confirma tu nuevo email ✔", htmlContent);
+        sendEmail(user.getEmail(), "Confirmá tu nuevo correo electrónico ✔", htmlContent);
     }
 
     private void sendEmail(String to, String subject, String htmlContent) {

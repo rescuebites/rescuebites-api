@@ -17,7 +17,8 @@ public class TopProductReportMapper {
             return Collections.emptyList();
         }
 
-        BigDecimal total = BigDecimal.valueOf(totalUnitsSold != null && totalUnitsSold > 0 ? totalUnitsSold : 1L);
+        long topUnitsSum = projections.stream().mapToLong(TopProductProjection::getUnits).sum();
+        BigDecimal total = BigDecimal.valueOf(topUnitsSum > 0 ? topUnitsSum : 1L);
 
         return projections.stream()
                 .map(p -> toResponse(p, total))

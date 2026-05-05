@@ -27,7 +27,7 @@ public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
     @Query("SELECT c FROM commerces c LEFT JOIN FETCH c.images WHERE c.commerceId = :commerceId")
     Optional<Commerce> findByIdIncludingDeleted(@Param("commerceId") UUID commerceId);
 
-    @Query("SELECT c FROM commerces c WHERE c.deleted = false AND c.normalizedLocality = :normalizedLocality")
+    @Query("SELECT c FROM commerces c WHERE c.deleted = false AND c.normalizedLocality = :normalizedLocality ORDER BY c.name ASC")
     Page<Commerce> findByDeletedFalseAndLocalityIgnoreCase(
             @Param("normalizedLocality") String normalizedLocality,
             Pageable pageable
@@ -36,7 +36,8 @@ public interface ICommerceRepository extends JpaRepository<Commerce, UUID> {
     @Query("SELECT DISTINCT c FROM commerces c " +
             "JOIN c.commerceTypes ct " +
             "WHERE ct.name = :commerceType AND c.deleted = false " +
-            "AND c.normalizedLocality = :normalizedLocality")
+            "AND c.normalizedLocality = :normalizedLocality " +
+            "ORDER BY c.name ASC")
     Page<Commerce> findActiveByCommerceTypeAndLocality(
             @Param("commerceType") CommerceTypeEnum commerceType,
             @Param("normalizedLocality") String normalizedLocality,

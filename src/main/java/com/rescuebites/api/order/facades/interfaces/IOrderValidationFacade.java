@@ -4,7 +4,6 @@ import com.rescuebites.api.cart.data.models.Cart;
 import com.rescuebites.api.commerce.data.models.Commerce;
 import com.rescuebites.api.order.data.models.Order;
 
-import java.time.LocalTime;
 import java.util.UUID;
 
 public interface IOrderValidationFacade {
@@ -21,7 +20,7 @@ public interface IOrderValidationFacade {
 
     void validateStockForAllItems(Cart cart);
 
-    void validateCommerceAvailability(Commerce commerce, LocalTime scheduledPickupTime);
+    void validateCommerceAvailability(Commerce commerce);
 
     String generateOrderNumber();
 }
