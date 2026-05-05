@@ -16,10 +16,6 @@ COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
 
-<<<<<<< HEAD
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 CMD ["sh", "-c", "java -jar app.jar --server.port=$PORT"]
-=======
-ENTRYPOINT ["java", "-jar", "app.jar"]
->>>>>>> 5aaa7099da1b51ce0075289538892df2866fc149
