@@ -76,3 +76,7 @@ logging:
 
 server:
   port: ${PORT:8080}
+
+jwt:
+  secret: ${JWT_SECRET:default_secret}
+  access-token-expiration: ${JWT_EXPIRATION:86400000}
