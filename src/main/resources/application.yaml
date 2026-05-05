@@ -75,4 +75,4 @@ logging:
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
 
 server:
-  port: ${PORT}
+  port: ${PORT:8080}
