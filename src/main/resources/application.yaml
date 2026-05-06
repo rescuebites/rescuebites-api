@@ -79,6 +79,8 @@ cloudinary:
 logging:
   level:
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
+    org.springframework.mail: DEBUG
+    com.rescuebites.api: INFO
 
 server:
   port: ${PORT:8080}
