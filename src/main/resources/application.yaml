@@ -71,6 +71,11 @@ springdoc:
     enabled: true
   show-actuator: false
 
+cloudinary:
+  cloud-name: ${CLOUD_NAME}
+  api-key: ${CLOUD_API_KEY}
+  api-secret: ${CLOUD_API_SECRET}
+
 logging:
   level:
     org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
