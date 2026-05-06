@@ -48,6 +48,10 @@ public class EmailServiceImpl implements IEmailService {
 
     private void sendEmail(String to, String subject, String htmlContent) {
         try {
+            System.out.println("=== INTENTANDO ENVIAR MAIL ===");
+        System.out.println("TO: " + to);
+        System.out.println("FROM: " + senderEmail);
+        
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -57,7 +61,12 @@ public class EmailServiceImpl implements IEmailService {
             helper.setText(htmlContent, true);
 
             javaMailSender.send(message);
+
+                    System.out.println("=== MAIL ENVIADO OK ===");
+
         } catch (Exception e) {
+            System.out.println("=== ERROR ENVIANDO MAIL ===");
+            e.printStackTrace();
             throw new RuntimeException("Failed to send email", e);
         }
     }
