@@ -56,6 +56,7 @@ frontend:
 
 app:
   url: ${APP_URL}
+  default-profile-picture: ${DEFAULT_PROFILE_PICTURE_URL}
 
 payment:
   redirect:
