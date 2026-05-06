@@ -1,10 +1,13 @@
 package com.rescuebites.api.users.services.implementations;
 
+import com.rescuebites.api.exceptions.custom_exceptions.EmailSendingException;
 import com.rescuebites.api.shared.EmailBuilder;
 import com.rescuebites.api.users.data.models.User;
 import com.rescuebites.api.users.services.interfaces.IEmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -15,6 +18,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class EmailServiceImpl implements IEmailService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailServiceImpl.class);
 
     @Value("${spring.mail.username}")
     private String senderEmail;
@@ -30,7 +35,6 @@ public class EmailServiceImpl implements IEmailService {
 
     @Override
     public void sendResendConfirmAccountEmail(User user, UUID token) {
-        System.out.println("ENTRANDO A RESEND");
         String htmlContent = emailBuilder.buildResendConfirmAccount(user, token);
         sendEmail(user.getEmail(), "Nuevo enlace de confirmación ✔", htmlContent);
     }
@@ -49,9 +53,7 @@ public class EmailServiceImpl implements IEmailService {
 
     private void sendEmail(String to, String subject, String htmlContent) {
         try {
-            System.out.println("=== INTENTANDO ENVIAR MAIL ===");
-        System.out.println("TO: " + to);
-        System.out.println("FROM: " + senderEmail);
+            log.info("Preparing to send email to {} with subject={}", to, subject);
 
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -62,13 +64,10 @@ public class EmailServiceImpl implements IEmailService {
             helper.setText(htmlContent, true);
 
             javaMailSender.send(message);
-
-                    System.out.println("=== MAIL ENVIADO OK ===");
-
+            log.info("Email sent to {}", to);
         } catch (Exception e) {
-            System.out.println("=== ERROR ENVIANDO MAIL ===");
-            e.printStackTrace();
-            throw new RuntimeException("Failed to send email", e);
+            log.error("Failed to send email to {} subject {}: {}", to, subject, e.getMessage(), e);
+            throw new EmailSendingException("Failed to send email to " + to, e);
         }
     }
 }
