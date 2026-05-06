@@ -30,6 +30,7 @@ public class EmailServiceImpl implements IEmailService {
 
     @Override
     public void sendResendConfirmAccountEmail(User user, UUID token) {
+        System.out.println("ENTRANDO A RESEND");
         String htmlContent = emailBuilder.buildResendConfirmAccount(user, token);
         sendEmail(user.getEmail(), "Nuevo enlace de confirmación ✔", htmlContent);
     }
@@ -51,7 +52,7 @@ public class EmailServiceImpl implements IEmailService {
             System.out.println("=== INTENTANDO ENVIAR MAIL ===");
         System.out.println("TO: " + to);
         System.out.println("FROM: " + senderEmail);
-        
+
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
